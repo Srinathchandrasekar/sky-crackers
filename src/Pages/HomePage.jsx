@@ -68,7 +68,7 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
             {/* Left Content Column */}
             <Box sx={{ maxWidth: { xs: '100%', md: 540, lg: 620 }, zIndex: 2, flexShrink: 0 }}>
               {/* Tagline Pill */}
-              <Stack direction="row" spacing={1} sx={{ mb: 2.5 }} flexWrap="wrap">
+              <Box sx={{ mb: 2.5, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 <Chip
                   icon={<AutoAwesomeIcon sx={{ color: '#FFA000 !important', fontSize: 16 }} />}
                   label="80% OFF • SIVAKASI DIRECT SALE"
@@ -76,22 +76,25 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                     backgroundColor: 'rgba(255, 160, 0, 0.2)',
                     color: '#FFA000',
                     fontWeight: 800,
-                    fontSize: { xs: '0.78rem', md: '0.85rem' },
+                    fontSize: { xs: '0.72rem', sm: '0.82rem' },
                     border: '1px solid rgba(255, 160, 0, 0.4)',
                     backdropFilter: 'blur(4px)',
+                    height: 28,
                   }}
                 />
                 <Chip
                   icon={<LocalShippingOutlinedIcon sx={{ color: '#FFFFFF !important', fontSize: 16 }} />}
                   label="DELIVERY ALL OVER TAMIL NADU"
                   sx={{
-                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
                     color: '#FFFFFF',
                     fontWeight: 700,
-                    fontSize: { xs: '0.75rem', md: '0.8rem' },
+                    fontSize: { xs: '0.72rem', sm: '0.8rem' },
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    height: 28,
                   }}
                 />
-              </Stack>
+              </Box>
 
               {/* Main Title */}
               <Typography
@@ -145,7 +148,7 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
               </Typography>
 
               {/* Action Buttons */}
-              <Stack direction="row" spacing={2} flexWrap="wrap">
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} sx={{ maxWidth: { xs: '100%', sm: 520 } }}>
                 <Button
                   variant="contained"
                   size="large"
@@ -154,12 +157,14 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                   sx={{
                     backgroundColor: '#FFA000',
                     color: '#0B132B',
-                    fontWeight: 800,
-                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    fontWeight: 900,
+                    fontSize: { xs: '0.92rem', md: '1rem' },
                     px: { xs: 3, md: 4 },
-                    py: 1.5,
-                    borderRadius: 2,
+                    py: { xs: 1.3, md: 1.5 },
+                    borderRadius: 2.5,
                     boxShadow: '0 8px 24px rgba(255, 160, 0, 0.4)',
+                    textTransform: 'none',
+                    letterSpacing: '0.01em',
                     transition: 'all 0.2s ease',
                     '&:hover': {
                       backgroundColor: '#FF8F00',
@@ -177,23 +182,25 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                   startIcon={<DescriptionOutlinedIcon />}
                   onClick={onOpenBrochure}
                   sx={{
-                    color: '#FFFFFF',
-                    borderColor: 'rgba(255, 255, 255, 0.6)',
-                    fontWeight: 700,
-                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    color: '#FFA000',
+                    borderColor: '#FFA000',
+                    borderWidth: '1.5px',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.92rem', md: '1rem' },
                     px: { xs: 2.5, md: 3.5 },
-                    py: 1.5,
-                    borderRadius: 2,
+                    py: { xs: 1.3, md: 1.5 },
+                    borderRadius: 2.5,
                     backdropFilter: 'blur(4px)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    backgroundColor: 'rgba(255, 160, 0, 0.08)',
+                    textTransform: 'none',
                     '&:hover': {
-                      borderColor: '#FFFFFF',
-                      backgroundColor: 'rgba(255, 255, 255, 0.18)',
+                      borderColor: '#FFB300',
+                      backgroundColor: 'rgba(255, 160, 0, 0.18)',
                       transform: 'translateY(-2px)',
                     },
                   }}
                 >
-                  View PDF Price List
+                  Download PDF Price List
                 </Button>
               </Stack>
             </Box>
@@ -288,9 +295,24 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
             </Box>
 
             <Button
-              variant="outlined"
+              variant="contained"
               onClick={onShopNow}
-              sx={{ borderColor: '#FFA000', color: '#0B132B', fontWeight: 700 }}
+              sx={{
+                backgroundColor: '#FFA000',
+                color: '#0B132B',
+                fontWeight: 900,
+                fontSize: { xs: '0.84rem', sm: '0.94rem' },
+                px: { xs: 2.2, sm: 3 },
+                py: { xs: 1, sm: 1.2 },
+                borderRadius: 2.5,
+                boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
+                textTransform: 'none',
+                whiteSpace: 'nowrap',
+                '&:hover': {
+                  backgroundColor: '#FF8F00',
+                  boxShadow: '0 6px 20px rgba(255, 160, 0, 0.45)',
+                },
+              }}
             >
               View All 91 Products →
             </Button>

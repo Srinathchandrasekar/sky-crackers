@@ -37,8 +37,8 @@ export default function RightCartDrawer({
   const savings = Math.max(0, originalSubtotal - subtotal)
 
   // Calculations strictly based on items (Zero delivery fee!)
-  const festivalDiscount = subtotal > 1500 ? 150 : subtotal > 800 ? 100 : 0
-  const totalAmount = cart.length === 0 ? 0 : Math.max(0, subtotal - festivalDiscount)
+  const festivalDiscount = 0
+  const totalAmount = cart.length === 0 ? 0 : subtotal
 
   return (
     <Drawer
@@ -314,16 +314,7 @@ export default function RightCartDrawer({
               </Typography>
             </Box>
 
-            {festivalDiscount > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#16A34A' }}>
-                <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '0.88rem' }}>
-                  Festival Discount
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 800, fontSize: '0.94rem' }}>
-                  -₹{festivalDiscount}
-                </Typography>
-              </Box>
-            )}
+
 
             {savings > 0 && (
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#EA580C' }}>

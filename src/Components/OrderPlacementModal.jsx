@@ -129,8 +129,8 @@ export default function OrderPlacementModal({
   // Calculations based strictly on selected items (Zero delivery charges!)
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const subtotal = cart.reduce((sum, item) => sum + item.product.discountPrice * item.quantity, 0)
-  const festivalDiscount = subtotal > 1500 ? 150 : subtotal > 800 ? 100 : 0
-  const totalAmount = cart.length === 0 ? 0 : Math.max(0, subtotal - festivalDiscount)
+  const festivalDiscount = 0
+  const totalAmount = cart.length === 0 ? 0 : subtotal
 
   // Clear all states cleanly on modal close
   const clearFormState = () => {
@@ -501,20 +501,19 @@ export default function OrderPlacementModal({
         sx={{
           backgroundColor: '#0B132B',
           color: '#FFFFFF',
-          px: { xs: 2, sm: 3, md: 4 },
-          py: 1.6,
+          px: { xs: 1.5, sm: 3, md: 4 },
+          py: { xs: 1.2, sm: 1.6 },
           position: 'relative',
           borderBottom: '3px solid #FFA000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          flexWrap: 'wrap',
           gap: 1.5,
           boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
           zIndex: 10,
         }}
       >
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, minWidth: 0, flex: 1 }}>
           <Button
             variant="contained"
             startIcon={<ArrowBackIcon />}
@@ -522,52 +521,59 @@ export default function OrderPlacementModal({
             sx={{
               backgroundColor: '#FFA000',
               color: '#0B132B',
-              fontWeight: 900,
-              fontSize: '0.92rem',
+              fontWeight: 800,
+              fontSize: { xs: '0.8rem', sm: '0.9rem' },
               borderRadius: 2,
-              px: 2.2,
-              py: 0.8,
+              px: { xs: 1.2, sm: 2 },
+              py: { xs: 0.6, sm: 0.8 },
               textTransform: 'none',
               boxShadow: '0 2px 10px rgba(255, 160, 0, 0.4)',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
               '&:hover': { backgroundColor: '#FF8F00' },
             }}
           >
-            ← Back to Shop
+            Back
           </Button>
 
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box
+          <Box sx={{ minWidth: 0 }}>
+            <Typography
+              variant="h6"
               sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255, 160, 0, 0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                fontWeight: 800,
+                color: '#FFA000',
+                lineHeight: 1.2,
+                fontSize: { xs: '0.88rem', sm: '1.15rem' },
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: { xs: 'normal', sm: 'nowrap' },
               }}
             >
-              <AccountCircleIcon sx={{ color: '#FFA000', fontSize: 26 }} />
-            </Box>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: '#FFA000', lineHeight: 1.2, fontSize: { xs: '1rem', md: '1.2rem' } }}>
-                Customer Order Placement & Direct Sivakasi Booking
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#94A3B8' }}>
-                Enter contact and transport parcel delivery details to confirm your Diwali crackers booking
-              </Typography>
-            </Box>
-          </Stack>
-        </Stack>
+              Customer Order Placement
+            </Typography>
+            <Typography
+              variant="caption"
+              sx={{
+                color: '#94A3B8',
+                display: { xs: 'none', sm: 'block' },
+                fontSize: '0.78rem',
+              }}
+            >
+              Direct Sivakasi Booking & Transport Parcel Delivery
+            </Typography>
+          </Box>
+        </Box>
 
         <IconButton
           onClick={handleModalClose}
+          size="small"
           sx={{
             color: 'rgba(255, 255, 255, 0.7)',
             '&:hover': { color: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.1)' },
+            flexShrink: 0,
           }}
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
 
@@ -1174,17 +1180,6 @@ export default function OrderPlacementModal({
                 ₹{subtotal}
               </Typography>
             </Box>
-
-            {festivalDiscount > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.8, color: '#16A34A' }}>
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  Festival Discount
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                  -₹{festivalDiscount}
-                </Typography>
-              </Box>
-            )}
 
             <Divider sx={{ my: 1.5 }} />
 

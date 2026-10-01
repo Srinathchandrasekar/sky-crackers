@@ -476,29 +476,6 @@ export default function CrackersListPage({
                 </Box>
               </Box>
 
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
-                <InputLabel id="sort-select-label" sx={{ fontSize: '0.85rem' }}>
-                  Sort by
-                </InputLabel>
-                <Select
-                  labelId="sort-select-label"
-                  id="sort-select"
-                  value={sortBy}
-                  label="Sort by"
-                  onChange={(e) => setSortBy(e.target.value)}
-                  sx={{
-                    borderRadius: 2,
-                    fontSize: '0.85rem',
-                    backgroundColor: '#FFFFFF',
-                  }}
-                >
-                  <MenuItem value="popular">Sort by: Popular</MenuItem>
-                  <MenuItem value="price_asc">Price: Low to High</MenuItem>
-                  <MenuItem value="price_desc">Price: High to Low</MenuItem>
-                  <MenuItem value="rating">Highest Rated</MenuItem>
-                  <MenuItem value="discount">Biggest Discount</MenuItem>
-                </Select>
-              </FormControl>
             </Box>
 
             {/* Empty State */}

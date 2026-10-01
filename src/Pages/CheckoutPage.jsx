@@ -81,9 +81,9 @@ export default function CheckoutPage({
   // Calculations (Zero delivery fee!)
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0)
   const subtotal = cart.reduce((sum, item) => sum + (item.product.discountPrice || 0) * item.quantity, 0)
-  const discount = subtotal > 1500 ? 150 : (subtotal > 800 ? 100 : 0)
+  const discount = 0
   const deliveryCharges = 0
-  const totalAmount = Math.max(0, subtotal - discount + deliveryCharges)
+  const totalAmount = subtotal
 
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }))
@@ -643,16 +643,7 @@ export default function CheckoutPage({
                           ₹{subtotal.toLocaleString('en-IN')}
                         </Typography>
                       </Box>
-                      {discount > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                          <Typography variant="body2" sx={{ color: '#16A34A' }}>
-                            Special Festival Discount:
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#16A34A' }}>
-                            - ₹{discount}
-                          </Typography>
-                        </Box>
-                      )}
+
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                         <Typography variant="body2" sx={{ color: '#64748B' }}>
                           Delivery Charges:

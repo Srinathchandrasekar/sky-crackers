@@ -398,17 +398,21 @@ export default function Navbar({
         anchor="right"
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
-        PaperProps={{
-          sx: {
-            width: 280,
-            backgroundColor: '#0B132B',
-            color: '#FFFFFF',
-            p: 2,
+        sx={{
+          zIndex: 1400,
+          '& .MuiDrawer-paper': {
+            width: 285,
+            backgroundColor: '#0B132B !important',
+            color: '#FFFFFF !important',
+            p: 2.2,
+            boxShadow: '-8px 0 35px rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            flexDirection: 'column',
           },
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: '#FFA000' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800, color: '#FFA000' }}>
             SkyFire Crackers
           </Typography>
           <IconButton onClick={() => setMobileOpen(false)} sx={{ color: '#FFFFFF' }}>
@@ -421,13 +425,27 @@ export default function Navbar({
               <ListItemButton
                 onClick={link.onClick ? link.onClick : () => handleNavClick(link.id)}
                 sx={{
-                  borderRadius: 2,
-                  backgroundColor: activePage === link.id ? 'rgba(255, 160, 0, 0.15)' : 'transparent',
-                  color: activePage === link.id ? '#FFA000' : '#FFFFFF',
+                  borderRadius: 2.5,
+                  py: 1.2,
+                  px: 2,
+                  backgroundColor: activePage === link.id ? 'rgba(255, 160, 0, 0.2)' : 'transparent',
+                  color: activePage === link.id ? '#FFA000' : '#E2E8F0',
+                  border: activePage === link.id ? '1px solid rgba(255, 160, 0, 0.4)' : '1px solid transparent',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                    color: '#FFA000',
+                  },
                 }}
               >
-                <Box sx={{ mr: 2, display: 'flex' }}>{link.icon}</Box>
-                <ListItemText primary={link.label} primaryTypographyProps={{ fontWeight: 600 }} />
+                <Box sx={{ mr: 2, display: 'flex', color: activePage === link.id ? '#FFA000' : '#94A3B8' }}>{link.icon}</Box>
+                <ListItemText
+                  primary={link.label}
+                  primaryTypographyProps={{
+                    fontWeight: activePage === link.id ? 800 : 600,
+                    fontSize: '0.95rem',
+                    color: 'inherit',
+                  }}
+                />
               </ListItemButton>
             </ListItem>
           ))}
@@ -435,17 +453,28 @@ export default function Navbar({
             <ListItemButton
               onClick={() => handleNavClick('cart')}
               sx={{
-                borderRadius: 2,
-                backgroundColor: activePage === 'cart' ? 'rgba(255, 160, 0, 0.15)' : 'transparent',
-                color: activePage === 'cart' ? '#FFA000' : '#FFFFFF',
+                borderRadius: 2.5,
+                py: 1.2,
+                px: 2,
+                backgroundColor: activePage === 'cart' ? 'rgba(255, 160, 0, 0.2)' : 'transparent',
+                color: activePage === 'cart' ? '#FFA000' : '#E2E8F0',
+                border: activePage === 'cart' ? '1px solid rgba(255, 160, 0, 0.4)' : '1px solid transparent',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                  color: '#FFA000',
+                },
               }}
             >
-              <Box sx={{ mr: 2, display: 'flex' }}>
+              <Box sx={{ mr: 2, display: 'flex', color: activePage === 'cart' ? '#FFA000' : '#94A3B8' }}>
                 <ShoppingCartIcon fontSize="small" />
               </Box>
               <ListItemText
                 primary={`Cart (${cartCount} items)`}
-                primaryTypographyProps={{ fontWeight: 600 }}
+                primaryTypographyProps={{
+                  fontWeight: activePage === 'cart' ? 800 : 600,
+                  fontSize: '0.95rem',
+                  color: 'inherit',
+                }}
               />
             </ListItemButton>
           </ListItem>
