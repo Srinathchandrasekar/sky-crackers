@@ -117,38 +117,41 @@ export default function Navbar({
           >
             <Box
               sx={{
-                width: 42,
-                height: 42,
+                width: { xs: 36, sm: 42 },
+                height: { xs: 36, sm: 42 },
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #FFA000 0%, #FF6F00 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 0 15px rgba(255, 160, 0, 0.6)',
+                flexShrink: 0,
               }}
             >
-              <AutoAwesomeIcon sx={{ color: '#0B132B', fontSize: 26 }} />
+              <AutoAwesomeIcon sx={{ color: '#0B132B', fontSize: { xs: 20, sm: 26 } }} />
             </Box>
-            <Box>
+            <Box sx={{ minWidth: 0 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant="h6"
                   component="div"
                   sx={{
                     fontWeight: 800,
-                    fontSize: { xs: '1.15rem', md: '1.4rem' },
+                    fontSize: { xs: '0.95rem', sm: '1.2rem', md: '1.4rem' },
                     letterSpacing: '0.02em',
                     color: '#FFFFFF',
                     lineHeight: 1.1,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   Sky Fire Crackers
                 </Typography>
                 {apiStatus === 'live' ? (
                   <Chip
-                    label="API LIVE"
+                    label="LIVE"
                     size="small"
                     sx={{
+                      display: { xs: 'none', sm: 'inline-flex' },
                       backgroundColor: 'rgba(34, 197, 94, 0.2)',
                       color: '#4ADE80',
                       border: '1px solid rgba(74, 222, 128, 0.4)',
@@ -162,6 +165,7 @@ export default function Navbar({
                     label="OFFLINE"
                     size="small"
                     sx={{
+                      display: { xs: 'none', sm: 'inline-flex' },
                       backgroundColor: 'rgba(239, 68, 68, 0.2)',
                       color: '#F87171',
                       border: '1px solid rgba(248, 113, 113, 0.4)',
@@ -177,9 +181,10 @@ export default function Navbar({
                 sx={{
                   color: '#FFA000',
                   fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  fontSize: '0.65rem',
+                  letterSpacing: '0.08em',
+                  fontSize: { xs: '0.58rem', sm: '0.65rem' },
                   display: 'block',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 பட்டாசு கடை • 80% OFF
@@ -351,8 +356,16 @@ export default function Navbar({
           {isMobile && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <IconButton
+                component="a"
+                href="tel:9597167401"
+                sx={{ color: '#FFA000', p: { xs: 0.8, sm: 1 }, mr: 0.5 }}
+                title="Call 9597167401"
+              >
+                <PhoneIcon sx={{ fontSize: { xs: 20, sm: 22 } }} />
+              </IconButton>
+              <IconButton
                 onClick={() => (onOpenCart ? onOpenCart() : handleNavClick('cart'))}
-                sx={{ color: '#FFFFFF', mr: 0.5 }}
+                sx={{ color: '#FFFFFF', mr: 0.5, p: { xs: 0.8, sm: 1 } }}
               >
                 <Badge
                   badgeContent={cartCount}
@@ -360,17 +373,20 @@ export default function Navbar({
                     '& .MuiBadge-badge': {
                       backgroundColor: '#E53935',
                       color: '#FFFFFF',
+                      fontSize: '0.7rem',
+                      height: 18,
+                      minWidth: 18,
                     },
                   }}
                 >
-                  <ShoppingCartIcon />
+                  <ShoppingCartIcon sx={{ fontSize: { xs: 22, sm: 24 } }} />
                 </Badge>
               </IconButton>
               <IconButton
                 onClick={() => setMobileOpen(true)}
-                sx={{ color: '#FFFFFF' }}
+                sx={{ color: '#FFFFFF', p: { xs: 0.8, sm: 1 } }}
               >
-                <MenuIcon />
+                <MenuIcon sx={{ fontSize: { xs: 24, sm: 26 } }} />
               </IconButton>
             </Box>
           )}

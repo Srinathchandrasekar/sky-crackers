@@ -352,10 +352,10 @@ export default function CheckoutPage({
   }
 
   return (
-    <Box sx={{ py: { xs: 3, md: 5 }, backgroundColor: '#F8FAFC', minHeight: '80vh' }}>
-      <Container maxWidth="xl">
+    <Box sx={{ py: { xs: 2, md: 5 }, backgroundColor: '#F8FAFC', minHeight: '80vh' }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 3 } }}>
         {/* Header */}
-        <Box sx={{ mb: 3.5, display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1.8 }}>
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={onBackToCart}
@@ -382,13 +382,13 @@ export default function CheckoutPage({
               sx={{
                 fontWeight: 800,
                 color: '#0F172A',
-                fontSize: { xs: '1.6rem', md: '2.1rem' },
-                mb: 0.5,
+                fontSize: { xs: '1.35rem', md: '2.1rem' },
+                mb: 0.3,
               }}
             >
               Order Review & Payment
             </Typography>
-            <Typography variant="body1" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
+            <Typography variant="body1" sx={{ color: '#64748B', fontSize: { xs: '0.82rem', md: '0.95rem' } }}>
               Verify your parcel delivery address, review crackers breakdown & complete booking
             </Typography>
           </Box>
@@ -571,38 +571,41 @@ export default function CheckoutPage({
                     <Box
                       key={item.product.id}
                       sx={{
-                        p: 1.5,
+                        p: { xs: 1.2, sm: 1.5 },
                         borderRadius: 2,
                         backgroundColor: '#F8FAFC',
                         border: '1px solid #E2E8F0',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        gap: 2,
+                        gap: { xs: 1, sm: 2 },
                       }}
                     >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1.2, sm: 2 }, minWidth: 0, flex: 1 }}>
                         <Box
                           component="img"
                           src={item.product.image}
                           alt={item.product.name}
                           sx={{
-                            width: 52,
-                            height: 52,
+                            width: { xs: 46, sm: 52 },
+                            height: { xs: 46, sm: 52 },
                             borderRadius: 2,
                             objectFit: 'cover',
                             border: '1px solid #CBD5E1',
                             flexShrink: 0,
                           }}
                         />
-                        <Box>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
                           <Typography
                             variant="subtitle2"
                             sx={{
                               fontWeight: 800,
                               color: '#0F172A',
                               lineHeight: 1.2,
-                              fontSize: '0.95rem',
+                              fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {item.product.name}
@@ -610,17 +613,17 @@ export default function CheckoutPage({
                           {(item.product.nameTamil || item.product.tamilName) && (
                             <Typography
                               variant="caption"
-                              sx={{ color: '#B45309', fontWeight: 600, display: 'block', fontSize: '0.8rem' }}
+                              sx={{ color: '#B45309', fontWeight: 600, display: 'block', fontSize: { xs: '0.72rem', sm: '0.8rem' }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                             >
                               {item.product.nameTamil || item.product.tamilName}
                             </Typography>
                           )}
-                          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600 }}>
-                            Quantity: <strong>{item.quantity} boxes</strong> × ₹{item.product.discountPrice}
+                          <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 600, fontSize: { xs: '0.72rem', sm: '0.78rem' }, display: 'block' }}>
+                            Qty: <strong>{item.quantity} box(es)</strong> × ₹{item.product.discountPrice}
                           </Typography>
                         </Box>
                       </Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap' }}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#16A34A', whiteSpace: 'nowrap', fontSize: { xs: '0.95rem', sm: '1.1rem' }, ml: 1 }}>
                         ₹{item.product.discountPrice * item.quantity}
                       </Typography>
                     </Box>

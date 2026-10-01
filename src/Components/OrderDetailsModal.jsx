@@ -542,9 +542,9 @@ SkyFire Crackers Sivakasi
                   </Box>
 
                   {/* Order Content */}
-                  <Box sx={{ p: 2.5 }}>
-                    <TableContainer>
-                      <Table size="small">
+                  <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+                    <TableContainer sx={{ overflowX: 'auto' }}>
+                      <Table size="small" sx={{ minWidth: 460 }}>
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 700, color: '#64748B' }}>Cracker Item</TableCell>

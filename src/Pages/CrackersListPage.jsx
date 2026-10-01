@@ -230,16 +230,17 @@ export default function CrackersListPage({
   const currentCategoryObj = categoriesList.find((c) => c.id === selectedCategory) || categoriesList[0]
 
   return (
-    <Box sx={{ pt: { xs: 2.5, md: 3 }, pb: { xs: 12, md: 14 }, backgroundColor: '#F8FAFC', minHeight: '80vh', width: '100%' }}>
-      <Container maxWidth={false} sx={{ px: { xs: 1.5, sm: 2.5, md: 3.5, lg: 4 } }}>
+    <Box sx={{ pt: { xs: 1.5, md: 3 }, pb: { xs: 12, md: 14 }, backgroundColor: '#F8FAFC', minHeight: '80vh', width: '100%' }}>
+      <Container maxWidth={false} sx={{ px: { xs: 1.25, sm: 2.5, md: 3.5, lg: 4 } }}>
         <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'flex-start', gap: 2.5, width: '100%' }}>
-          {/* Left Sidebar Filter - Sticky on Scroll */}
+          {/* Left Sidebar Filter - Sticky on Scroll (Desktop only) */}
           <Box
             sx={{
-              width: { xs: '100%', md: 250, lg: 260 },
+              display: { xs: 'none', md: 'block' },
+              width: { md: 250, lg: 260 },
               flexShrink: 0,
-              position: { xs: 'relative', md: 'sticky' },
-              top: { md: 85 },
+              position: 'sticky',
+              top: 85,
               zIndex: 10,
               alignSelf: 'flex-start',
             }}
@@ -251,8 +252,8 @@ export default function CrackersListPage({
                 borderRadius: 3,
                 border: '1px solid #E2E8F0',
                 backgroundColor: '#FFFFFF',
-                maxHeight: { md: 'calc(100vh - 105px)' },
-                overflowY: { md: 'auto' },
+                maxHeight: 'calc(100vh - 105px)',
+                overflowY: 'auto',
                 boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
                 '&::-webkit-scrollbar': { width: 4 },
                 '&::-webkit-scrollbar-thumb': { backgroundColor: '#CBD5E1', borderRadius: 2 },
@@ -384,15 +385,58 @@ export default function CrackersListPage({
 
           {/* Right Product Section */}
           <Box sx={{ flexGrow: 1, minWidth: 0, width: '100%' }}>
+            {/* Mobile Category Pills Bar (Horizontal Scroll) */}
+            <Box
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                overflowX: 'auto',
+                py: 0.8,
+                px: 0.2,
+                mb: 2,
+                gap: 1,
+                whiteSpace: 'nowrap',
+                '&::-webkit-scrollbar': { display: 'none' },
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+              }}
+            >
+              {categoriesList.map((cat) => {
+                const isSelected = selectedCategory === cat.id
+                return (
+                  <Chip
+                    key={cat.id}
+                    icon={getCategoryIcon(cat.icon, isSelected)}
+                    label={`${cat.name} (${cat.count})`}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    sx={{
+                      borderRadius: '50px',
+                      fontWeight: isSelected ? 800 : 600,
+                      fontSize: '0.78rem',
+                      height: 32,
+                      px: 0.6,
+                      backgroundColor: isSelected ? '#FFA000' : '#FFFFFF',
+                      color: isSelected ? '#0B132B' : '#334155',
+                      border: isSelected ? '1.5px solid #FFA000' : '1px solid #CBD5E1',
+                      boxShadow: isSelected ? '0 2px 8px rgba(255, 160, 0, 0.35)' : 'none',
+                      flexShrink: 0,
+                      '& .MuiChip-icon': {
+                        color: isSelected ? '#0B132B !important' : '#64748B !important',
+                      },
+                    }}
+                  />
+                )
+              })}
+            </Box>
+
             {/* Header with Title, Count & Sort */}
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
                 justifyContent: 'space-between',
-                alignItems: { xs: 'flex-start', sm: 'center' },
+                alignItems: { xs: 'stretch', sm: 'center' },
                 gap: 1.5,
-                mb: 3,
+                mb: 2.5,
               }}
             >
               <Box>
@@ -401,38 +445,38 @@ export default function CrackersListPage({
                   sx={{
                     fontWeight: 800,
                     color: '#0F172A',
-                    fontSize: { xs: '1.4rem', md: '1.75rem' },
+                    fontSize: { xs: '1.25rem', md: '1.75rem' },
                   }}
                 >
                   {currentCategoryObj.name}
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
-                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.4, flexWrap: 'wrap' }}>
+                  <Typography variant="body2" sx={{ color: '#64748B', fontWeight: 500, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
                     Showing {filteredCrackers.length} products
                   </Typography>
                   {isLiveConnected ? (
                     <Chip
-                      icon={<WifiIcon sx={{ fontSize: '14px !important' }} />}
-                      label={`SQL Server Database (${productsList.length} Products)`}
+                      icon={<WifiIcon sx={{ fontSize: '13px !important' }} />}
+                      label={`SQL Server (${productsList.length})`}
                       size="small"
                       color="success"
                       variant="outlined"
-                      sx={{ height: 22, fontSize: '0.72rem', fontWeight: 700 }}
+                      sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700 }}
                     />
                   ) : (
                     <Chip
-                      icon={<WifiOffIcon sx={{ fontSize: '14px !important' }} />}
-                      label={loadingApi ? "Loading from SQL Server..." : "Catalog Active"}
+                      icon={<WifiOffIcon sx={{ fontSize: '13px !important' }} />}
+                      label={loadingApi ? "Loading DB..." : "Catalog Active"}
                       size="small"
                       color="warning"
                       variant="outlined"
-                      sx={{ height: 22, fontSize: '0.72rem', fontWeight: 600 }}
+                      sx={{ height: 20, fontSize: '0.68rem', fontWeight: 600 }}
                     />
                   )}
                 </Box>
               </Box>
 
-              <FormControl size="small" sx={{ minWidth: 160 }}>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 160 } }}>
                 <InputLabel id="sort-select-label" sx={{ fontSize: '0.85rem' }}>
                   Sort by
                 </InputLabel>
@@ -461,22 +505,22 @@ export default function CrackersListPage({
             {filteredCrackers.length === 0 && (
               <Box
                 sx={{
-                  p: 6,
+                  p: { xs: 4, sm: 6 },
                   textAlign: 'center',
                   backgroundColor: '#FFFFFF',
                   borderRadius: 3,
                   border: '1px dashed #CBD5E1',
                 }}
               >
-                <Typography variant="h6" sx={{ color: '#64748B', mb: 1 }}>
+                <Typography variant="h6" sx={{ color: '#64748B', mb: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                   No crackers found matching your criteria.
                 </Typography>
                 <Button
                   variant="outlined"
                   onClick={() => {
                     setSelectedCategory('all')
-                    setPriceRange([50, 2000])
-                    setAppliedPriceRange([50, 2000])
+                    setPriceRange([10, 2100])
+                    setAppliedPriceRange([10, 2100])
                   }}
                   sx={{ mt: 1, borderColor: '#FFA000', color: '#0B132B' }}
                 >
@@ -485,18 +529,18 @@ export default function CrackersListPage({
               </Box>
             )}
 
-            {/* Product Cards Grid */}
+            {/* Product Cards Grid - 2 columns on mobile */}
             <Box
               sx={{
                 display: 'grid',
                 gridTemplateColumns: {
-                  xs: '1fr',
+                  xs: 'repeat(2, 1fr)',
                   sm: 'repeat(2, 1fr)',
                   md: 'repeat(3, 1fr)',
                   lg: 'repeat(4, 1fr)',
                   xl: 'repeat(5, 1fr)',
                 },
-                gap: 2,
+                gap: { xs: 1.25, sm: 2 },
               }}
             >
               {filteredCrackers.map((product) => {
@@ -536,32 +580,33 @@ export default function CrackersListPage({
                       size="small"
                       sx={{
                         position: 'absolute',
-                        top: 8,
-                        left: 8,
+                        top: { xs: 6, sm: 8 },
+                        left: { xs: 6, sm: 8 },
                         zIndex: 2,
                         backgroundColor: '#FFA000',
                         color: '#0B132B',
                         fontWeight: 900,
-                        fontSize: '0.74rem',
-                        height: 24,
+                        fontSize: { xs: '0.66rem', sm: '0.74rem' },
+                        height: { xs: 20, sm: 24 },
+                        px: { xs: 0.2, sm: 0.5 },
                       }}
                     />
 
                     {inCartQty > 0 ? (
                       <Chip
-                        icon={<CheckCircleIcon sx={{ fontSize: '13px !important', color: '#0B132B !important' }} />}
+                        icon={<CheckCircleIcon sx={{ fontSize: { xs: '11px !important', sm: '13px !important' }, color: '#0B132B !important' }} />}
                         label={`In Cart (${inCartQty})`}
                         size="small"
                         sx={{
                           position: 'absolute',
-                          top: 8,
-                          right: 8,
+                          top: { xs: 6, sm: 8 },
+                          right: { xs: 6, sm: 8 },
                           zIndex: 2,
                           backgroundColor: '#FFA000',
                           color: '#0B132B',
                           fontWeight: 900,
-                          fontSize: '0.74rem',
-                          height: 24,
+                          fontSize: { xs: '0.64rem', sm: '0.74rem' },
+                          height: { xs: 20, sm: 24 },
                           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
                         }}
                       />
@@ -571,14 +616,14 @@ export default function CrackersListPage({
                         size="small"
                         sx={{
                           position: 'absolute',
-                          top: 8,
-                          right: 8,
+                          top: { xs: 6, sm: 8 },
+                          right: { xs: 6, sm: 8 },
                           zIndex: 2,
                           backgroundColor: 'rgba(11, 19, 43, 0.88)',
                           color: '#FFA000',
                           fontWeight: 800,
-                          fontSize: '0.74rem',
-                          height: 24,
+                          fontSize: { xs: '0.66rem', sm: '0.74rem' },
+                          height: { xs: 20, sm: 24 },
                           backdropFilter: 'blur(4px)',
                         }}
                       />
@@ -617,15 +662,15 @@ export default function CrackersListPage({
                     </Box>
 
                     {/* Card Body */}
-                    <CardContent sx={{ p: 1.8, pb: '14px !important', flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ p: { xs: 1.2, sm: 1.8 }, pb: { xs: '10px !important', sm: '14px !important' }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
                       <Typography
                         variant="subtitle1"
                         sx={{
                           fontWeight: 800,
                           color: '#0F172A',
-                          fontSize: '1.05rem',
-                          lineHeight: 1.2,
-                          height: 38,
+                          fontSize: { xs: '0.84rem', sm: '1.05rem' },
+                          lineHeight: 1.25,
+                          height: { xs: 34, sm: 38 },
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           display: '-webkit-box',
@@ -642,9 +687,9 @@ export default function CrackersListPage({
                         sx={{
                           color: '#B45309',
                           fontWeight: 700,
-                          fontSize: '0.82rem',
+                          fontSize: { xs: '0.7rem', sm: '0.82rem' },
                           display: 'block',
-                          mb: 1,
+                          mb: { xs: 0.5, sm: 1 },
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
@@ -659,15 +704,15 @@ export default function CrackersListPage({
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'baseline',
-                          mb: 1.5,
+                          mb: { xs: 1, sm: 1.5 },
                         }}
                       >
                         <Chip
                           size="small"
                           label={product.pieces || '1 Box'}
                           sx={{
-                            height: 22,
-                            fontSize: '0.72rem',
+                            height: { xs: 18, sm: 22 },
+                            fontSize: { xs: '0.64rem', sm: '0.72rem' },
                             fontWeight: 700,
                             backgroundColor: '#F1F5F9',
                             color: '#475569',
@@ -680,7 +725,7 @@ export default function CrackersListPage({
                             sx={{
                               fontWeight: 900,
                               color: '#16A34A',
-                              fontSize: '1.35rem',
+                              fontSize: { xs: '1.05rem', sm: '1.35rem' },
                               lineHeight: 1,
                             }}
                           >
@@ -692,7 +737,7 @@ export default function CrackersListPage({
                               sx={{
                                 color: '#94A3B8',
                                 textDecoration: 'line-through',
-                                fontSize: '0.75rem',
+                                fontSize: { xs: '0.68rem', sm: '0.75rem' },
                                 display: 'block',
                               }}
                             >
@@ -714,41 +759,41 @@ export default function CrackersListPage({
                                 backgroundColor: '#FFFBEB',
                                 border: '1.5px solid #FDE68A',
                                 borderRadius: 2,
-                                mb: 1,
-                                px: 1,
-                                py: 0.4,
+                                mb: 0.8,
+                                px: { xs: 0.5, sm: 1 },
+                                py: { xs: 0.2, sm: 0.4 },
                               }}
                             >
                               <IconButton
                                 size="small"
                                 onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, -1)}
-                                sx={{ p: 0.4, color: '#B45309' }}
+                                sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
                               >
-                                <RemoveIcon sx={{ fontSize: 16 }} />
+                                <RemoveIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
                               </IconButton>
-                              <Typography variant="body2" sx={{ fontWeight: 900, color: '#92400E', fontSize: '0.92rem' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 900, color: '#92400E', fontSize: { xs: '0.78rem', sm: '0.92rem' } }}>
                                 {inCartQty} in Cart
                               </Typography>
                               <IconButton
                                 size="small"
                                 onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, 1)}
-                                sx={{ p: 0.4, color: '#B45309' }}
+                                sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
                               >
-                                <AddIcon sx={{ fontSize: 16 }} />
+                                <AddIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
                               </IconButton>
                             </Box>
 
                             <Button
                               variant="contained"
                               fullWidth
-                              startIcon={<ShoppingCartIcon sx={{ fontSize: '16px !important' }} />}
+                              startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '13px !important', sm: '16px !important' } }} />}
                               onClick={() => (onOpenCart ? onOpenCart() : handleAdd(product))}
                               sx={{
                                 backgroundColor: '#0B132B',
                                 color: '#FFA000',
                                 fontWeight: 800,
-                                fontSize: '0.85rem',
-                                py: 0.7,
+                                fontSize: { xs: '0.74rem', sm: '0.85rem' },
+                                py: { xs: 0.5, sm: 0.7 },
                                 borderRadius: 2,
                                 textTransform: 'none',
                                 '&:hover': {
@@ -756,7 +801,7 @@ export default function CrackersListPage({
                                 },
                               }}
                             >
-                              View in Cart →
+                              View Cart →
                             </Button>
                           </Box>
                         ) : (
@@ -770,25 +815,25 @@ export default function CrackersListPage({
                                 backgroundColor: '#F8FAFC',
                                 border: '1px solid #E2E8F0',
                                 borderRadius: 2,
-                                mb: 1,
-                                py: 0.3,
+                                mb: 0.8,
+                                py: { xs: 0.2, sm: 0.3 },
                               }}
                             >
                               <IconButton
                                 size="small"
                                 onClick={() => handleQuantityChange(product.id, -1)}
                                 disabled={currentQty <= 1}
-                                sx={{ p: 0.5 }}
+                                sx={{ p: { xs: 0.3, sm: 0.5 } }}
                               >
-                                <RemoveIcon sx={{ fontSize: 18 }} />
+                                <RemoveIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
                               </IconButton>
                               <Typography
                                 variant="body2"
                                 sx={{
-                                  px: 2,
+                                  px: { xs: 1, sm: 2 },
                                   fontWeight: 800,
-                                  fontSize: '0.96rem',
-                                  minWidth: 26,
+                                  fontSize: { xs: '0.82rem', sm: '0.96rem' },
+                                  minWidth: 20,
                                   textAlign: 'center',
                                 }}
                               >
@@ -797,23 +842,23 @@ export default function CrackersListPage({
                               <IconButton
                                 size="small"
                                 onClick={() => handleQuantityChange(product.id, 1)}
-                                sx={{ p: 0.5 }}
+                                sx={{ p: { xs: 0.3, sm: 0.5 } }}
                               >
-                                <AddIcon sx={{ fontSize: 18 }} />
+                                <AddIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
                               </IconButton>
                             </Box>
 
                             <Button
                               variant="contained"
                               fullWidth
-                              startIcon={<ShoppingCartIcon sx={{ fontSize: '18px !important' }} />}
+                              startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '14px !important', sm: '18px !important' } }} />}
                               onClick={() => handleAdd(product)}
                               sx={{
                                 backgroundColor: '#FFA000',
                                 color: '#0B132B',
                                 fontWeight: 900,
-                                fontSize: '0.92rem',
-                                py: 0.9,
+                                fontSize: { xs: '0.76rem', sm: '0.92rem' },
+                                py: { xs: 0.65, sm: 0.9 },
                                 borderRadius: 2,
                                 boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
                                 textTransform: 'none',
@@ -836,6 +881,58 @@ export default function CrackersListPage({
           </Box>
         </Box>
       </Container>
+
+      {/* Mobile Sticky Floating Cart Bar */}
+      {cart.length > 0 && (
+        <Paper
+          elevation={8}
+          sx={{
+            display: { xs: 'flex', md: 'none' },
+            position: 'fixed',
+            bottom: 14,
+            left: 14,
+            right: 14,
+            zIndex: 1100,
+            backgroundColor: '#0B132B',
+            color: '#FFFFFF',
+            borderRadius: 3.5,
+            p: 1.2,
+            px: 2,
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            border: '2px solid #FFA000',
+            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          <Box onClick={onOpenCart} sx={{ cursor: 'pointer' }}>
+            <Typography variant="caption" sx={{ color: '#FFA000', fontWeight: 800, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+              {cart.reduce((s, i) => s + i.quantity, 0)} Items Added
+            </Typography>
+            <Typography variant="subtitle1" sx={{ fontWeight: 900, lineHeight: 1.1, fontSize: '1.1rem' }}>
+              ₹{cart.reduce((s, i) => s + (i.product.discountPrice || 0) * i.quantity, 0)}
+            </Typography>
+          </Box>
+
+          <Button
+            variant="contained"
+            onClick={onOpenCart}
+            startIcon={<ShoppingCartIcon sx={{ fontSize: 16 }} />}
+            sx={{
+              backgroundColor: '#FFA000',
+              color: '#0B132B',
+              fontWeight: 900,
+              fontSize: '0.84rem',
+              py: 0.7,
+              px: 2,
+              borderRadius: 2.5,
+              textTransform: 'none',
+              '&:hover': { backgroundColor: '#FF8F00' },
+            }}
+          >
+            View Cart →
+          </Button>
+        </Paper>
+      )}
 
       {/* Snackbar feedback */}
       <Snackbar
