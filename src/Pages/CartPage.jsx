@@ -339,18 +339,19 @@ export default function CartPage({
                   sx={{
                     backgroundColor: '#FFA000',
                     color: '#0B132B',
-                    fontWeight: 800,
-                    fontSize: '0.95rem',
-                    py: 1.4,
+                    fontWeight: 900,
+                    fontSize: '0.92rem',
+                    py: 1.1,
                     borderRadius: 2,
-                    boxShadow: 'none',
+                    boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
                     mb: 2.5,
+                    textTransform: 'none',
                     '&:hover': {
                       backgroundColor: '#FF8F00',
                     },
                   }}
                 >
-                  Proceed to Payment
+                  Proceed to Payment →
                 </Button>
 
                 {/* Security Tag */}

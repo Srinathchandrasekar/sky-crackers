@@ -1067,6 +1067,17 @@ export default function OrderPlacementModal({
                     label="District"
                     value={district}
                     onChange={(e) => setDistrict(e.target.value)}
+                    SelectProps={{
+                      MenuProps: {
+                        PaperProps: {
+                          sx: {
+                            maxHeight: 280,
+                            borderRadius: 2,
+                            boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                          },
+                        },
+                      },
+                    }}
                     required
                   >
                     <MenuItem value="">
@@ -1207,16 +1218,17 @@ export default function OrderPlacementModal({
               variant="contained"
               disabled={submitLoading || cart.length === 0}
               onClick={handleConfirmOrder}
-              startIcon={submitLoading ? <CircularProgress size={18} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
+              startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
               sx={{
                 backgroundColor: '#FFA000',
                 color: '#0B132B',
                 fontWeight: 900,
-                fontSize: '1rem',
-                px: 3,
-                py: 1.2,
+                fontSize: { xs: '0.86rem', sm: '0.92rem' },
+                px: { xs: 2, sm: 2.8 },
+                py: { xs: 0.9, sm: 1.1 },
                 borderRadius: 2,
-                boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
+                boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+                textTransform: 'none',
                 '&:hover': { backgroundColor: '#FF8F00' },
               }}
             >
@@ -1238,15 +1250,16 @@ export default function OrderPlacementModal({
                 backgroundColor: lookupDone && !isExistingCustomer ? '#B45309' : '#0B132B',
                 color: lookupDone && !isExistingCustomer ? '#FFFFFF' : '#FFA000',
                 fontWeight: 800,
-                fontSize: '0.95rem',
-                px: 3,
-                py: 1.2,
+                fontSize: { xs: '0.84rem', sm: '0.9rem' },
+                px: { xs: 2, sm: 2.8 },
+                py: { xs: 0.9, sm: 1.1 },
                 borderRadius: 2,
+                textTransform: 'none',
                 '&:hover': { backgroundColor: lookupDone && !isExistingCustomer ? '#92400E' : '#1A2A56' },
               }}
             >
               {lookupLoading ? (
-                <CircularProgress size={20} sx={{ color: '#FFA000' }} />
+                <CircularProgress size={18} sx={{ color: '#FFA000' }} />
               ) : lookupDone && !isExistingCustomer ? (
                 'Create New Account Now →'
               ) : (
@@ -1259,16 +1272,17 @@ export default function OrderPlacementModal({
             variant="contained"
             disabled={submitLoading || cart.length === 0}
             onClick={handleConfirmOrder}
-            startIcon={submitLoading ? <CircularProgress size={18} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
+            startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
             sx={{
               backgroundColor: '#FFA000',
               color: '#0B132B',
               fontWeight: 900,
-              fontSize: '1rem',
-              px: 3,
-              py: 1.2,
+              fontSize: { xs: '0.86rem', sm: '0.92rem' },
+              px: { xs: 2, sm: 2.8 },
+              py: { xs: 0.9, sm: 1.1 },
               borderRadius: 2,
-              boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
+              boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+              textTransform: 'none',
               '&:hover': { backgroundColor: '#FF8F00' },
             }}
           >

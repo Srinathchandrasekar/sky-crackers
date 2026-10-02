@@ -339,7 +339,7 @@ export default function RightCartDrawer({
             </Box>
           </Stack>
 
-          {/* Proceed / Produce Order Button */}
+          {/* Proceed / Produce Order Button - Compact & Sleek */}
           <Button
             variant="contained"
             fullWidth
@@ -351,13 +351,13 @@ export default function RightCartDrawer({
               backgroundColor: '#FFA000',
               color: '#0B132B',
               fontWeight: 900,
-              fontSize: '1.02rem',
-              py: 1.4,
-              borderRadius: 2.5,
-              boxShadow: '0 4px 16px rgba(255, 160, 0, 0.4)',
+              fontSize: '0.94rem',
+              py: 1.1,
+              borderRadius: 2,
+              boxShadow: '0 3px 12px rgba(255, 160, 0, 0.35)',
               textTransform: 'none',
               letterSpacing: '0.01em',
-              '&:hover': { backgroundColor: '#FF8F00', boxShadow: '0 6px 20px rgba(255, 143, 0, 0.5)' },
+              '&:hover': { backgroundColor: '#FF8F00', boxShadow: '0 4px 16px rgba(255, 143, 0, 0.45)' },
             }}
           >
             Produce Order (₹{totalAmount}) →

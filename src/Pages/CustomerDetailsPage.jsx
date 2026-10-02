@@ -473,16 +473,21 @@ export default function CustomerDetailsPage({
               color: '#0B132B',
               borderColor: '#CBD5E1',
               borderRadius: 2,
-              fontWeight: 600,
+              fontWeight: 800,
+              fontSize: { xs: '0.82rem', sm: '0.88rem' },
               textTransform: 'none',
-              px: 2,
+              px: 2.2,
+              py: 0.8,
+              minHeight: 40,
+              backgroundColor: '#FFFFFF',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
               '&:hover': {
-                borderColor: '#94A3B8',
-                backgroundColor: '#F1F5F9',
+                borderColor: '#FFA000',
+                backgroundColor: '#FFFBEB',
               },
             }}
           >
-            Back to Cart
+            ← Back to Cart
           </Button>
         </Box>
 
@@ -978,6 +983,15 @@ export default function CustomerDetailsPage({
                             }
                             return selected
                           }}
+                          MenuProps={{
+                            PaperProps: {
+                              sx: {
+                                maxHeight: 280,
+                                borderRadius: 2,
+                                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                              },
+                            },
+                          }}
                           startAdornment={
                             <InputAdornment position="start">
                               <MapOutlinedIcon sx={{ color: errors.district ? '#DC2626' : '#94A3B8', fontSize: 19, mr: 0.5 }} />
@@ -1156,9 +1170,10 @@ export default function CustomerDetailsPage({
                       borderColor: '#CBD5E1',
                       color: '#0B132B',
                       fontWeight: 700,
-                      px: 3.5,
-                      py: 1.3,
+                      px: 3,
+                      py: { xs: 0.85, sm: 1.05 },
                       borderRadius: 2,
+                      fontSize: { xs: '0.84rem', sm: '0.9rem' },
                       textTransform: 'none',
                       '&:hover': {
                         borderColor: '#94A3B8',
@@ -1166,7 +1181,7 @@ export default function CustomerDetailsPage({
                       },
                     }}
                   >
-                    Back to Cart
+                    ← Back to Cart
                   </Button>
 
                   <Button
@@ -1175,9 +1190,9 @@ export default function CustomerDetailsPage({
                     disabled={isSubmitting}
                     endIcon={
                       isSubmitting ? (
-                        <CircularProgress size={18} sx={{ color: '#0B132B' }} />
+                        <CircularProgress size={16} sx={{ color: '#0B132B' }} />
                       ) : (
-                        <ArrowForwardIcon />
+                        <ArrowForwardIcon fontSize="small" />
                       )
                     }
                     sx={{
@@ -1185,19 +1200,19 @@ export default function CustomerDetailsPage({
                       backgroundColor: '#FFA000',
                       color: '#0B132B',
                       fontWeight: 800,
-                      fontSize: '1rem',
-                      px: 4.5,
-                      py: 1.4,
+                      fontSize: { xs: '0.88rem', sm: '0.94rem' },
+                      px: 3.5,
+                      py: { xs: 0.95, sm: 1.15 },
                       borderRadius: 2,
                       textTransform: 'none',
-                      boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
+                      boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
                       '&:hover': {
                         backgroundColor: '#FF8F00',
-                        boxShadow: '0 6px 20px rgba(255, 160, 0, 0.45)',
+                        boxShadow: '0 4px 14px rgba(255, 160, 0, 0.4)',
                       },
                     }}
                   >
-                    {isSubmitting ? 'Validating Details...' : 'Continue to Payment'}
+                    {isSubmitting ? 'Validating Details...' : 'Continue to Payment →'}
                   </Button>
                 </Box>
               </Stack>

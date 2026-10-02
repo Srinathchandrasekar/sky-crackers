@@ -122,6 +122,19 @@ export default function OrderDetailsModal({
         })
       }
 
+      // Check locally saved orders as instant fallback
+      try {
+        const localSaved = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        localSaved.forEach((lo) => {
+          const loPhone = (lo.customerPhone || '').replace(/\D/g, '')
+          if (loPhone.includes(cleanPhone) && lo.orderNumber && !ordersMap.has(lo.orderNumber)) {
+            ordersMap.set(lo.orderNumber, lo)
+          }
+        })
+      } catch (locErr) {
+        console.warn('Local orders load warning:', locErr)
+      }
+
       const combinedOrders = Array.from(ordersMap.values()).sort(
         (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
       )
@@ -140,7 +153,7 @@ export default function OrderDetailsModal({
       setOrders(combinedOrders)
 
       if (!custData && combinedOrders.length === 0) {
-        setErrorMsg(`No saved bookings or orders found for +91 ${cleanPhone}.`)
+        setErrorMsg(`No saved bookings or customer profile found for +91 ${cleanPhone}.`)
       }
     } catch (err) {
       console.error('Failed to retrieve orders:', err)
@@ -667,17 +680,61 @@ SkyFire Crackers Sivakasi
             })}
           </Stack>
         ) : searched && !loading && !errorMsg ? (
-          <Paper elevation={0} sx={{ p: 4, textAlign: 'center', borderRadius: 3, border: '1px solid #E2E8F0' }}>
-            <Typography variant="body1" sx={{ color: '#64748B', mb: 2 }}>
-              No bookings found for this mobile number.
+          <Paper elevation={0} sx={{ p: 3.5, textAlign: 'center', borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0B132B', mb: 1 }}>
+              {customer ? `Verified Account: ${customer.customerName}` : 'No Bookings Found'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, maxWidth: 500, mx: 'auto' }}>
+              {customer ? (
+                <span>
+                  Your address details are verified and saved in the database! However, no crackers bookings have been placed yet under <strong>+91 {customer.mobileNumber}</strong>. You can choose crackers from our catalog and book now!
+                </span>
+              ) : (
+                `No previous bookings or customer account found for +91 ${mobileNumber}.`
+              )}
             </Typography>
             {onOpenShop && (
-              <Button variant="contained" onClick={onOpenShop} sx={{ backgroundColor: '#0B132B', color: '#FFA000', fontWeight: 800 }}>
-                Explore Crackers Catalog
+              <Button
+                variant="contained"
+                onClick={() => {
+                  if (onClose) onClose()
+                  onOpenShop()
+                }}
+                sx={{
+                  backgroundColor: '#0B132B',
+                  color: '#FFA000',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  py: 1,
+                  px: 3,
+                  borderRadius: 2,
+                  '&:hover': { backgroundColor: '#1A2A56' },
+                }}
+              >
+                Explore Crackers Catalog →
               </Button>
             )}
           </Paper>
         ) : null}
+
+        {/* Mobile Back / Close Button */}
+        <Box sx={{ mt: 3, textAlign: 'center', display: { xs: 'block', sm: 'none' } }}>
+          <Button
+            variant="outlined"
+            fullWidth
+            onClick={onClose}
+            sx={{
+              borderColor: '#CBD5E1',
+              color: '#0B132B',
+              fontWeight: 800,
+              py: 1,
+              borderRadius: 2,
+              textTransform: 'none',
+            }}
+          >
+            ← Close & Go Back
+          </Button>
+        </Box>
       </DialogContent>
     </Dialog>
   )

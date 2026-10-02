@@ -17,6 +17,8 @@ import {
   Alert,
   Chip,
   CircularProgress,
+  Select,
+  MenuItem,
 } from '@mui/material'
 import { createOrderApi, saveCustomerApi } from '../services/api'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
@@ -28,6 +30,48 @@ import CreditCardIcon from '@mui/icons-material/CreditCard'
 import QrCode2Icon from '@mui/icons-material/QrCode2'
 import LocalAtmIcon from '@mui/icons-material/LocalAtm'
 import SaveIcon from '@mui/icons-material/Save'
+
+const TAMIL_NADU_DISTRICTS = [
+  'Ariyalur',
+  'Chengalpattu',
+  'Chennai',
+  'Coimbatore',
+  'Cuddalore',
+  'Dharmapuri',
+  'Dindigul',
+  'Erode',
+  'Kallakurichi',
+  'Kanchipuram',
+  'Kanyakumari',
+  'Karur',
+  'Krishnagiri',
+  'Madurai',
+  'Mayiladuthurai',
+  'Nagapattinam',
+  'Namakkal',
+  'Nilgiris (Ooty)',
+  'Perambalur',
+  'Pudukkottai',
+  'Ramanathapuram',
+  'Ranipet',
+  'Salem',
+  'Sivaganga',
+  'Tenkasi',
+  'Thanjavur',
+  'Theni',
+  'Thoothukudi (Tuticorin)',
+  'Tiruchirappalli (Trichy)',
+  'Tirunelveli',
+  'Tirupathur',
+  'Tiruppur',
+  'Tiruvallur',
+  'Tiruvannamalai',
+  'Tiruvarur',
+  'Vellore',
+  'Viluppuram',
+  'Virudhunagar (Sivakasi)',
+  'Other District / State',
+]
 
 const loadRazorpayScript = () => {
   return new Promise((resolve) => {
@@ -52,13 +96,17 @@ export default function CheckoutPage({
   const [formData, setFormData] = useState({
     fullName: customerData?.fullName || customerData?.customerName || '',
     mobileNumber: customerData?.mobileNumber || '',
+    doorNumber: customerData?.doorNumber || '',
+    streetName: customerData?.streetName || '',
+    area: customerData?.area || '',
+    city: customerData?.city || '',
+    district: customerData?.district || '',
+    pincode: customerData?.pinCode || customerData?.pincode || '',
     address: customerData
       ? (customerData.address || [customerData.doorNumber, customerData.streetName, customerData.area, customerData.city, customerData.district]
           .filter(Boolean)
           .join(', ') + (customerData.pinCode || customerData.pincode ? ` - ${customerData.pinCode || customerData.pincode}` : ''))
       : '',
-    city: customerData?.city || '',
-    pincode: customerData?.pinCode || customerData?.pincode || '',
   })
 
   useEffect(() => {
@@ -66,11 +114,15 @@ export default function CheckoutPage({
       setFormData({
         fullName: customerData.fullName || customerData.customerName || '',
         mobileNumber: customerData.mobileNumber || '',
+        doorNumber: customerData.doorNumber || '',
+        streetName: customerData.streetName || '',
+        area: customerData.area || '',
+        city: customerData.city || '',
+        district: customerData.district || '',
+        pincode: customerData.pinCode || customerData.pincode || '',
         address: customerData.address || [customerData.doorNumber, customerData.streetName, customerData.area, customerData.city, customerData.district]
           .filter(Boolean)
           .join(', ') + (customerData.pinCode || customerData.pincode ? ` - ${customerData.pinCode || customerData.pincode}` : ''),
-        city: customerData.city || '',
-        pincode: customerData.pinCode || customerData.pincode || '',
       })
     }
   }, [customerData])
@@ -176,6 +228,15 @@ export default function CheckoutPage({
           },
           handler: async function (response) {
             try {
+              const fullAddress = [
+                formData.doorNumber?.trim(),
+                formData.streetName?.trim(),
+                formData.area?.trim(),
+                formData.city?.trim(),
+                formData.district?.trim(),
+                formData.pincode?.trim() ? `- ${formData.pincode.trim()}` : ''
+              ].filter(Boolean).join(', ') || formData.address
+
               // Transactionally save order to SQL Server after payment confirmation
               const orderRes = await createOrderApi({
                 customerId: Number(custId),
@@ -184,12 +245,39 @@ export default function CheckoutPage({
                 items: itemsPayload,
               })
 
+              // Persist locally for instant lookup retrieval
+              try {
+                const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+                existingOrders.unshift({
+                  orderNumber: orderRes.orderNumber,
+                  customerId: Number(custId),
+                  customerName: orderRes.customerName || formData.fullName,
+                  customerPhone: orderRes.customerPhone || formData.mobileNumber,
+                  deliveryAddress: orderRes.deliveryAddress || fullAddress,
+                  totalAmount: orderRes.totalAmount || totalAmount,
+                  subTotal: orderRes.subTotal || subtotal,
+                  paymentMethod: 'RAZORPAY',
+                  paymentStatus: 'Completed',
+                  orderStatus: 'Confirmed',
+                  createdAt: new Date().toISOString(),
+                  items: cart.map((i) => ({
+                    productName: i.product.name,
+                    quantity: i.quantity,
+                    unitPrice: i.product.discountPrice,
+                    totalPrice: i.product.discountPrice * i.quantity,
+                  })),
+                })
+                localStorage.setItem('skycrackers_orders_history', JSON.stringify(existingOrders.slice(0, 30)))
+              } catch (locErr) {
+                console.warn('Local save warning:', locErr)
+              }
+
               const orderSummary = {
                 orderId: orderRes.orderNumber,
                 customer: {
                   name: orderRes.customerName || formData.fullName,
                   phone: orderRes.customerPhone || formData.mobileNumber,
-                  address: orderRes.deliveryAddress || formData.address,
+                  address: orderRes.deliveryAddress || fullAddress,
                 },
                 paymentMethod: `Razorpay Confirmed (${response.razorpay_payment_id})`,
                 items: cart,
@@ -223,13 +311,49 @@ export default function CheckoutPage({
         return
       }
 
+      const fullAddress = [
+        formData.doorNumber?.trim(),
+        formData.streetName?.trim(),
+        formData.area?.trim(),
+        formData.city?.trim(),
+        formData.district?.trim(),
+        formData.pincode?.trim() ? `- ${formData.pincode.trim()}` : ''
+      ].filter(Boolean).join(', ') || formData.address
+
       // Cash on Delivery (COD) or Direct UPI
       const orderRes = await createOrderApi({
         customerId: Number(custId),
         paymentMethod: paymentMethod.toUpperCase(),
-        notes: `Festival Delivery to ${formData.city || 'Tamil Nadu'}`,
+        notes: `Festival Delivery to ${formData.district || formData.city || 'Tamil Nadu'}`,
         items: itemsPayload,
       })
+
+      // Persist locally for instant lookup retrieval
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        existingOrders.unshift({
+          orderNumber: orderRes.orderNumber,
+          customerId: Number(custId),
+          customerName: orderRes.customerName || formData.fullName,
+          customerPhone: orderRes.customerPhone || formData.mobileNumber,
+          deliveryAddress: orderRes.deliveryAddress || fullAddress,
+          totalAmount: orderRes.totalAmount || totalAmount,
+          subTotal: orderRes.subTotal || subtotal,
+          paymentMethod: paymentMethod.toUpperCase(),
+          paymentStatus: 'Pending',
+          orderStatus: 'Confirmed',
+          createdAt: new Date().toISOString(),
+          items: cart.map((i) => ({
+            productName: i.product.name,
+            quantity: i.quantity,
+            unitPrice: i.product.discountPrice,
+            totalPrice: i.product.discountPrice * i.quantity,
+          })),
+        })
+        localStorage.setItem('skycrackers_orders_history', JSON.stringify(existingOrders.slice(0, 30)))
+      } catch (locErr) {
+        console.warn('Local save warning:', locErr)
+      }
 
       const paymentLabels = {
         razorpay: 'Razorpay Secure (UPI, GPay, Cards)',
@@ -244,7 +368,7 @@ export default function CheckoutPage({
         customer: {
           name: orderRes.customerName || formData.fullName,
           phone: orderRes.customerPhone || formData.mobileNumber,
-          address: orderRes.deliveryAddress || formData.address,
+          address: orderRes.deliveryAddress || fullAddress,
         },
         paymentMethod: paymentLabels[paymentMethod] || paymentMethod,
         items: cart,
@@ -259,7 +383,7 @@ export default function CheckoutPage({
     } catch (err) {
       console.error('Order creation error:', err)
       setIsSubmitting(false)
-      setErrorMsg(err.message || 'Failed to place booking in database. Please check connection and stock.')
+      setErrorMsg(err.message || 'Failed to place booking in database. Please check connection and try again.')
     }
   }
 
@@ -319,6 +443,15 @@ export default function CheckoutPage({
         }
       })
 
+      const fullAddress = [
+        formData.doorNumber?.trim(),
+        formData.streetName?.trim(),
+        formData.area?.trim(),
+        formData.city?.trim(),
+        formData.district?.trim(),
+        formData.pincode?.trim() ? `- ${formData.pincode.trim()}` : ''
+      ].filter(Boolean).join(', ') || formData.address
+
       // Transactionally save order and order items with CustomerId in SQL Server
       const orderRes = await createOrderApi({
         customerId: Number(custId),
@@ -327,12 +460,39 @@ export default function CheckoutPage({
         items: itemsPayload,
       })
 
+      // Persist locally for instant lookup retrieval
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        existingOrders.unshift({
+          orderNumber: orderRes.orderNumber,
+          customerId: Number(custId),
+          customerName: orderRes.customerName || formData.fullName,
+          customerPhone: orderRes.customerPhone || formData.mobileNumber,
+          deliveryAddress: orderRes.deliveryAddress || fullAddress,
+          totalAmount: orderRes.totalAmount || totalAmount,
+          subTotal: orderRes.subTotal || subtotal,
+          paymentMethod: 'SAVED_BOOKING',
+          paymentStatus: 'Pending',
+          orderStatus: 'Confirmed',
+          createdAt: new Date().toISOString(),
+          items: cart.map((i) => ({
+            productName: i.product.name,
+            quantity: i.quantity,
+            unitPrice: i.product.discountPrice,
+            totalPrice: i.product.discountPrice * i.quantity,
+          })),
+        })
+        localStorage.setItem('skycrackers_orders_history', JSON.stringify(existingOrders.slice(0, 30)))
+      } catch (locErr) {
+        console.warn('Local save warning:', locErr)
+      }
+
       const orderSummary = {
         orderId: orderRes.orderNumber,
         customer: {
           name: orderRes.customerName || formData.fullName,
           phone: orderRes.customerPhone || formData.mobileNumber,
-          address: orderRes.deliveryAddress || formData.address,
+          address: orderRes.deliveryAddress || fullAddress,
         },
         paymentMethod: 'Saved Booking (Pay Later / Cash on Delivery)',
         items: cart,
@@ -354,8 +514,16 @@ export default function CheckoutPage({
   return (
     <Box sx={{ py: { xs: 2, md: 5 }, backgroundColor: '#F8FAFC', minHeight: '80vh' }}>
       <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 3 } }}>
-        {/* Header */}
-        <Box sx={{ mb: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 1.8 }}>
+        {/* Header with Mobile-Optimized Back Button */}
+        <Box
+          sx={{
+            mb: 3,
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            gap: { xs: 1.5, sm: 2 },
+          }}
+        >
           <Button
             startIcon={<ArrowBackIcon />}
             onClick={onBackToCart}
@@ -365,30 +533,36 @@ export default function CheckoutPage({
               color: '#0B132B',
               borderColor: '#CBD5E1',
               borderRadius: 2,
-              fontWeight: 700,
+              fontWeight: 800,
+              fontSize: { xs: '0.82rem', sm: '0.88rem' },
               textTransform: 'none',
-              px: 2,
+              px: 2.2,
+              py: 0.8,
+              minHeight: 40,
+              backgroundColor: '#FFFFFF',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
               '&:hover': {
-                borderColor: '#94A3B8',
-                backgroundColor: '#F1F5F9',
+                borderColor: '#FFA000',
+                backgroundColor: '#FFFBEB',
               },
             }}
           >
-            ← Back to Shop / Products
+            ← Back to Cart
           </Button>
+
           <Box>
             <Typography
               variant="h4"
               sx={{
                 fontWeight: 800,
                 color: '#0F172A',
-                fontSize: { xs: '1.35rem', md: '2.1rem' },
+                fontSize: { xs: '1.25rem', sm: '1.6rem', md: '2rem' },
                 mb: 0.3,
               }}
             >
               Order Review & Payment
             </Typography>
-            <Typography variant="body1" sx={{ color: '#64748B', fontSize: { xs: '0.82rem', md: '0.95rem' } }}>
+            <Typography variant="body1" sx={{ color: '#64748B', fontSize: { xs: '0.8rem', md: '0.92rem' } }}>
               Verify your parcel delivery address, review crackers breakdown & complete booking
             </Typography>
           </Box>
@@ -404,7 +578,7 @@ export default function CheckoutPage({
           {/* Left Column (7.5 cols): Customer Details & Full Crackers Table */}
           <Grid item xs={12} lg={7.5}>
             <Stack spacing={3}>
-              {/* Section 1: Customer Details */}
+              {/* Section 1: Customer Details & Proper Structured Address */}
               <Paper
                 elevation={0}
                 sx={{
@@ -414,7 +588,7 @@ export default function CheckoutPage({
                   backgroundColor: '#FFFFFF',
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2.5, flexWrap: 'wrap', gap: 1 }}>
                   <Typography
                     variant="h6"
                     sx={{
@@ -440,10 +614,11 @@ export default function CheckoutPage({
                   )}
                 </Box>
 
-                <Grid container spacing={2.5}>
+                <Grid container spacing={2.2}>
+                  {/* Customer Full Name */}
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 0.8, display: 'block' }}>
-                      Customer Full Name *
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      Customer Full Name <span style={{ color: '#DC2626' }}>*</span>
                     </Typography>
                     <TextField
                       fullWidth
@@ -451,18 +626,14 @@ export default function CheckoutPage({
                       value={formData.fullName}
                       onChange={handleInputChange('fullName')}
                       placeholder="Enter customer name"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#FFFFFF',
-                        },
-                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#FFFFFF' } }}
                     />
                   </Grid>
 
+                  {/* Primary Mobile Number */}
                   <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 0.8, display: 'block' }}>
-                      Primary Mobile Number *
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      Primary Mobile Number <span style={{ color: '#DC2626' }}>*</span>
                     </Typography>
                     <TextField
                       fullWidth
@@ -470,27 +641,53 @@ export default function CheckoutPage({
                       value={formData.mobileNumber}
                       onChange={handleInputChange('mobileNumber')}
                       placeholder="10-digit mobile number"
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#FFFFFF',
-                        },
+                      inputProps={{ maxLength: 10, inputMode: 'numeric' }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#475569' }}>
+                              +91
+                            </Typography>
+                          </InputAdornment>
+                        ),
                       }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2, backgroundColor: '#FFFFFF' } }}
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 0.8, display: 'block' }}>
-                      Full Transport Delivery Address *
+                  {/* Door / Flat Number */}
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      Door / Flat No.
                     </Typography>
                     <TextField
                       fullWidth
                       size="small"
-                      multiline
-                      rows={2}
-                      value={formData.address}
-                      onChange={handleInputChange('address')}
-                      placeholder="Door no, Street name, Area, City & Pincode"
+                      value={formData.doorNumber}
+                      onChange={handleInputChange('doorNumber')}
+                      placeholder="e.g. 12/A, Flat 3B"
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                    />
+                  </Grid>
+
+                  {/* Street Name & Area */}
+                  <Grid item xs={12} sm={8}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      Street Name & Area / Locality <span style={{ color: '#DC2626' }}>*</span>
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      value={formData.streetName || formData.address}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          streetName: e.target.value,
+                          address: e.target.value,
+                        }))
+                        setErrorMsg('')
+                      }}
+                      placeholder="e.g. Gandhi Road, Anna Nagar"
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">
@@ -498,39 +695,86 @@ export default function CheckoutPage({
                           </InputAdornment>
                         ),
                       }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          backgroundColor: '#FFFFFF',
-                        },
-                      }}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 0.8, display: 'block' }}>
-                      City / Town
+                  {/* City / Town */}
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      City / Town <span style={{ color: '#DC2626' }}>*</span>
                     </Typography>
                     <TextField
                       fullWidth
                       size="small"
                       value={formData.city}
                       onChange={handleInputChange('city')}
-                      placeholder="e.g. Sivakasi / Chennai"
+                      placeholder="e.g. Coimbatore / Madurai"
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
                   </Grid>
 
-                  <Grid item xs={12} sm={6}>
-                    <Typography variant="caption" sx={{ fontWeight: 600, color: '#475569', mb: 0.8, display: 'block' }}>
-                      PIN Code
+                  {/* District Dropdown (Proper Tamil Nadu Districts) */}
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      District (மாவட்டம்) <span style={{ color: '#DC2626' }}>*</span>
+                    </Typography>
+                    <FormControl fullWidth size="small">
+                      <Select
+                        displayEmpty
+                        value={formData.district || ''}
+                        onChange={handleInputChange('district')}
+                        renderValue={(selected) => {
+                          if (!selected) {
+                            return <span style={{ color: '#94A3B8' }}>Select District</span>
+                          }
+                          return selected
+                        }}
+                        MenuProps={{
+                          PaperProps: {
+                            sx: {
+                              maxHeight: 280,
+                              borderRadius: 2,
+                              boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                            },
+                          },
+                        }}
+                        sx={{
+                          borderRadius: 2,
+                          backgroundColor: '#FFFFFF',
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: '#FFA000',
+                          },
+                        }}
+                      >
+                        <MenuItem disabled value="">
+                          <em>Select Tamil Nadu District</em>
+                        </MenuItem>
+                        {TAMIL_NADU_DISTRICTS.map((dist) => (
+                          <MenuItem key={dist} value={dist}>
+                            {dist}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {/* PIN Code */}
+                  <Grid item xs={12} sm={4}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155', mb: 0.6, display: 'block' }}>
+                      6-Digit PIN Code <span style={{ color: '#DC2626' }}>*</span>
                     </Typography>
                     <TextField
                       fullWidth
                       size="small"
                       value={formData.pincode}
-                      onChange={handleInputChange('pincode')}
-                      placeholder="6-digit PIN"
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 6)
+                        setFormData((prev) => ({ ...prev, pincode: val }))
+                        setErrorMsg('')
+                      }}
+                      placeholder="e.g. 641007"
+                      inputProps={{ maxLength: 6, inputMode: 'numeric' }}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
                   </Grid>
@@ -815,53 +1059,55 @@ export default function CheckoutPage({
                 </Paper>
               </RadioGroup>
 
-              {/* Confirm & Place Order Button */}
+              {/* Confirm & Place Order Button - Compact & Sleek */}
               <Button
                 variant="contained"
                 fullWidth
                 disabled={isSubmitting || cart.length === 0}
-                startIcon={isSubmitting ? <CircularProgress size={18} sx={{ color: '#0B132B' }} /> : <LockIcon sx={{ fontSize: 18 }} />}
+                startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <LockIcon sx={{ fontSize: 16 }} />}
                 onClick={handleSubmitOrder}
                 sx={{
-                  mt: 2.5,
+                  mt: 2,
                   backgroundColor: '#FFA000',
                   color: '#0B132B',
                   fontWeight: 900,
-                  fontSize: '1rem',
-                  py: 1.5,
+                  fontSize: { xs: '0.86rem', sm: '0.92rem' },
+                  py: { xs: 0.9, sm: 1.1 },
                   borderRadius: 2,
-                  boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
+                  boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+                  textTransform: 'none',
                   '&:hover': {
                     backgroundColor: '#FF8F00',
                   },
                 }}
               >
                 {isSubmitting
-                  ? 'Processing Booking in Database...'
+                  ? 'Saving Booking...'
                   : paymentMethod === 'razorpay'
-                  ? `Pay ₹${totalAmount.toLocaleString('en-IN')} via Razorpay →`
-                  : `Confirm Booking with COD (₹${totalAmount.toLocaleString('en-IN')}) →`}
+                  ? `Pay ₹${totalAmount.toLocaleString('en-IN')} (Razorpay) →`
+                  : `Confirm COD (₹${totalAmount.toLocaleString('en-IN')}) →`}
               </Button>
 
-              {/* Save Order Details Button */}
+              {/* Save Order Details Button - Compact & Sleek */}
               <Button
                 variant="outlined"
                 fullWidth
                 disabled={isSubmitting || cart.length === 0}
-                startIcon={isSubmitting ? <CircularProgress size={18} sx={{ color: '#0B132B' }} /> : <SaveIcon sx={{ color: '#0B132B' }} />}
+                startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <SaveIcon sx={{ color: '#0B132B', fontSize: 16 }} />}
                 onClick={handleSaveBookingOnly}
                 sx={{
-                  mt: 1.5,
+                  mt: 1,
                   borderColor: '#0B132B',
                   color: '#0B132B',
-                  fontWeight: 900,
-                  fontSize: '0.92rem',
-                  py: 1.3,
+                  fontWeight: 800,
+                  fontSize: { xs: '0.82rem', sm: '0.86rem' },
+                  py: { xs: 0.75, sm: 0.9 },
                   borderRadius: 2,
-                  borderWidth: 2,
+                  borderWidth: 1.5,
                   backgroundColor: '#F8FAFC',
+                  textTransform: 'none',
                   '&:hover': {
-                    borderWidth: 2,
+                    borderWidth: 1.5,
                     backgroundColor: '#E2E8F0',
                     borderColor: '#0B132B',
                   },
@@ -870,7 +1116,7 @@ export default function CheckoutPage({
                 💾 Save Booking (Pay Later)
               </Button>
 
-              <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textAlign: 'center', mt: 1.2, fontSize: '0.75rem' }}>
+              <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textAlign: 'center', mt: 1, fontSize: '0.72rem' }}>
                 💡 Click <strong>Save Booking</strong> to save into database without payment now. You can retrieve it anytime using +91 {formData.mobileNumber || 'XXXXXXXXXX'}.
               </Typography>
 
