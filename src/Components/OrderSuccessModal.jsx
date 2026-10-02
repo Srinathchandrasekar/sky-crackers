@@ -21,6 +21,7 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 import ReceiptIcon from '@mui/icons-material/Receipt'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag'
+import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 
 export default function OrderSuccessModal({
   open,
@@ -32,41 +33,17 @@ export default function OrderSuccessModal({
   if (!orderDetails) return null
 
   const isSavedBooking =
+    orderDetails.paymentStatus?.toLowerCase() === 'pending' ||
     orderDetails.paymentMethod?.toLowerCase().includes('saved') ||
-    orderDetails.paymentMethod?.toLowerCase().includes('pay later') ||
-    orderDetails.paymentMethod?.toLowerCase().includes('cod') ||
-    orderDetails.paymentMethod?.toLowerCase().includes('cash')
+    orderDetails.paymentMethod?.toLowerCase().includes('pending') ||
+    orderDetails.paymentMethod?.toLowerCase().includes('pay later')
 
   const handleDownloadInvoice = () => {
-    const text = `========================================
-SKYFIRE CRACKERS - OFFICIAL INVOICE
-Direct From Sivakasi Factories
-Order ID: ${orderDetails.orderId}
-Date: ${new Date().toLocaleDateString()}
-Customer: ${orderDetails.customer?.name || 'Valued Customer'}
-Phone: ${orderDetails.customer?.phone || 'N/A'}
-Delivery Address: ${orderDetails.customer?.address || 'N/A'}
-Payment Mode: ${orderDetails.paymentMethod || 'Saved Booking'}
-========================================
-ITEMS ORDERED:
-${(orderDetails.items || []).map((item) => `- ${item.product?.name || item.productName || 'Crackers'} (Qty: ${item.quantity}) - ₹${(item.product?.discountPrice || item.unitPrice || 0) * item.quantity}`).join('\n')}
-
-Subtotal: ₹${orderDetails.subtotal}
-Discount: -₹${orderDetails.discount || 0}
-Delivery Charges: ₹${orderDetails.delivery || 0}
-TOTAL AMOUNT: ₹${orderDetails.total}
-========================================
-Happy & Safe Celebrations!
-SkyFire Crackers Sivakasi
-========================================`
-
-    const element = document.createElement('a')
-    const file = new Blob([text], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `Invoice_${orderDetails.orderId}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    downloadStructuredInvoice({
+      ...orderDetails,
+      paymentStatus: isSavedBooking ? 'Pending' : 'Completed',
+      paymentMethod: isSavedBooking ? 'Online Payment (Pending)' : 'Online Payment (Razorpay)',
+    })
   }
 
   return (
@@ -150,7 +127,7 @@ SkyFire Crackers Sivakasi
               </Typography>
               <Chip
                 size="small"
-                label={orderDetails.paymentMethod}
+                label={isSavedBooking ? 'Online Payment (Pending / Pay Later)' : (orderDetails.paymentMethod || 'Online Payment')}
                 sx={{
                   backgroundColor: isSavedBooking ? '#FEF3C7' : '#DCFCE7',
                   color: isSavedBooking ? '#B45309' : '#15803D',

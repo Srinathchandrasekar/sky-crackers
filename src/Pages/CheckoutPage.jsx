@@ -455,8 +455,8 @@ export default function CheckoutPage({
       // Transactionally save order and order items with CustomerId in SQL Server
       const orderRes = await createOrderApi({
         customerId: Number(custId),
-        paymentMethod: 'SAVED_BOOKING',
-        notes: `Saved booking by customer (+91 ${formData.mobileNumber})`,
+        paymentMethod: 'ONLINE_PENDING',
+        notes: `Online Payment Pending - saved by customer (+91 ${formData.mobileNumber})`,
         items: itemsPayload,
       })
 
@@ -471,7 +471,7 @@ export default function CheckoutPage({
           deliveryAddress: orderRes.deliveryAddress || fullAddress,
           totalAmount: orderRes.totalAmount || totalAmount,
           subTotal: orderRes.subTotal || subtotal,
-          paymentMethod: 'SAVED_BOOKING',
+          paymentMethod: 'ONLINE_PENDING',
           paymentStatus: 'Pending',
           orderStatus: 'Confirmed',
           createdAt: new Date().toISOString(),
@@ -494,7 +494,7 @@ export default function CheckoutPage({
           phone: orderRes.customerPhone || formData.mobileNumber,
           address: orderRes.deliveryAddress || fullAddress,
         },
-        paymentMethod: 'Saved Booking (Pay Later / Cash on Delivery)',
+        paymentMethod: 'Online Payment (Pending / Pay Later)',
         items: cart,
         subtotal: orderRes.subTotal || subtotal,
         discount: orderRes.discountAmount || discount,
@@ -1027,35 +1027,6 @@ export default function CheckoutPage({
                     <Chip size="small" label="Cards" sx={{ fontSize: '0.68rem', fontWeight: 600, height: 20 }} />
                     <Chip size="small" label="Net Banking" sx={{ fontSize: '0.68rem', fontWeight: 600, height: 20 }} />
                   </Stack>
-                </Paper>
-
-                {/* Option 2: Cash on Delivery (COD) */}
-                <Paper
-                  elevation={0}
-                  onClick={() => setPaymentMethod('cod')}
-                  sx={{
-                    p: 1.8,
-                    borderRadius: 2,
-                    border: paymentMethod === 'cod' ? '2px solid #FFA000' : '1px solid #E2E8F0',
-                    backgroundColor: paymentMethod === 'cod' ? '#FFFBEB' : '#F8FAFC',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <FormControlLabel
-                    value="cod"
-                    control={<Radio size="small" sx={{ color: '#FFA000', '&.Mui-checked': { color: '#FFA000' } }} />}
-                    label={
-                      <Box sx={{ ml: 0.5 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B', fontSize: '0.92rem' }}>
-                          Cash on Delivery (COD)
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#64748B', display: 'block', lineHeight: 1.2 }}>
-                          Pay cash at your local Sivakasi transport parcel office
-                        </Typography>
-                      </Box>
-                    }
-                  />
                 </Paper>
               </RadioGroup>
 

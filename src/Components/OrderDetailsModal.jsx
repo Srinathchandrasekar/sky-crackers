@@ -38,6 +38,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import PersonIcon from '@mui/icons-material/Person'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
 import DownloadIcon from '@mui/icons-material/Download'
+import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 import { lookupCustomerApi, getOrdersListApi, updateOrderStatusApi } from '../services/api'
 import { CRACKERS_DATA } from '../data/crackersData'
 
@@ -74,6 +75,8 @@ export default function OrderDetailsModal({
   const [successMsg, setSuccessMsg] = useState('')
   const [payingOrderId, setPayingOrderId] = useState(null)
   const [contextMenu, setContextMenu] = useState(null)
+  const [quickDetailsOpen, setQuickDetailsOpen] = useState(false)
+  const [quickOrder, setQuickOrder] = useState(null)
 
   const handleContextMenu = (e, cust, ord) => {
     e.preventDefault()
@@ -295,38 +298,16 @@ export default function OrderDetailsModal({
     }
   }
 
-  // Invoice download generator
+  // Structured Invoice download generator
   const handleDownloadInvoice = (order) => {
-    const text = `========================================
-SKYFIRE CRACKERS - OFFICIAL BOOKING INVOICE
-Direct From Sivakasi Factories Wholesale
-Booking ID: ${order.orderNumber}
-Date: ${new Date(order.createdAt).toLocaleString()}
-Customer: ${order.customerName || 'Valued Customer'}
-Phone: ${order.customerPhone || 'N/A'}
-Delivery Address: ${order.deliveryAddress || 'N/A'}
-Payment Method: ${order.paymentMethod || 'COD'}
-Payment Status: ${order.paymentStatus || 'Pending'}
-========================================
-ITEMS ORDERED:
-${(order.items || []).map((i) => `- ${i.productName} (Qty: ${i.quantity}) - ₹${i.totalPrice || (i.unitPrice * i.quantity)}`).join('\n')}
-
-Subtotal: ₹${order.subTotal || order.totalAmount}
-Discount: -₹${order.discountAmount || 0}
-Delivery Charges: FREE (₹0)
-TOTAL AMOUNT: ₹${order.totalAmount}
-========================================
-Happy & Safe Celebrations!
-SkyFire Crackers Sivakasi
-========================================`
-
-    const element = document.createElement('a')
-    const file = new Blob([text], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `Invoice_${order.orderNumber}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    downloadStructuredInvoice({
+      ...order,
+      customerName: order.customerName || customer?.customerName,
+      customerPhone: order.customerPhone || customer?.mobileNumber,
+      deliveryAddress: order.deliveryAddress || customer?.address,
+      paymentStatus: order.paymentStatus || 'Pending',
+      paymentMethod: order.paymentMethod || 'Online Payment (Pending)',
+    })
   }
 
   return (
@@ -916,6 +897,52 @@ SkyFire Crackers Sivakasi
             : undefined
         }
       >
+        {/* Continue Payment if payment is pending */}
+        {((contextMenu?.ord && contextMenu.ord.paymentStatus?.toLowerCase() !== 'completed' && contextMenu.ord.paymentStatus?.toLowerCase() !== 'paid') ||
+          (!contextMenu?.ord && orders.some(o => o.paymentStatus?.toLowerCase() !== 'completed' && o.paymentStatus?.toLowerCase() !== 'paid'))) && (
+          <MenuItem
+            onClick={() => {
+              const pendingOrd = contextMenu?.ord || orders.find(o => o.paymentStatus?.toLowerCase() !== 'completed' && o.paymentStatus?.toLowerCase() !== 'paid')
+              handleCloseContextMenu()
+              if (pendingOrd) handlePayNow(pendingOrd)
+            }}
+            sx={{ backgroundColor: '#FFFBEB', color: '#B45309', fontWeight: 800, borderLeft: '4px solid #FFA000' }}
+          >
+            <ListItemIcon>
+              <PaymentIcon fontSize="small" sx={{ color: '#B45309' }} />
+            </ListItemIcon>
+            <ListItemText
+              primary="💳 Continue Payment Online (Pending)"
+              secondary="Instant Razorpay UPI / Cards Gateway"
+            />
+          </MenuItem>
+        )}
+
+        <MenuItem
+          onClick={() => {
+            const ord = contextMenu?.ord || (orders && orders[0])
+            setQuickOrder(ord || {
+              orderNumber: 'SAVED-DRAFT',
+              customerName: contextMenu?.cust?.customerName || customer?.customerName,
+              customerPhone: contextMenu?.cust?.mobileNumber || customer?.mobileNumber,
+              deliveryAddress: contextMenu?.cust?.address || customer?.address,
+              items: (cart || []).map(i => ({ productName: i.product?.name, quantity: i.quantity, unitPrice: i.product?.discountPrice, totalPrice: i.product?.discountPrice * i.quantity })),
+              totalAmount: (cart || []).reduce((s, i) => s + (i.product?.discountPrice || 0) * i.quantity, 0),
+              paymentStatus: 'Pending',
+            })
+            setQuickDetailsOpen(true)
+            handleCloseContextMenu()
+          }}
+        >
+          <ListItemIcon>
+            <ReceiptLongIcon fontSize="small" sx={{ color: '#0284C7' }} />
+          </ListItemIcon>
+          <ListItemText
+            primary="👁️ View Details (Products, Saved Orders & Payment)"
+            secondary="Quick inspection popup"
+          />
+        </MenuItem>
+
         <MenuItem
           onClick={() => {
             const c = contextMenu?.cust || customer
@@ -927,10 +954,11 @@ SkyFire Crackers Sivakasi
             <PersonIcon fontSize="small" sx={{ color: '#0284C7' }} />
           </ListItemIcon>
           <ListItemText
-            primary={`Open ${contextMenu?.cust?.customerName || 'Customer'}'s Full Page`}
+            primary={`Open ${contextMenu?.cust?.customerName || customer?.customerName || 'Customer'}'s Full Hub`}
             secondary="Selected Products, Saved Orders & Payment Status"
           />
         </MenuItem>
+
         <MenuItem
           onClick={() => {
             const c = contextMenu?.cust || customer
@@ -943,6 +971,7 @@ SkyFire Crackers Sivakasi
           </ListItemIcon>
           <ListItemText primary="Select Products from Catalog" />
         </MenuItem>
+
         {contextMenu?.ord && (
           <MenuItem
             onClick={() => {
@@ -958,6 +987,182 @@ SkyFire Crackers Sivakasi
           </MenuItem>
         )}
       </Menu>
+
+      {/* QUICK INSPECTION DIALOG (Payment Status, Product Details & Saved Products) */}
+      <Dialog
+        open={quickDetailsOpen}
+        onClose={() => setQuickDetailsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3, p: 1 } }}
+      >
+        <DialogContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 900, color: '#0B132B' }}>
+              Customer Details & Payment Status
+            </Typography>
+            <IconButton size="small" onClick={() => setQuickDetailsOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Customer info */}
+          <Paper elevation={0} sx={{ p: 2, backgroundColor: '#F8FAFC', borderRadius: 2, mb: 2, border: '1px solid #E2E8F0' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B' }}>
+              {customer?.customerName || quickOrder?.customerName || 'Customer'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748B' }}>
+              📞 +91 {customer?.mobileNumber || quickOrder?.customerPhone || mobileNumber}
+            </Typography>
+            <Typography variant="caption" sx={{ color: '#475569', display: 'block', mt: 0.5 }}>
+              📍 {customer?.address || quickOrder?.deliveryAddress || 'Tamil Nadu, India'}
+            </Typography>
+          </Paper>
+
+          {/* 1. Payment Status Box with Continue Payment button */}
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              mb: 2.5,
+              backgroundColor:
+                (quickOrder?.paymentStatus?.toLowerCase() === 'completed' || quickOrder?.paymentStatus?.toLowerCase() === 'paid')
+                  ? '#DCFCE7'
+                  : '#FEF3C7',
+              border:
+                (quickOrder?.paymentStatus?.toLowerCase() === 'completed' || quickOrder?.paymentStatus?.toLowerCase() === 'paid')
+                  ? '1.5px solid #86EFAC'
+                  : '1.5px solid #FCD34D',
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
+              <Box>
+                <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', color: '#64748B' }}>
+                  Payment Status:
+                </Typography>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 900,
+                    color:
+                      (quickOrder?.paymentStatus?.toLowerCase() === 'completed' || quickOrder?.paymentStatus?.toLowerCase() === 'paid')
+                        ? '#15803D'
+                        : '#B45309',
+                  }}
+                >
+                  {(quickOrder?.paymentStatus?.toLowerCase() === 'completed' || quickOrder?.paymentStatus?.toLowerCase() === 'paid')
+                    ? '✔ PAYMENT COMPLETED'
+                    : '⚠️ PAYMENT PENDING (ONLINE DUE)'}
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 800, color: '#0B132B' }}>
+                  Amount: ₹{quickOrder?.totalAmount || 0}
+                </Typography>
+              </Box>
+
+              {!(quickOrder?.paymentStatus?.toLowerCase() === 'completed' || quickOrder?.paymentStatus?.toLowerCase() === 'paid') && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    setQuickDetailsOpen(false)
+                    if (quickOrder) handlePayNow(quickOrder)
+                  }}
+                  startIcon={<PaymentIcon />}
+                  sx={{
+                    backgroundColor: '#FFA000',
+                    color: '#0B132B',
+                    fontWeight: 900,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    py: 0.8,
+                    px: 2,
+                    boxShadow: '0 2px 10px rgba(255, 160, 0, 0.4)',
+                    '&:hover': { backgroundColor: '#FF8F00' },
+                  }}
+                >
+                  Continue Payment →
+                </Button>
+              )}
+            </Box>
+          </Paper>
+
+          {/* 2. Selected Products (Current Cart) */}
+          {cart && cart.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0284C7', mb: 1 }}>
+                🛒 Selected Products (Active Cart - {cart.reduce((s, i) => s + i.quantity, 0)} boxes):
+              </Typography>
+              <Paper elevation={0} sx={{ p: 1.5, backgroundColor: '#F0F9FF', borderRadius: 2, border: '1px solid #BAE6FD' }}>
+                {cart.map((item, idx) => (
+                  <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4, borderBottom: '1px solid #E0F2FE' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                      {item.product?.name || item.name}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#0284C7' }}>
+                      {item.quantity} box(es) × ₹{item.product?.discountPrice || item.price}
+                    </Typography>
+                  </Box>
+                ))}
+              </Paper>
+            </Box>
+          )}
+
+          {/* 3. Saved Products (From Database) */}
+          {quickOrder?.items && quickOrder.items.length > 0 && (
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#16A34A', mb: 1 }}>
+                📦 Saved Products (Booking #{quickOrder.orderNumber}):
+              </Typography>
+              <Paper elevation={0} sx={{ p: 1.5, backgroundColor: '#F8FAFC', borderRadius: 2, border: '1px solid #E2E8F0' }}>
+                {quickOrder.items.map((it, idx) => (
+                  <Box key={idx} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4, borderBottom: '1px solid #EDF2F7' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 700, color: '#0B132B' }}>
+                      {it.productName}
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#16A34A' }}>
+                      {it.quantity} box(es) - ₹{it.totalPrice || it.unitPrice * it.quantity}
+                    </Typography>
+                  </Box>
+                ))}
+              </Paper>
+            </Box>
+          )}
+
+          <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ mt: 2.5 }}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => {
+                if (quickOrder) handleDownloadInvoice(quickOrder)
+              }}
+              startIcon={<DownloadIcon />}
+              sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 2 }}
+            >
+              Tax Bill
+            </Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => {
+                setQuickDetailsOpen(false)
+                if (onOpenPersonPage && (customer || quickOrder)) {
+                  onOpenPersonPage(customer || { customerName: quickOrder.customerName, mobileNumber: quickOrder.customerPhone, address: quickOrder.deliveryAddress })
+                }
+              }}
+              sx={{
+                backgroundColor: '#0B132B',
+                color: '#FFA000',
+                fontWeight: 900,
+                borderRadius: 2,
+                textTransform: 'none',
+              }}
+            >
+              Open Full Hub →
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }

@@ -38,6 +38,7 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
+import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 import { lookupCustomerApi, getOrdersListApi, updateOrderStatusApi } from '../services/api'
 
 const loadRazorpayScript = () => {
@@ -215,40 +216,16 @@ export default function PersonOrdersPage({
     }
   }
 
-  // Invoice generator
+  // Structured Invoice generator
   const handleDownloadInvoice = (order) => {
-    const text = `================================================
-SKYFIRE CRACKERS SIVAKASI - TAX INVOICE & BOOKING
-Wholesale Fireworks Direct From Sivakasi Factories
-Booking Number: ${order.orderNumber}
-Booking Date: ${new Date(order.createdAt).toLocaleString()}
-------------------------------------------------
-CUSTOMER DETAILS:
-Customer Name   : ${order.customerName || customer?.customerName || 'Valued Customer'}
-Contact Number  : +91 ${order.customerPhone || customer?.mobileNumber || 'N/A'}
-Delivery Address: ${order.deliveryAddress || customer?.address || 'N/A'}
-Payment Method  : ${order.paymentMethod || 'COD / Pay Later'}
-Payment Status  : ${order.paymentStatus || 'Pending'}
-------------------------------------------------
-CRACKER PRODUCTS ORDERED:
-${(order.items || []).map((i, idx) => `${idx + 1}. ${i.productName} x ${i.quantity} box(es) @ ₹${i.unitPrice} = ₹${i.totalPrice || i.unitPrice * i.quantity}`).join('\n')}
-
-Subtotal         : ₹${order.subTotal || order.totalAmount}
-Special Discount : -₹${order.discountAmount || 0}
-Delivery Charge  : FREE (₹0)
-GRAND TOTAL      : ₹${order.totalAmount}
-================================================
-Thank you for booking with SkyFire Crackers!
-Wishing you a Bright, Safe & Joyous Diwali!
-================================================`
-
-    const element = document.createElement('a')
-    const file = new Blob([text], { type: 'text/plain' })
-    element.href = URL.createObjectURL(file)
-    element.download = `SkyCrackers_Invoice_${order.orderNumber}.txt`
-    document.body.appendChild(element)
-    element.click()
-    document.body.removeChild(element)
+    downloadStructuredInvoice({
+      ...order,
+      customerName: order.customerName || customer?.customerName,
+      customerPhone: order.customerPhone || customer?.mobileNumber,
+      deliveryAddress: order.deliveryAddress || customer?.address,
+      paymentStatus: order.paymentStatus || 'Pending',
+      paymentMethod: order.paymentMethod || 'Online Payment (Pending / Pay Later)',
+    })
   }
 
   // Selected Cart totals
@@ -807,7 +784,7 @@ Wishing you a Bright, Safe & Joyous Diwali!
                           >
                             <Box>
                               <Typography variant="caption" sx={{ color: '#64748B', display: 'block' }}>
-                                Method: <strong>{ord.paymentMethod || 'COD / Pay Later'}</strong>
+                                Method: <strong>{ord.paymentMethod?.toLowerCase().includes('cod') ? 'Online Payment (Pending)' : (ord.paymentMethod || 'Online Payment (Pending)')}</strong>
                               </Typography>
                               <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#16A34A' }}>
                                 Booking Total: ₹{ord.totalAmount}
