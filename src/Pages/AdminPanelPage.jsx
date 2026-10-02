@@ -29,6 +29,10 @@ import {
   FormControlLabel,
   Divider,
   Collapse,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
@@ -47,6 +51,9 @@ import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import PaymentIcon from '@mui/icons-material/Payment'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
+import PersonIcon from '@mui/icons-material/Person'
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout'
+import DownloadIcon from '@mui/icons-material/Download'
 import {
   adminLoginApi,
   getAdminDashboardApi,
@@ -55,12 +62,26 @@ import {
   getProductsApi,
 } from '../services/api'
 
-export default function AdminPanelPage({ onExitAdmin }) {
+export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken') || '')
   const [activeTab, setActiveTab] = useState(0)
   const [loginForm, setLoginForm] = useState({ username: 'admin', password: 'Admin@123' })
   const [loginLoading, setLoginLoading] = useState(false)
   const [loginError, setLoginError] = useState('')
+  const [contextMenu, setContextMenu] = useState(null)
+
+  const handleContextMenu = (e, ord) => {
+    e.preventDefault()
+    setContextMenu({
+      mouseX: e.clientX + 2,
+      mouseY: e.clientY - 6,
+      order: ord,
+    })
+  }
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null)
+  }
 
   // Dashboard Data State
   const [dashboard, setDashboard] = useState(null)
@@ -426,9 +447,35 @@ export default function AdminPanelPage({ onExitAdmin }) {
                   </TableHead>
                   <TableBody>
                     {dashboard.recentOrders?.map((ord) => (
-                      <TableRow key={ord.orderNumber} hover>
+                      <TableRow
+                        key={ord.orderNumber}
+                        hover
+                        onContextMenu={(e) => handleContextMenu(e, ord)}
+                        sx={{ cursor: 'context-menu' }}
+                      >
                         <TableCell sx={{ fontWeight: 800, color: '#0B132B' }}>{ord.orderNumber}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{ord.customerName}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          <Box
+                            component="span"
+                            onClick={() =>
+                              onOpenPersonPage &&
+                              onOpenPersonPage({
+                                customerName: ord.customerName,
+                                mobileNumber: ord.customerPhone,
+                                address: ord.deliveryAddress,
+                              })
+                            }
+                            sx={{
+                              cursor: 'pointer',
+                              color: '#0284C7',
+                              textDecoration: 'underline',
+                              '&:hover': { color: '#0369A1' },
+                            }}
+                            title="Click or right-click to open customer's page (Selected Products, Saved Products & Payment Status)"
+                          >
+                            {ord.customerName}
+                          </Box>
+                        </TableCell>
                         <TableCell>{ord.customerPhone}</TableCell>
                         <TableCell sx={{ fontWeight: 800, color: '#16A34A' }}>₹{ord.totalAmount}</TableCell>
                         <TableCell>
@@ -537,12 +584,14 @@ export default function AdminPanelPage({ onExitAdmin }) {
                     <Paper
                       key={ord.orderId || ord.orderNumber}
                       elevation={0}
+                      onContextMenu={(e) => handleContextMenu(e, ord)}
                       sx={{
                         p: 2,
                         mb: 2,
                         borderRadius: 2.5,
                         border: '1.5px solid #E2E8F0',
                         backgroundColor: '#FFFFFF',
+                        cursor: 'context-menu',
                       }}
                     >
                       {/* Card Top: Order Number & Status */}
@@ -579,7 +628,23 @@ export default function AdminPanelPage({ onExitAdmin }) {
                       {/* Customer & Phone with direct dialer button */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, backgroundColor: '#F8FAFC', p: 1.2, borderRadius: 2 }}>
                         <Box>
-                          <Typography variant="body2" sx={{ fontWeight: 800, color: '#0F172A' }}>
+                          <Typography
+                            variant="body2"
+                            onClick={() =>
+                              onOpenPersonPage &&
+                              onOpenPersonPage({
+                                customerName: ord.customerName,
+                                mobileNumber: ord.customerPhone,
+                                address: ord.deliveryAddress,
+                              })
+                            }
+                            sx={{
+                              fontWeight: 800,
+                              color: '#0284C7',
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                            }}
+                          >
                             {ord.customerName}
                           </Typography>
                           <Typography variant="caption" sx={{ color: '#64748B' }}>
@@ -664,6 +729,30 @@ export default function AdminPanelPage({ onExitAdmin }) {
                       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
                         <Button
                           size="small"
+                          variant="outlined"
+                          startIcon={<PersonIcon sx={{ fontSize: '14px !important' }} />}
+                          onClick={() => {
+                            if (onOpenPersonPage) {
+                              onOpenPersonPage({
+                                customerName: ord.customerName,
+                                mobileNumber: ord.customerPhone,
+                                address: ord.deliveryAddress,
+                              })
+                            }
+                          }}
+                          sx={{
+                            fontSize: '0.75rem',
+                            py: 0.6,
+                            textTransform: 'none',
+                            borderColor: '#0284C7',
+                            color: '#0284C7',
+                            fontWeight: 800,
+                          }}
+                        >
+                          Person Page
+                        </Button>
+                        <Button
+                          size="small"
                           variant="contained"
                           startIcon={<LocalShippingIcon sx={{ fontSize: '14px !important' }} />}
                           onClick={() => {
@@ -739,7 +828,14 @@ export default function AdminPanelPage({ onExitAdmin }) {
                       const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                       return (
                         <React.Fragment key={ord.orderId || ord.orderNumber}>
-                          <TableRow hover sx={{ '& > *': { borderBottom: isExpanded ? 'unset' : undefined } }}>
+                          <TableRow
+                            hover
+                            onContextMenu={(e) => handleContextMenu(e, ord)}
+                            sx={{
+                              cursor: 'context-menu',
+                              '& > *': { borderBottom: isExpanded ? 'unset' : undefined },
+                            }}
+                          >
                             <TableCell>
                               <IconButton
                                 size="small"
@@ -752,7 +848,27 @@ export default function AdminPanelPage({ onExitAdmin }) {
                             </TableCell>
                             <TableCell sx={{ fontWeight: 800, color: '#0B132B' }}>{ord.orderNumber}</TableCell>
                             <TableCell>
-                              <Typography variant="body2" sx={{ fontWeight: 700 }}>{ord.customerName}</Typography>
+                              <Typography
+                                variant="body2"
+                                onClick={() =>
+                                  onOpenPersonPage &&
+                                  onOpenPersonPage({
+                                    customerName: ord.customerName,
+                                    mobileNumber: ord.customerPhone,
+                                    address: ord.deliveryAddress,
+                                  })
+                                }
+                                sx={{
+                                  fontWeight: 700,
+                                  color: '#0284C7',
+                                  cursor: 'pointer',
+                                  textDecoration: 'underline',
+                                  '&:hover': { color: '#0369A1' },
+                                }}
+                                title="Click or right-click to open customer's page (Selected Products, Saved Products & Payment Status)"
+                              >
+                                {ord.customerName}
+                              </Typography>
                               <Typography variant="caption" sx={{ color: '#D97706', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <PhoneIcon sx={{ fontSize: 13 }} />
                                 <a href={`tel:${ord.customerPhone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
@@ -815,6 +931,33 @@ export default function AdminPanelPage({ onExitAdmin }) {
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>
                               <Stack direction="row" spacing={0.8} justifyContent="center">
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  startIcon={<PersonIcon sx={{ fontSize: '13px !important' }} />}
+                                  onClick={() => {
+                                    if (onOpenPersonPage) {
+                                      onOpenPersonPage({
+                                        customerName: ord.customerName,
+                                        mobileNumber: ord.customerPhone,
+                                        address: ord.deliveryAddress,
+                                      })
+                                    }
+                                  }}
+                                  sx={{
+                                    fontSize: '0.72rem',
+                                    py: 0.3,
+                                    px: 1,
+                                    textTransform: 'none',
+                                    backgroundColor: '#0284C7',
+                                    color: '#FFFFFF',
+                                    fontWeight: 800,
+                                    '&:hover': { backgroundColor: '#0369A1' },
+                                  }}
+                                  title="Open full page for this customer"
+                                >
+                                  Person Page
+                                </Button>
                                 <Button
                                   size="small"
                                   variant="contained"
@@ -1270,6 +1413,67 @@ export default function AdminPanelPage({ onExitAdmin }) {
           </DialogActions>
         </Dialog>
       )}
+
+      {/* Right-Click Context Menu for Admin Orders */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => {
+            const ord = contextMenu?.order
+            handleCloseContextMenu()
+            if (onOpenPersonPage && ord) {
+              onOpenPersonPage({
+                customerName: ord.customerName,
+                mobileNumber: ord.customerPhone,
+                address: ord.deliveryAddress,
+              })
+            }
+          }}
+        >
+          <ListItemIcon>
+            <PersonIcon fontSize="small" sx={{ color: '#0284C7' }} />
+          </ListItemIcon>
+          <ListItemText
+            primary={`Open ${contextMenu?.order?.customerName || 'Customer'}'s Full Page`}
+            secondary="Selected Products, Saved Orders & Payment Status"
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            const ord = contextMenu?.order
+            handleCloseContextMenu()
+            if (ord) {
+              setSelectedOrderDetails(ord)
+              setPackedChecklist({})
+            }
+          }}
+        >
+          <ListItemIcon>
+            <LocalShippingIcon fontSize="small" sx={{ color: '#FFA000' }} />
+          </ListItemIcon>
+          <ListItemText primary="Open Packing Sheet" />
+        </MenuItem>
+        {contextMenu?.order?.customerPhone && (
+          <MenuItem
+            component="a"
+            href={`tel:${contextMenu.order.customerPhone}`}
+            onClick={handleCloseContextMenu}
+          >
+            <ListItemIcon>
+              <PhoneIcon fontSize="small" sx={{ color: '#16A34A' }} />
+            </ListItemIcon>
+            <ListItemText primary={`Call Customer (+91 ${contextMenu.order.customerPhone})`} />
+          </MenuItem>
+        )}
+      </Menu>
     </Box>
   )
 }

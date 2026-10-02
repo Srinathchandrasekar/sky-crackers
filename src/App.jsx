@@ -24,6 +24,7 @@ import CartPage from './Pages/CartPage'
 import CustomerDetailsPage from './Pages/CustomerDetailsPage'
 import CheckoutPage from './Pages/CheckoutPage'
 import AdminPanelPage from './Pages/AdminPanelPage'
+import PersonOrdersPage from './Pages/PersonOrdersPage'
 
 function App() {
   const [activePage, setActivePage] = useState('home')
@@ -31,6 +32,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [cart, setCart] = useState([])
   const [customerData, setCustomerData] = useState(null)
+  const [selectedPerson, setSelectedPerson] = useState(null)
 
   // Drawer & Modals state
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false)
@@ -105,6 +107,24 @@ function App() {
     setOrderSuccessOpen(false)
     setCart([]) // Clear cart after successful order
     setActivePage('crackers')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  // Open dedicated Person / Customer Hub Page
+  const [personPreviousPage, setPersonPreviousPage] = useState('crackers')
+  const handleOpenPersonPage = (person, fromPage = activePage) => {
+    if (person) {
+      setSelectedPerson(person)
+      setCustomerData((prev) => ({
+        ...prev,
+        fullName: person.customerName || person.fullName || prev?.fullName || '',
+        mobileNumber: person.mobileNumber || person.customerPhone || person.phone || prev?.mobileNumber || '',
+        address: person.address || person.deliveryAddress || prev?.address || '',
+      }))
+    }
+    setPersonPreviousPage(fromPage === 'person-page' ? 'crackers' : fromPage)
+    setOrderDetailsOpen(false)
+    setActivePage('person-page')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -208,6 +228,36 @@ function App() {
             <AdminPanelPage
               onExitAdmin={() => {
                 setActivePage('home')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onOpenPersonPage={(person) => handleOpenPersonPage(person, 'admin')}
+            />
+          )}
+
+          {activePage === 'person-page' && (
+            <PersonOrdersPage
+              person={selectedPerson}
+              cart={cart}
+              onUpdateCartQuantity={handleUpdateQuantity}
+              onRemoveCartItem={handleRemoveItem}
+              onAddProducts={() => {
+                setActivePage('crackers')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onCheckoutCart={() => {
+                if (selectedPerson) {
+                  setCustomerData((prev) => ({
+                    ...prev,
+                    fullName: selectedPerson.customerName || selectedPerson.fullName || prev?.fullName || '',
+                    mobileNumber: selectedPerson.mobileNumber || selectedPerson.customerPhone || selectedPerson.phone || prev?.mobileNumber || '',
+                    address: selectedPerson.address || selectedPerson.deliveryAddress || prev?.address || '',
+                  }))
+                }
+                setActivePage('checkout')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              onBack={() => {
+                setActivePage(personPreviousPage || 'crackers')
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
             />
@@ -329,6 +379,7 @@ function App() {
             setActivePage('checkout')
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
+          onOpenPersonPage={(cust) => handleOpenPersonPage(cust, 'crackers')}
         />
       </Box>
     </ThemeProvider>

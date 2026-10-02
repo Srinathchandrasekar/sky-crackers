@@ -21,6 +21,10 @@ import {
   TableHead,
   TableRow,
   InputAdornment,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 import SearchIcon from '@mui/icons-material/Search'
@@ -59,6 +63,7 @@ export default function OrderDetailsModal({
   onRestoreCart,
   onOpenShop,
   onProceedToCheckout,
+  onOpenPersonPage,
 }) {
   const [mobileNumber, setMobileNumber] = useState(initialMobile || '')
   const [loading, setLoading] = useState(false)
@@ -68,6 +73,21 @@ export default function OrderDetailsModal({
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
   const [payingOrderId, setPayingOrderId] = useState(null)
+  const [contextMenu, setContextMenu] = useState(null)
+
+  const handleContextMenu = (e, cust, ord) => {
+    e.preventDefault()
+    setContextMenu({
+      mouseX: e.clientX + 2,
+      mouseY: e.clientY - 6,
+      cust,
+      ord,
+    })
+  }
+
+  const handleCloseContextMenu = () => {
+    setContextMenu(null)
+  }
 
   useEffect(() => {
     if (open && initialMobile) {
@@ -442,6 +462,7 @@ SkyFire Crackers Sivakasi
         {customer && (
           <Paper
             elevation={0}
+            onContextMenu={(e) => handleContextMenu(e, customer, null)}
             sx={{
               p: 2.5,
               borderRadius: 2.5,
@@ -449,6 +470,7 @@ SkyFire Crackers Sivakasi
               border: '1.5px solid #0284C7',
               boxShadow: '0 4px 15px rgba(2, 132, 199, 0.08)',
               mb: 3,
+              cursor: 'context-menu',
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
@@ -478,7 +500,29 @@ SkyFire Crackers Sivakasi
 
             {/* Direct Action Buttons for this customer */}
             <Divider sx={{ my: 1.5 }} />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="flex-end">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => {
+                  if (onOpenPersonPage) onOpenPersonPage(customer)
+                }}
+                sx={{
+                  backgroundColor: '#0B132B',
+                  color: '#FFA000',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  py: 0.7,
+                  px: 2,
+                  border: '1px solid #FFA000',
+                  '&:hover': { backgroundColor: '#1A2A56' },
+                }}
+              >
+                👤 Open {customer.customerName?.split(' ')[0]}'s Page (Selected & Saved Products + Payment) →
+              </Button>
+
               <Button
                 variant="outlined"
                 size="small"
@@ -497,7 +541,7 @@ SkyFire Crackers Sivakasi
                   '&:hover': { backgroundColor: '#F0F9FF' },
                 }}
               >
-                🛒 Select Crackers for {customer.customerName?.split(' ')[0] || 'Customer'} →
+                🛒 Select Crackers →
               </Button>
 
               {cart && cart.length > 0 && (
@@ -544,11 +588,23 @@ SkyFire Crackers Sivakasi
                 <Paper
                   key={ord.orderNumber}
                   elevation={0}
+                  onContextMenu={(e) =>
+                    handleContextMenu(
+                      e,
+                      customer || {
+                        customerName: ord.customerName,
+                        mobileNumber: ord.customerPhone,
+                        address: ord.deliveryAddress,
+                      },
+                      ord
+                    )
+                  }
                   sx={{
                     borderRadius: 2.5,
                     border: '1.5px solid #E2E8F0',
                     backgroundColor: '#FFFFFF',
                     overflow: 'hidden',
+                    cursor: 'context-menu',
                   }}
                 >
                   {/* Order Top Bar */}
@@ -716,6 +772,34 @@ SkyFire Crackers Sivakasi
 
                         <Button
                           size="small"
+                          variant="contained"
+                          startIcon={<PersonIcon />}
+                          onClick={() => {
+                            if (onOpenPersonPage) {
+                              onOpenPersonPage(
+                                customer || {
+                                  customerName: ord.customerName,
+                                  mobileNumber: ord.customerPhone,
+                                  address: ord.deliveryAddress,
+                                }
+                              )
+                            }
+                          }}
+                          sx={{
+                            backgroundColor: '#0B132B',
+                            color: '#FFA000',
+                            fontWeight: 800,
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            border: '1px solid #FFA000',
+                            '&:hover': { backgroundColor: '#1A2A56' },
+                          }}
+                        >
+                          👤 Person Page
+                        </Button>
+
+                        <Button
+                          size="small"
                           variant="outlined"
                           startIcon={<DownloadIcon />}
                           onClick={() => handleDownloadInvoice(ord)}
@@ -820,6 +904,60 @@ SkyFire Crackers Sivakasi
           </Button>
         </Box>
       </DialogContent>
+
+      {/* Right-Click Context Menu */}
+      <Menu
+        open={contextMenu !== null}
+        onClose={handleCloseContextMenu}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+      >
+        <MenuItem
+          onClick={() => {
+            const c = contextMenu?.cust || customer
+            handleCloseContextMenu()
+            if (onOpenPersonPage && c) onOpenPersonPage(c)
+          }}
+        >
+          <ListItemIcon>
+            <PersonIcon fontSize="small" sx={{ color: '#0284C7' }} />
+          </ListItemIcon>
+          <ListItemText
+            primary={`Open ${contextMenu?.cust?.customerName || 'Customer'}'s Full Page`}
+            secondary="Selected Products, Saved Orders & Payment Status"
+          />
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            const c = contextMenu?.cust || customer
+            handleCloseContextMenu()
+            if (onOpenShop && c) onOpenShop(c)
+          }}
+        >
+          <ListItemIcon>
+            <ShoppingCartCheckoutIcon fontSize="small" sx={{ color: '#FFA000' }} />
+          </ListItemIcon>
+          <ListItemText primary="Select Products from Catalog" />
+        </MenuItem>
+        {contextMenu?.ord && (
+          <MenuItem
+            onClick={() => {
+              const ord = contextMenu.ord
+              handleCloseContextMenu()
+              handleDownloadInvoice(ord)
+            }}
+          >
+            <ListItemIcon>
+              <DownloadIcon fontSize="small" sx={{ color: '#16A34A' }} />
+            </ListItemIcon>
+            <ListItemText primary="Download Tax Invoice" />
+          </MenuItem>
+        )}
+      </Menu>
     </Dialog>
   )
 }
