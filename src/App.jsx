@@ -153,6 +153,7 @@ function App() {
               selectedCategory={selectedCategory}
               setSelectedCategory={setSelectedCategory}
               searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
               cart={cart}
               onAddToCart={handleAddToCart}
               onUpdateQuantity={handleUpdateQuantity}

@@ -270,20 +270,14 @@ export default function OrderPlacementModal({
           setIsEditingAddress(false)
         }
       } else {
-        // Customer DOES NOT have an account in the database!
+        // Customer profile not found
         setIsExistingCustomer(false)
         setCustomerId(null)
         setPreviousOrders([])
 
-        // CRITICAL FIX: Reset all fields completely so NO default or previous customer data leaks into New Customer!
-        setCustomerName('')
-        setAlternatePhone('')
-        setEmailAddress('')
-        setAddress('')
-        setLandmark('')
-        setCity('')
-        setDistrict('')
-        setPinCode('')
+        if (activeTab === 0) {
+          setFormError(`No registered profile found for +91 ${phone}. Please switch to "New Customer" to register your delivery address.`)
+        }
         setIsEditingAddress(true)
       }
     } catch (err) {
@@ -291,14 +285,6 @@ export default function OrderPlacementModal({
       setLookupDone(true)
       setIsExistingCustomer(false)
       setCustomerId(null)
-      setCustomerName('')
-      setAlternatePhone('')
-      setEmailAddress('')
-      setAddress('')
-      setLandmark('')
-      setCity('')
-      setDistrict('')
-      setPinCode('')
       setIsEditingAddress(true)
     } finally {
       setLookupLoading(false)

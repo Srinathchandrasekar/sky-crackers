@@ -27,7 +27,10 @@ export default function ExistingCustomerModal({
   lookupResult,
   isLoading,
   onApplyDemoData,
+  onApplyCustomerData,
 }) {
+  const customer = lookupResult?.customer
+
   return (
     <Dialog
       open={open}
@@ -72,10 +75,10 @@ export default function ExistingCustomerModal({
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.2 }}>
-              Customer Verification
+              Customer Profile Lookup
             </Typography>
             <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.78rem' }}>
-              Secure Database Lookup
+              Database & Local Session
             </Typography>
           </Box>
         </Stack>
@@ -91,10 +94,10 @@ export default function ExistingCustomerModal({
           <Box sx={{ py: 5, textAlign: 'center' }}>
             <CircularProgress size={36} sx={{ color: '#FFA000', mb: 2 }} />
             <Typography variant="body1" sx={{ fontWeight: 700, color: '#0F172A' }}>
-              Querying SQL Database...
+              Searching Customer Database...
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748B' }}>
-              Checking customer presence for mobile number +91 {mobileNumber}
+              Looking up account details for +91 {mobileNumber}
             </Typography>
           </Box>
         ) : (
@@ -127,7 +130,7 @@ export default function ExistingCustomerModal({
                 <Chip
                   size="small"
                   icon={<CheckCircleOutlinedIcon sx={{ '&&': { color: '#16A34A', fontSize: 16 } }} />}
-                  label="Registered Customer"
+                  label="Profile Found"
                   sx={{
                     backgroundColor: '#ECFDF5',
                     color: '#065F46',
@@ -152,84 +155,98 @@ export default function ExistingCustomerModal({
               )}
             </Box>
 
-            {lookupResult?.exists ? (
+            {lookupResult?.exists && customer ? (
               <>
-                {/* Masked Data Display (Prevents personal info exposure) */}
                 <Box
                   sx={{
-                    p: 2,
+                    p: 2.2,
                     mb: 2.5,
                     borderRadius: 2,
                     backgroundColor: '#FFFFFF',
-                    border: '1px solid #E2E8F0',
+                    border: '1.5px solid #A7F3D0',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.08)',
                   }}
                 >
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    Masked Account Summary (SQL Record Match)
+                  <Typography variant="caption" sx={{ color: '#059669', fontWeight: 800, display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    Saved Customer Profile
                   </Typography>
 
-                  <Stack spacing={1}>
+                  <Stack spacing={1.2}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" sx={{ color: '#64748B' }}>Account Holder:</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>
-                        {lookupResult.maskedName}
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>Customer Name:</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800, color: '#0F172A' }}>
+                        {customer.customerName || customer.CustomerName || lookupResult.maskedName}
                       </Typography>
                     </Box>
 
                     <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <Typography variant="body2" sx={{ color: '#64748B' }}>Phone Link:</Typography>
+                      <Typography variant="body2" sx={{ color: '#64748B' }}>Primary Mobile:</Typography>
                       <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>
-                        {lookupResult.maskedMobile}
+                        +91 {customer.mobileNumber || mobileNumber}
                       </Typography>
                     </Box>
 
-                    {lookupResult.cityHint && (
+                    {(customer.city || customer.district) && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" sx={{ color: '#64748B' }}>Registered Region:</Typography>
+                        <Typography variant="body2" sx={{ color: '#64748B' }}>Location:</Typography>
                         <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>
-                          {lookupResult.cityHint}
+                          {customer.city ? `${customer.city}, ` : ''}{customer.district || customer.state || 'Tamil Nadu'}
+                        </Typography>
+                      </Box>
+                    )}
+
+                    {customer.pinCode && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <Typography variant="body2" sx={{ color: '#64748B' }}>PIN Code:</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                          {customer.pinCode}
                         </Typography>
                       </Box>
                     )}
                   </Stack>
-                </Box>
 
-                {/* Privacy & Verification Disclosure */}
-                <Alert
-                  severity="info"
-                  sx={{
-                    mb: 2.5,
-                    borderRadius: 2,
-                    backgroundColor: '#EFF6FF',
-                    border: '1px solid #BFDBFE',
-                    color: '#1E3A8A',
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Zero Personal Data Exposure
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#1E40AF', display: 'block', lineHeight: 1.5 }}>
-                    In accordance with strict security standards, full address details are not exposed without verified 2-Factor Authentication.
-                    External SMS OTP services are currently pending live gateway integration. You may enter or update your address in the form below.
-                  </Typography>
-                </Alert>
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={() => {
+                      if (onApplyCustomerData) onApplyCustomerData(customer)
+                      onClose()
+                    }}
+                    startIcon={<CheckCircleIcon />}
+                    sx={{
+                      mt: 2,
+                      backgroundColor: '#16A34A',
+                      color: '#FFFFFF',
+                      fontWeight: 800,
+                      py: 1.2,
+                      borderRadius: 2,
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
+                      textTransform: 'none',
+                      '&:hover': {
+                        backgroundColor: '#15803D',
+                      },
+                    }}
+                  >
+                    ✓ Use My Saved Address & Auto-fill
+                  </Button>
+                </Box>
               </>
             ) : (
               <Alert
-                severity="success"
+                severity="info"
                 sx={{
                   mb: 2.5,
                   borderRadius: 2,
-                  backgroundColor: '#ECFDF5',
-                  border: '1px solid #A7F3D0',
-                  color: '#065F46',
+                  backgroundColor: '#EFF6FF',
+                  border: '1px solid #BFDBFE',
+                  color: '#1E40AF',
                 }}
               >
-                <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  Welcome New Customer!
+                <Typography variant="body2" sx={{ fontWeight: 700, mb: 0.5 }}>
+                  New Customer Registration
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#047857', display: 'block', lineHeight: 1.5 }}>
-                  No previous profile exists for +91 {mobileNumber}. Please fill out your delivery details to complete your Diwali crackers booking.
+                <Typography variant="caption" sx={{ color: '#1E40AF', display: 'block', lineHeight: 1.5 }}>
+                  No existing account found for +91 {mobileNumber}. Please fill in your delivery details in the form to save your profile.
                 </Typography>
               </Alert>
             )}
@@ -244,28 +261,21 @@ export default function ExistingCustomerModal({
               }}
             >
               <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Secure Booking Architecture
+                Secure Booking Guarantee
               </Typography>
 
               <Stack spacing={1}>
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <CheckCircleOutlinedIcon sx={{ color: '#16A34A', fontSize: 17 }} />
                   <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.82rem' }}>
-                    Real-time SQL lookup executed via parameterized query
+                    Customer details automatically save to database and local session
                   </Typography>
                 </Stack>
 
                 <Stack direction="row" spacing={1.5} alignItems="center">
                   <VpnKeyOutlinedIcon sx={{ color: '#FFA000', fontSize: 17 }} />
                   <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.82rem' }}>
-                    Cryptographic session tokens protect subsequent order updates
-                  </Typography>
-                </Stack>
-
-                <Stack direction="row" spacing={1.5} alignItems="center">
-                  <AutoAwesomeIcon sx={{ color: '#6366F1', fontSize: 17 }} />
-                  <Typography variant="body2" sx={{ color: '#334155', fontSize: '0.82rem' }}>
-                    No personal or address information is stored in localStorage
+                    Orders can be tracked instantly by 10-digit mobile number
                   </Typography>
                 </Stack>
               </Stack>
@@ -276,7 +286,7 @@ export default function ExistingCustomerModal({
 
       <Divider />
 
-      <DialogActions sx={{ p: 2.5, backgroundColor: '#FFFFFF', gap: 1.5, justifyContent: 'space-between' }}>
+      <DialogActions sx={{ p: 2, backgroundColor: '#FFFFFF', gap: 1.5, justifyContent: 'space-between', flexWrap: 'wrap' }}>
         <Button
           onClick={() => {
             if (onApplyDemoData) onApplyDemoData()
@@ -314,7 +324,7 @@ export default function ExistingCustomerModal({
             },
           }}
         >
-          Continue to Form
+          Close
         </Button>
       </DialogActions>
     </Dialog>

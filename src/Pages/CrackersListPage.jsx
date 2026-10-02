@@ -26,7 +26,11 @@ import {
   Divider,
   Snackbar,
   Alert,
+  TextField,
+  InputAdornment,
 } from '@mui/material'
+import SearchIcon from '@mui/icons-material/Search'
+import CloseIcon from '@mui/icons-material/Close'
 import AddIcon from '@mui/icons-material/Add'
 import RemoveIcon from '@mui/icons-material/Remove'
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
@@ -72,20 +76,28 @@ function getCategoryFallbackImage(slug) {
 }
 
 export default function CrackersListPage({
-  selectedCategory,
+  selectedCategory = 'all',
   setSelectedCategory,
-  searchQuery,
+  searchQuery = '',
+  setSearchQuery,
   onAddToCart,
   cart = [],
   onUpdateQuantity,
   onOpenCart,
 }) {
-  const [priceRange, setPriceRange] = useState([10, 2100])
-  const [appliedPriceRange, setAppliedPriceRange] = useState([10, 2100])
+  const [priceRange, setPriceRange] = useState([10, 5000])
+  const [appliedPriceRange, setAppliedPriceRange] = useState([10, 5000])
   const [sortBy, setSortBy] = useState('popular')
   const [itemQuantities, setItemQuantities] = useState({})
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [lastAddedName, setLastAddedName] = useState('')
+  const [localSearch, setLocalSearch] = useState(searchQuery || '')
+
+  const currentSearch = setSearchQuery ? (searchQuery || '') : localSearch
+  const handleSearchChange = (val) => {
+    setLocalSearch(val)
+    if (setSearchQuery) setSearchQuery(val)
+  }
 
   // Live Backend API Data States
   const [productsList, setProductsList] = useState(CRACKERS_DATA)
@@ -114,7 +126,9 @@ export default function CrackersListPage({
               sku: p.sku,
               name: p.englishName || (local ? local.name : ''),
               nameTamil: (local && local.tamilName) ? local.tamilName : (p.tamilName || ''),
-              category: p.categorySlug,
+              category: p.categorySlug || (local ? local.category : ''),
+              categorySlug: p.categorySlug || (local ? local.category : ''),
+              categoryName: p.categoryName || (local ? local.category : ''),
               originalPrice: Number(p.originalPrice),
               discountPrice: Number(p.discountPrice),
               discountPercent: p.discountPercent || 80,
@@ -196,27 +210,77 @@ export default function CrackersListPage({
     setSnackbarOpen(true)
   }
 
-  // Filter & Sort crackers
+  // Dynamic category product counts
+  const categoryCounts = useMemo(() => {
+    const counts = { all: productsList.length }
+    const norm = (s) => (s || '').toLowerCase().replace(/[-_\s]+/g, '')
+    productsList.forEach((p) => {
+      const c1 = p.category || ''
+      const c2 = p.categorySlug || ''
+      const n1 = norm(c1)
+      const n2 = norm(c2)
+      if (c1) counts[c1] = (counts[c1] || 0) + 1
+      if (c2 && c2 !== c1) counts[c2] = (counts[c2] || 0) + 1
+      if (n1) counts[n1] = (counts[n1] || 0) + 1
+      if (n2 && n2 !== n1) counts[n2] = (counts[n2] || 0) + 1
+    })
+    return counts
+  }, [productsList])
+
+  // Filter & Sort crackers with resilient normalization
   const filteredCrackers = useMemo(() => {
+    const norm = (s) => (s || '').toLowerCase().replace(/[-_\s]+/g, '')
+    const selectedNorm = norm(selectedCategory)
+    const effectiveSearch = (currentSearch || '').trim().toLowerCase()
+
     return productsList.filter((product) => {
-      // Category filter
-      if (selectedCategory !== 'all' && product.category !== selectedCategory) {
-        return false
+      // 1. Resilient Category Filter
+      if (selectedNorm && selectedNorm !== 'all') {
+        if (selectedNorm === 'newarrivals') {
+          const isExplicit = norm(product.category) === 'newarrivals' || norm(product.categorySlug) === 'newarrivals'
+          const isFeatured = (product.sno && product.sno > 75) || (product.rating && product.rating >= 4.7)
+          if (!isExplicit && !isFeatured) return false
+        } else {
+          const prodCat = norm(product.category)
+          const prodSlug = norm(product.categorySlug)
+          const prodName = norm(product.categoryName)
+          const matches =
+            prodCat === selectedNorm ||
+            prodSlug === selectedNorm ||
+            prodName === selectedNorm ||
+            prodCat.includes(selectedNorm) ||
+            selectedNorm.includes(prodCat)
+          if (!matches) return false
+        }
       }
-      // Search filter
-      if (searchQuery.trim() !== '') {
-        const query = searchQuery.toLowerCase()
-        const matchesName = product.name.toLowerCase().includes(query)
-        const matchesCat = product.category.toLowerCase().includes(query)
-        if (!matchesName && !matchesCat) return false
+
+      // 2. Comprehensive Search Filter (English name, Tamil name, S.No, SKU, Category)
+      if (effectiveSearch) {
+        const nameEn = (product.name || '').toLowerCase()
+        const nameTa = (product.nameTamil || product.tamilName || '').toLowerCase()
+        const snoStr = String(product.sno || '')
+        const skuStr = (product.sku || '').toLowerCase()
+        const catStr = (product.category || product.categoryName || '').toLowerCase()
+
+        const matchesSearch =
+          nameEn.includes(effectiveSearch) ||
+          nameTa.includes(effectiveSearch) ||
+          snoStr === effectiveSearch ||
+          skuStr.includes(effectiveSearch) ||
+          catStr.includes(effectiveSearch)
+
+        if (!matchesSearch) return false
       }
-      // Price range filter
+
+      // 3. Price range filter
+      const price = Number(product.discountPrice) || 0
       if (
-        product.discountPrice < appliedPriceRange[0] ||
-        product.discountPrice > appliedPriceRange[1]
+        price < appliedPriceRange[0] ||
+        price > appliedPriceRange[1]
       ) {
         return false
       }
+
       return true
     }).sort((a, b) => {
       if (sortBy === 'price_asc') return a.discountPrice - b.discountPrice
@@ -225,9 +289,10 @@ export default function CrackersListPage({
       if (sortBy === 'discount') return b.discountPercent - a.discountPercent
       return 0 // 'popular' maintains default order
     })
-  }, [productsList, selectedCategory, searchQuery, appliedPriceRange, sortBy])
+  }, [productsList, selectedCategory, currentSearch, appliedPriceRange, sortBy])
 
-  const currentCategoryObj = categoriesList.find((c) => c.id === selectedCategory) || categoriesList[0]
+  const normHelper = (s) => (s || '').toLowerCase().replace(/[-_\s]+/g, '')
+  const currentCategoryObj = categoriesList.find((c) => normHelper(c.id) === normHelper(selectedCategory)) || categoriesList[0]
 
   return (
     <Box sx={{ pt: { xs: 1.5, md: 3 }, pb: { xs: 12, md: 14 }, backgroundColor: '#F8FAFC', minHeight: '80vh', width: '100%' }}>
@@ -274,7 +339,10 @@ export default function CrackersListPage({
 
               <List disablePadding sx={{ mb: 3 }}>
                 {categoriesList.map((cat) => {
-                  const isSelected = selectedCategory === cat.id
+                  const isSelected = normHelper(selectedCategory) === normHelper(cat.id)
+                  const count = cat.id === 'all'
+                    ? productsList.length
+                    : (categoryCounts[cat.id] ?? categoryCounts[normHelper(cat.id)] ?? cat.count ?? 0)
                   return (
                     <ListItem key={cat.id} disablePadding sx={{ mb: 0.8 }}>
                       <ListItemButton
@@ -311,7 +379,7 @@ export default function CrackersListPage({
                             ml: 1,
                           }}
                         >
-                          {cat.count}
+                          {count}
                         </Typography>
                       </ListItemButton>
                     </ListItem>
@@ -338,7 +406,7 @@ export default function CrackersListPage({
                 <Slider
                   value={priceRange}
                   min={10}
-                  max={2100}
+                  max={5000}
                   step={10}
                   onChange={(e, val) => setPriceRange(val)}
                   sx={{
@@ -401,12 +469,15 @@ export default function CrackersListPage({
               }}
             >
               {categoriesList.map((cat) => {
-                const isSelected = selectedCategory === cat.id
+                const isSelected = normHelper(selectedCategory) === normHelper(cat.id)
+                const count = cat.id === 'all'
+                  ? productsList.length
+                  : (categoryCounts[cat.id] ?? categoryCounts[normHelper(cat.id)] ?? cat.count ?? 0)
                 return (
                   <Chip
                     key={cat.id}
                     icon={getCategoryIcon(cat.icon, isSelected)}
-                    label={`${cat.name} (${cat.count})`}
+                    label={`${cat.name} (${count})`}
                     onClick={() => setSelectedCategory(cat.id)}
                     sx={{
                       borderRadius: '50px',
@@ -428,7 +499,7 @@ export default function CrackersListPage({
               })}
             </Box>
 
-            {/* Header with Title, Count & Sort */}
+            {/* Header with Title, Count & Search Box */}
             <Box
               sx={{
                 display: 'flex',
@@ -476,6 +547,41 @@ export default function CrackersListPage({
                 </Box>
               </Box>
 
+              {/* Responsive Crackers Search Bar */}
+              <Box sx={{ width: { xs: '100%', sm: 280, md: 340 } }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  placeholder="Search crackers (English, தமிழ், S.No)..."
+                  value={currentSearch}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#FFA000', fontSize: 20 }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: currentSearch ? (
+                      <InputAdornment position="end">
+                        <IconButton size="small" onClick={() => handleSearchChange('')}>
+                          <CloseIcon sx={{ fontSize: 16 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
+                  }}
+                  sx={{
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 2,
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      fontSize: '0.85rem',
+                      '& fieldset': { borderColor: '#E2E8F0' },
+                      '&:hover fieldset': { borderColor: '#FFA000' },
+                      '&.Mui-focused fieldset': { borderColor: '#FFA000' },
+                    },
+                  }}
+                />
+              </Box>
             </Box>
 
             {/* Empty State */}
@@ -496,8 +602,9 @@ export default function CrackersListPage({
                   variant="outlined"
                   onClick={() => {
                     setSelectedCategory('all')
-                    setPriceRange([10, 2100])
-                    setAppliedPriceRange([10, 2100])
+                    handleSearchChange('')
+                    setPriceRange([10, 5000])
+                    setAppliedPriceRange([10, 5000])
                   }}
                   sx={{ mt: 1, borderColor: '#FFA000', color: '#0B132B' }}
                 >
