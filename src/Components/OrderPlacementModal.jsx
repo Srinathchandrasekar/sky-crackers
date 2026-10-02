@@ -179,17 +179,6 @@ export default function OrderPlacementModal({
     setDuplicateNotice('')
     if (newValue === 1) {
       setIsEditingAddress(true)
-      // When switching to New Customer, if user is not verified existing customer, ensure all fields are blank
-      if (!isExistingCustomer) {
-        setCustomerName('')
-        setAlternatePhone('')
-        setEmailAddress('')
-        setAddress('')
-        setLandmark('')
-        setCity('')
-        setDistrict('')
-        setPinCode('')
-      }
     }
   }
 
@@ -225,16 +214,10 @@ export default function OrderPlacementModal({
       setLookupDone(false)
       setIsExistingCustomer(false)
       setCustomerId(null)
-      // Clear fields if mobile number is being retyped so past customer data never leaks
-      setCustomerName('')
-      setAlternatePhone('')
-      setEmailAddress('')
-      setAddress('')
-      setLandmark('')
-      setCity('')
-      setDistrict('')
-      setPinCode('')
-      setPreviousOrders([])
+      if (activeTab === 0) {
+        setCustomerName('')
+        setPreviousOrders([])
+      }
     }
   }
 
@@ -672,7 +655,7 @@ export default function OrderPlacementModal({
                     '&:hover': { backgroundColor: '#1A2A56' },
                   }}
                 >
-                  {lookupLoading ? <CircularProgress size={20} sx={{ color: '#FFA000' }} /> : 'Retrieve Account'}
+                  {lookupLoading ? <CircularProgress size={20} sx={{ color: '#FFA000' }} /> : 'Search Customer'}
                 </Button>
               </Grid>
             </Grid>
@@ -1263,7 +1246,7 @@ export default function OrderPlacementModal({
               ) : lookupDone && !isExistingCustomer ? (
                 'Create New Account Now →'
               ) : (
-                'Retrieve Account to Proceed'
+                'Search Customer to Proceed'
               )}
             </Button>
           )

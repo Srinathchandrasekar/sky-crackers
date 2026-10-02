@@ -8,10 +8,11 @@ import giftBoxImg from '../assets/giftbox.jpg'
 export const STORE_INFO = {
   name: 'Sky Fire Crackers',
   tagline: 'பட்டாசு கடை - Sivakasi Direct Factory Wholesale',
-  owner: 'J. Subathish',
-  phones: ['+91 8056704353', '+91 9597167401'],
-  address: 'Sivakasi Direct Factory Sale, Tamil Nadu',
-  discountNote: 'Up to 80% Discount • Wholesale & Retail Direct Sivakasi Factory Sale',
+  owner: 'Sri Venkateshwaran',
+  phones: ['+91 95971 67401', '+91 80567 04353'],
+  address: 'No 68, Virudhunagar Road, Anaikottam, Sivakasi - 626 130, Tamil Nadu',
+  email: 'skyfirecrackers@gmail.com',
+  discountNote: 'Wholesale Direct Sivakasi Factory Sale',
 }
 
 export const CATEGORIES = [

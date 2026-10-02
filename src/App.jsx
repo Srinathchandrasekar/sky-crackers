@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   ThemeProvider,
   CssBaseline,
@@ -43,6 +43,52 @@ function App() {
   const [offersOpen, setOffersOpen] = useState(false)
   const [orderSuccessOpen, setOrderSuccessOpen] = useState(false)
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null)
+
+  // Handle mobile browser hardware back button navigation (prevents Chrome from exiting)
+  useEffect(() => {
+    const isAnyModalOpen =
+      cartDrawerOpen ||
+      orderModalOpen ||
+      orderDetailsOpen ||
+      brochureOpen ||
+      offersOpen ||
+      orderSuccessOpen
+
+    // Push history state whenever modal opens or user navigates away from home
+    if (isAnyModalOpen || activePage !== 'home') {
+      window.history.pushState({ modalOpen: isAnyModalOpen, page: activePage }, '')
+    }
+
+    const handlePopState = () => {
+      if (orderDetailsOpen) {
+        setOrderDetailsOpen(false)
+      } else if (orderModalOpen) {
+        setOrderModalOpen(false)
+      } else if (cartDrawerOpen) {
+        setCartDrawerOpen(false)
+      } else if (brochureOpen) {
+        setBrochureOpen(false)
+      } else if (offersOpen) {
+        setOffersOpen(false)
+      } else if (orderSuccessOpen) {
+        setOrderSuccessOpen(false)
+      } else if (activePage !== 'home') {
+        setActivePage('home')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [
+    cartDrawerOpen,
+    orderModalOpen,
+    orderDetailsOpen,
+    brochureOpen,
+    offersOpen,
+    orderSuccessOpen,
+    activePage,
+  ])
 
   // Cart total items count
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -265,8 +311,8 @@ function App() {
           )}
         </Box>
 
-        {/* Floating Quick Cart Action Button (Bottom-Right) */}
-        {cartCount > 0 && activePage !== 'admin' && (
+        {/* Floating Quick Cart Action Button (Bottom-Right) - Styled like Produce Order button */}
+        {cartCount > 0 && activePage !== 'admin' && activePage !== 'checkout' && activePage !== 'cart' && (
           <Fab
             variant="extended"
             onClick={() => setCartDrawerOpen(true)}
@@ -275,28 +321,28 @@ function App() {
               bottom: { xs: 20, md: 32 },
               right: { xs: 20, md: 32 },
               zIndex: 1200,
-              backgroundColor: '#0B132B',
-              color: '#FFA000',
-              fontWeight: 800,
+              backgroundColor: '#FFA000',
+              color: '#0B132B',
+              fontWeight: 900,
               px: 3,
               py: 1.6,
               borderRadius: '32px',
-              border: '2px solid #FFA000',
-              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.45)',
+              border: 'none',
+              boxShadow: '0 8px 30px rgba(255, 160, 0, 0.45)',
               display: 'flex',
               alignItems: 'center',
               gap: 1.5,
               '&:hover': {
-                backgroundColor: '#162244',
+                backgroundColor: '#FF8F00',
                 transform: 'scale(1.04)',
               },
               transition: 'all 0.25s ease',
             }}
           >
             <Badge badgeContent={cartCount} color="error">
-              <ShoppingCartIcon sx={{ color: '#FFA000' }} />
+              <ShoppingCartIcon sx={{ color: '#0B132B' }} />
             </Badge>
-            <Typography variant="body2" sx={{ fontWeight: 800, color: '#FFFFFF' }}>
+            <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '0.94rem' }}>
               View Cart (₹{cartSubtotal})
             </Typography>
           </Fab>

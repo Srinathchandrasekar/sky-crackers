@@ -135,18 +135,6 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                 Sky Fire Crackers பட்டாசு கடை • Price List 2026
               </Typography>
 
-              <Typography
-                variant="body1"
-                sx={{
-                  color: 'rgba(255, 255, 255, 0.85)',
-                  fontSize: { xs: '0.92rem', md: '1.05rem' },
-                  letterSpacing: '0.04em',
-                  mb: 3.5,
-                }}
-              >
-                சிவகாசி விலைக்கு நேரடி விற்பனை &nbsp;•&nbsp; Wholesale & Retail Available
-              </Typography>
-
               {/* Action Buttons */}
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} sx={{ maxWidth: { xs: '100%', sm: 520 } }}>
                 <Button

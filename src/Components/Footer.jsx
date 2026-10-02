@@ -41,7 +41,7 @@ const policiesData = {
             Enterprise & Merchant Details:
           </Typography>
           <Typography variant="body2"><strong>Entity / Merchant Name:</strong> Sri Venkateshwaran / Sky Fire Crackers</Typography>
-          <Typography variant="body2"><strong>Registered Location:</strong> Sivakasi - 626123, Virudhunagar District, Tamil Nadu, India</Typography>
+          <Typography variant="body2"><strong>Registered Location:</strong> No 68, Virudhunagar Road, Anaikottam, Sivakasi - 626 130, Tamil Nadu, India</Typography>
           <Typography variant="body2"><strong>Product Standards:</strong> 100% Certified Green Crackers (CSIR-NEERI Approved)</Typography>
           <Typography variant="body2"><strong>Compliance:</strong> Indian Explosives Act & PESO Guidelines</Typography>
         </Box>
@@ -99,24 +99,17 @@ const policiesData = {
     content: (
       <Box sx={{ lineHeight: 1.8 }}>
         <Typography variant="body2" paragraph>
-          <strong>1. Dispatch Origin:</strong> All consignments are packed and dispatched directly from our central fireworks storage warehouse located in Sivakasi, Tamil Nadu.
+          <strong>1. Dispatch Origin:</strong> All consignments are packed and dispatched directly from our central fireworks warehouse located at No 68, Virudhunagar Road, Anaikottam, Sivakasi - 626 130.
         </Typography>
         <Typography variant="body2" paragraph>
-          <strong>2. Transportation Method:</strong> Due to safety regulations governing the transport of pyrotechnic products, fireworks cannot be sent via air couriers or standard postal couriers. Consignments are transported via authorized and licensed regional parcel transport services (e.g., VRL, ABT, MET, KRS, Rathimeena, Royal Express).
+          <strong>2. Transportation Method & Delivery Charge Concept:</strong> Due to safety regulations governing the transport of pyrotechnic products, fireworks are transported via authorized and licensed regional parcel transport services. Consignments are dispatched to the customer door or nearest transport parcel office. <strong>Actual transport delivery charges are To-Pay at the time of delivery upon collecting the parcel.</strong>
         </Typography>
         <Typography variant="body2" paragraph>
           <strong>3. Delivery Timelines:</strong>
           <ul>
-            <li><strong>Tamil Nadu (Chennai, Madurai, Coimbatore, Tirunelveli, Trichy, Salem, etc.):</strong> 2 to 4 business days.</li>
-            <li><strong>Other South Indian States (Karnataka, Andhra Pradesh, Telangana, Kerala):</strong> 3 to 6 business days.</li>
-            <li><strong>Peak Festive Season (Diwali week):</strong> We strongly recommend booking 7–10 days in advance to ensure on-time delivery before the festival day.</li>
+            <li><strong>Tamil Nadu:</strong> 2 to 4 business days.</li>
+            <li><strong>Other South Indian States:</strong> 3 to 6 business days.</li>
           </ul>
-        </Typography>
-        <Typography variant="body2" paragraph>
-          <strong>4. Parcel Pickup / Door Delivery:</strong> Based on the consignee delivery location and accessibility of heavy transport vehicles, goods will be delivered directly to the address or made available for pickup at the nearest official transport parcel godown. Consignees receive an SMS/WhatsApp notification with the Lorry Receipt (LR) tracking number upon dispatch.
-        </Typography>
-        <Typography variant="body2" paragraph>
-          <strong>5. High-Grade Packaging:</strong> All orders are securely boxed in heavy-duty 5-ply/7-ply moisture-resistant corrugated cartons strapped with heavy plastic binding to guarantee full protection during transit.
         </Typography>
       </Box>
     ),
@@ -126,25 +119,13 @@ const policiesData = {
     content: (
       <Box sx={{ lineHeight: 1.8 }}>
         <Typography variant="body2" paragraph>
-          <strong>1. Cancellation Before Dispatch:</strong> Customers can cancel their booking free of charge at any time before the order has been packed and handed over to the transport carrier. To request a cancellation, please contact our support team at <strong>+91 8056 704353</strong> or email <strong>srinathsrinath7082@gmail.com</strong> with your Order Number.
+          <strong>1. Cancellation Before Dispatch:</strong> Customers can cancel their booking free of charge at any time before the order has been handed over to the transport carrier by contacting our support team at <strong>+91 95971 67401 / +91 80567 04353</strong> or email <strong>skyfirecrackers@gmail.com</strong> with your Order Number.
         </Typography>
         <Typography variant="body2" paragraph>
-          <strong>2. Damaged or Defective Items:</strong> While we ensure supreme multi-layer packaging, in the rare event of transit carton damage or missing items:
-          <ul>
-            <li>Please inspect the package upon collection and contact our customer support team within 48 hours of receipt.</li>
-            <li>Share a brief photo/video of the affected parcel via WhatsApp to +91 8056 704353.</li>
-            <li>Upon verification, we will provide an immediate free product replacement or issue a full refund for the damaged items.</li>
-          </ul>
+          <strong>2. Damaged or Defective Items:</strong> While we ensure supreme multi-layer packaging, in the rare event of transit carton damage or missing items, contact our customer support team within 48 hours of receipt via WhatsApp (+91 95971 67401 / +91 80567 04353). Upon verification, we will provide an immediate free product replacement or issue a full refund.
         </Typography>
         <Typography variant="body2" paragraph>
-          <strong>3. Refund Processing Timelines:</strong> Once an eligible refund is approved:
-          <ul>
-            <li>Refunds for payments made via Online Razorpay (UPI, Debit/Credit Card, Net Banking) are automatically credited back to the original source account.</li>
-            <li>Refund credits reflect within <strong>5 to 7 business working days</strong> as per standard banking and Razorpay settlement cycles.</li>
-          </ul>
-        </Typography>
-        <Typography variant="body2" paragraph>
-          <strong>4. Non-Refundable Scenarios:</strong> Due to legal explosive regulations, fired or ignited crackers cannot be returned. Orders where delivery was refused by the recipient without any valid damage or defect are subject to two-way transport deduction.
+          <strong>3. Refund Processing Timelines:</strong> Approved refunds are automatically credited back to the original source account via Razorpay within <strong>5 to 7 business working days</strong>.
         </Typography>
       </Box>
     ),
@@ -165,8 +146,8 @@ const policiesData = {
               </Typography>
               <Typography variant="body2" sx={{ color: '#475569' }}>
                 Sky Fire Crackers (Sri Venkateshwaran)<br />
-                4/112, Madurai Main Road, Near Central Bus Stand,<br />
-                Sivakasi - 626123, Virudhunagar District, Tamil Nadu, India.
+                No 68, Virudhunagar Road, Anaikottam,<br />
+                Sivakasi - 626 130, Virudhunagar District, Tamil Nadu, India.
               </Typography>
             </Box>
           </Box>
@@ -175,10 +156,22 @@ const policiesData = {
             <PhoneIcon sx={{ color: '#16A34A' }} />
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B' }}>
-                Customer Helpline / WhatsApp:
+                Customer Helpline (Call & Support):
               </Typography>
               <Typography variant="body2" sx={{ color: '#475569' }}>
-                <strong>+91 8056 704353</strong> (Fast WhatsApp & Call Support)
+                <strong>+91 95971 67401</strong> (Primary) | <strong>+91 80567 04353</strong>
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 1.5, bgcolor: '#F8FAFC', borderRadius: 2 }}>
+            <WhatsAppIcon sx={{ color: '#25D366' }} />
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B' }}>
+                WhatsApp Fast Support (Priority):
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#475569' }}>
+                <strong>+91 95971 67401</strong> / <strong>+91 80567 04353</strong>
               </Typography>
             </Box>
           </Box>
@@ -190,7 +183,7 @@ const policiesData = {
                 Official Email Address:
               </Typography>
               <Typography variant="body2" sx={{ color: '#475569' }}>
-                srinathsrinath7082@gmail.com / support@skycrackers.com
+                skyfirecrackers@gmail.com
               </Typography>
             </Box>
           </Box>
@@ -389,17 +382,21 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <LocationOnIcon sx={{ color: '#FFA000', fontSize: 20, mt: 0.2 }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1', fontSize: '0.82rem', lineHeight: 1.5 }}>
-                  <strong>Sky Fire Crackers (Sri Venkateshwaran)</strong><br />
-                  4/112, Madurai Road, Near Bus Stand,<br />
-                  Sivakasi - 626123, Tamil Nadu, India.
+                  <strong>Sky Fire Crackers</strong><br />
+                  No 68, Virudhunagar Road, Anaikottam,<br />
+                  Sivakasi - 626 130, Tamil Nadu, India.
                 </Typography>
               </Box>
 
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <PhoneIcon sx={{ color: '#10B981', fontSize: 18 }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1', fontSize: '0.84rem' }}>
+                  <a href="tel:+919597167401" style={{ color: '#CBD5E1', textDecoration: 'none' }}>
+                    <strong>+91 95971 67401</strong>
+                  </a>
+                  {' / '}
                   <a href="tel:+918056704353" style={{ color: '#CBD5E1', textDecoration: 'none' }}>
-                    <strong>+91 8056 704353</strong>
+                    <strong>+91 80567 04353</strong>
                   </a>
                 </Typography>
               </Box>
@@ -407,8 +404,8 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <WhatsAppIcon sx={{ color: '#25D366', fontSize: 18 }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1', fontSize: '0.84rem' }}>
-                  <a href="https://wa.me/918056704353" target="_blank" rel="noopener noreferrer" style={{ color: '#34D399', textDecoration: 'none', fontWeight: 700 }}>
-                    WhatsApp Quick Order Support
+                  <a href="https://wa.me/919597167401" target="_blank" rel="noopener noreferrer" style={{ color: '#34D399', textDecoration: 'none', fontWeight: 700 }}>
+                    WhatsApp: +91 95971 67401
                   </a>
                 </Typography>
               </Box>
@@ -416,8 +413,8 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <EmailIcon sx={{ color: '#38BDF8', fontSize: 18 }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1', fontSize: '0.84rem' }}>
-                  <a href="mailto:srinathsrinath7082@gmail.com" style={{ color: '#CBD5E1', textDecoration: 'none' }}>
-                    srinathsrinath7082@gmail.com
+                  <a href="mailto:skyfirecrackers@gmail.com" style={{ color: '#CBD5E1', textDecoration: 'none' }}>
+                    skyfirecrackers@gmail.com
                   </a>
                 </Typography>
               </Box>
@@ -465,7 +462,7 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <SecurityIcon sx={{ color: '#10B981', fontSize: 20 }} />
             <Typography variant="body2" sx={{ color: '#94A3B8', fontSize: '0.8rem' }}>
-              <strong>100% Secure Checkout:</strong> Powered by <strong>Razorpay Payment Gateway</strong> (UPI, Google Pay, PhonePe, Cards, Net Banking)
+              <strong>100% Secure Checkout:</strong> Online Payment (UPI, Google Pay, PhonePe, Cards, Net Banking)
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
@@ -478,13 +475,10 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
           </Box>
         </Box>
 
-        {/* Copyright & Disclaimer */}
+        {/* Copyright Simple */}
         <Box sx={{ textAlign: 'center' }}>
-          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mb: 0.5, fontSize: '0.75rem' }}>
-            © 2026 <strong>Sky Fire Crackers</strong>, Sivakasi. All Rights Reserved. Regulated under Indian Explosives Rules & Supreme Court Directives.
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#475569', fontSize: '0.7rem' }}>
-            Notice: As per Supreme Court orders, online sales are fulfilled via Sivakasi wholesale booking and licensed regional transport dispatch.
+          <Typography variant="body2" sx={{ color: '#94A3B8', fontWeight: 600, fontSize: '0.82rem' }}>
+            © 2026 all rights sky fire crackers
           </Typography>
         </Box>
       </Container>

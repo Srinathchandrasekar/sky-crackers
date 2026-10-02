@@ -380,14 +380,14 @@ export default function OrderDetailsModal({
           }}
         >
           <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B', mb: 1 }}>
-            Enter Customer 10-Digit Mobile Number to Retrieve Bookings:
+            Enter Customer 10-Digit Mobile Number:
           </Typography>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
             <TextField
               fullWidth
               size="small"
-              placeholder="e.g. 7448849672"
+              placeholder="Enter 10-digit mobile number"
               value={mobileNumber}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, '').slice(0, 10)
@@ -422,7 +422,7 @@ export default function OrderDetailsModal({
                 '&:hover': { backgroundColor: '#FF8F00' },
               }}
             >
-              {loading ? 'Searching DB...' : 'Find My Orders'}
+              {loading ? 'Searching...' : 'Search Customer'}
             </Button>
           </Stack>
         </Paper>

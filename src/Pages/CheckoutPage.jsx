@@ -888,12 +888,12 @@ export default function CheckoutPage({
                         </Typography>
                       </Box>
 
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant="body2" sx={{ color: '#64748B' }}>
                           Delivery Charges:
                         </Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#16A34A' }}>
-                          FREE (Direct Factory Wholesale)
+                        <Typography variant="body2" sx={{ fontWeight: 800, color: '#D97706', fontSize: '0.84rem' }}>
+                          To Pay at Delivery (Transport)
                         </Typography>
                       </Box>
                     </Box>
@@ -920,7 +920,7 @@ export default function CheckoutPage({
                         ₹{totalAmount.toLocaleString('en-IN')}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#94A3B8', mt: 0.5 }}>
-                        Inclusive of all factory discounts & zero transport booking fees
+                        Inclusive of all factory discounts. Transport charges To-Pay upon collecting parcel.
                       </Typography>
                     </Box>
                   </Grid>
@@ -982,18 +982,13 @@ export default function CheckoutPage({
                     ₹{totalAmount.toLocaleString('en-IN')}
                   </Typography>
                 </Box>
-                <Chip
-                  size="small"
-                  label="Direct Sivakasi"
-                  sx={{ backgroundColor: '#16A34A', color: '#FFFFFF', fontWeight: 800, fontSize: '0.75rem' }}
-                />
               </Box>
 
               <RadioGroup
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value)}
               >
-                {/* Option 1: Razorpay Online Payment */}
+                {/* Option 1: Online Payment */}
                 <Paper
                   elevation={0}
                   onClick={() => setPaymentMethod('razorpay')}
@@ -1013,7 +1008,7 @@ export default function CheckoutPage({
                     label={
                       <Box sx={{ ml: 0.5 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B', fontSize: '0.92rem' }}>
-                          Online Payment (Razorpay Secure)
+                          Online Payment (UPI, Cards, Net Banking)
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#64748B', display: 'block', lineHeight: 1.2 }}>
                           UPI (GPay / PhonePe / Paytm / QR), Cards, Net Banking
@@ -1054,17 +1049,15 @@ export default function CheckoutPage({
               >
                 {isSubmitting
                   ? 'Saving Booking...'
-                  : paymentMethod === 'razorpay'
-                  ? `Pay ₹${totalAmount.toLocaleString('en-IN')} (Razorpay) →`
-                  : `Pay ₹${totalAmount.toLocaleString('en-IN')} (Online Secure) →`}
+                  : `Pay ₹${totalAmount.toLocaleString('en-IN')} (Online Payment) →`}
               </Button>
 
-              {/* Save Order Details Button - Compact & Sleek */}
+              {/* Save Order Details Button - Compact & Sleek (No icon) */}
               <Button
                 variant="outlined"
                 fullWidth
                 disabled={isSubmitting || cart.length === 0}
-                startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <SaveIcon sx={{ color: '#0B132B', fontSize: 16 }} />}
+                startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : null}
                 onClick={handleSaveBookingOnly}
                 sx={{
                   mt: 1,

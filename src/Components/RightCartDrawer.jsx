@@ -262,31 +262,11 @@ export default function RightCartDrawer({
                   </Box>
                 </Box>
 
-                {/* Price Column */}
+                {/* Price Column - Clean price without strike or discount chip */}
                 <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                   <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '1.08rem' }}>
                     ₹{item.product.discountPrice * item.quantity}
                   </Typography>
-                  {item.product.originalPrice > item.product.discountPrice && (
-                    <Typography
-                      variant="caption"
-                      sx={{ color: '#94A3B8', textDecoration: 'line-through', display: 'block', fontSize: '0.78rem' }}
-                    >
-                      ₹{item.product.originalPrice * item.quantity}
-                    </Typography>
-                  )}
-                  <Chip
-                    label="80% OFF"
-                    size="small"
-                    sx={{
-                      backgroundColor: '#FEF3C7',
-                      color: '#B45309',
-                      fontWeight: 800,
-                      fontSize: '0.65rem',
-                      height: 18,
-                      mt: 0.4,
-                    }}
-                  />
                 </Box>
               </Paper>
             ))}
