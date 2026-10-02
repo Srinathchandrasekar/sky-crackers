@@ -309,7 +309,7 @@ export const createOrderApi = async (orderPayload) => {
     orderNumber: orderNum,
     createdAt: new Date().toISOString(),
     orderStatus: 'Confirmed',
-    paymentStatus: (orderPayload.paymentMethod || '').toUpperCase() === 'COD' ? 'Pending' : 'Paid',
+    paymentStatus: (orderPayload.paymentMethod || '').toUpperCase().includes('PENDING') ? 'Pending' : ((orderPayload.paymentMethod || '').toUpperCase() === 'RAZORPAY' ? 'Paid' : 'Pending'),
     ...orderPayload,
   }
 

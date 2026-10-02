@@ -200,7 +200,7 @@ export default function CheckoutPage({
       if (paymentMethod === 'razorpay') {
         const isLoaded = await loadRazorpayScript()
         if (!isLoaded) {
-          setErrorMsg('Failed to load Razorpay SDK. Please check your internet or select Cash on Delivery / UPI.')
+          setErrorMsg('Failed to load Razorpay SDK. Please check your internet connection and try again.')
           setIsSubmitting(false)
           return
         }
@@ -360,7 +360,7 @@ export default function CheckoutPage({
         upi: 'Direct UPI (GPay / PhonePe / Paytm)',
         card: 'Credit / Debit Card',
         netbanking: 'Net Banking',
-        cod: 'Cash on Delivery',
+        online_pending: 'Online Payment (Pending / Pay Later)',
       }
 
       const orderSummary = {
@@ -1056,7 +1056,7 @@ export default function CheckoutPage({
                   ? 'Saving Booking...'
                   : paymentMethod === 'razorpay'
                   ? `Pay ₹${totalAmount.toLocaleString('en-IN')} (Razorpay) →`
-                  : `Confirm COD (₹${totalAmount.toLocaleString('en-IN')}) →`}
+                  : `Pay ₹${totalAmount.toLocaleString('en-IN')} (Online Secure) →`}
               </Button>
 
               {/* Save Order Details Button - Compact & Sleek */}

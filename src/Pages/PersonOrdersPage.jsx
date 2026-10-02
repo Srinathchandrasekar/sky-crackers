@@ -164,12 +164,15 @@ export default function PersonOrdersPage({
         return
       }
 
+      const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TihKhwOYL8AwVm'
+      const amountPaise = Math.max(100, Math.round((Number(order.totalAmount) || 0) * 100))
+
       const options = {
-        key: 'rzp_test_placeholder', // Or test key
-        amount: Math.round(order.totalAmount * 100),
+        key: rzpKey,
+        amount: amountPaise,
         currency: 'INR',
         name: 'SkyFire Crackers Sivakasi',
-        description: `Payment for Order #${order.orderNumber}`,
+        description: `Payment for Order #${order.orderNumber || order.orderId}`,
         image: 'https://cdn-icons-png.flaticon.com/512/3595/3595455.png',
         prefill: {
           name: order.customerName || customer?.customerName || '',
@@ -187,11 +190,24 @@ export default function PersonOrdersPage({
               paymentMethod: 'Online Razorpay',
               transactionId: response.razorpay_payment_id,
             })
+            try {
+              const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+              const updated = existingOrders.map((o) => {
+                if (String(o.orderId) === String(order.orderId) || String(o.orderNumber) === String(order.orderNumber)) {
+                  return { ...o, paymentStatus: 'Completed', paymentMethod: 'Online Razorpay', transactionId: response.razorpay_payment_id }
+                }
+                return o
+              })
+              localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
+            } catch (lsErr) {
+              console.warn('LocalStorage sync warning:', lsErr)
+            }
             setSuccessMsg(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`)
             loadPersonData()
           } catch (updateErr) {
             console.error('Payment sync error:', updateErr)
             setSuccessMsg(`Payment received! ID: ${response.razorpay_payment_id}`)
+            loadPersonData()
           } finally {
             setPayingOrderId(null)
           }
