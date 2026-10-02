@@ -315,10 +315,19 @@ function App() {
           open={orderDetailsOpen}
           onClose={() => setOrderDetailsOpen(false)}
           initialMobile={placedOrderDetails?.customer?.phone || customerData?.mobileNumber || ''}
+          cart={cart}
           onRestoreCart={(items) => setCart(items)}
-          onOpenShop={() => {
+          onOpenShop={(cust) => {
+            if (cust) setCustomerData(cust)
             setOrderDetailsOpen(false)
             setActivePage('crackers')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onProceedToCheckout={(cust) => {
+            if (cust) setCustomerData(cust)
+            setOrderDetailsOpen(false)
+            setActivePage('checkout')
+            window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
         />
       </Box>

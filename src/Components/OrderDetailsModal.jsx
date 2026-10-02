@@ -55,8 +55,10 @@ export default function OrderDetailsModal({
   open,
   onClose,
   initialMobile = '',
+  cart = [],
   onRestoreCart,
   onOpenShop,
+  onProceedToCheckout,
 }) {
   const [mobileNumber, setMobileNumber] = useState(initialMobile || '')
   const [loading, setLoading] = useState(false)
@@ -444,7 +446,8 @@ SkyFire Crackers Sivakasi
               p: 2.5,
               borderRadius: 2.5,
               backgroundColor: '#FFFFFF',
-              border: '1px solid #BAE6FD',
+              border: '1.5px solid #0284C7',
+              boxShadow: '0 4px 15px rgba(2, 132, 199, 0.08)',
               mb: 3,
             }}
           >
@@ -454,6 +457,11 @@ SkyFire Crackers Sivakasi
                 <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0B132B' }}>
                   {customer.customerName}
                 </Typography>
+                <Chip
+                  size="small"
+                  label="Verified Account"
+                  sx={{ backgroundColor: '#DCFCE7', color: '#16A34A', fontWeight: 800, fontSize: '0.72rem' }}
+                />
               </Stack>
               <Chip
                 label={`+91 ${customer.mobileNumber}`}
@@ -461,11 +469,60 @@ SkyFire Crackers Sivakasi
               />
             </Box>
 
-            <Stack direction="row" spacing={1} alignItems="flex-start">
+            <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mb: 2 }}>
               <LocationOnIcon sx={{ color: '#64748B', fontSize: 18, mt: 0.2 }} />
               <Typography variant="body2" sx={{ color: '#475569' }}>
                 {customer.address}
               </Typography>
+            </Stack>
+
+            {/* Direct Action Buttons for this customer */}
+            <Divider sx={{ my: 1.5 }} />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="flex-end">
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => {
+                  if (onOpenShop) onOpenShop(customer)
+                }}
+                sx={{
+                  color: '#0284C7',
+                  borderColor: '#0284C7',
+                  fontWeight: 800,
+                  fontSize: '0.82rem',
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  py: 0.7,
+                  px: 2,
+                  '&:hover': { backgroundColor: '#F0F9FF' },
+                }}
+              >
+                🛒 Select Crackers for {customer.customerName?.split(' ')[0] || 'Customer'} →
+              </Button>
+
+              {cart && cart.length > 0 && (
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => {
+                    if (onProceedToCheckout) onProceedToCheckout(customer)
+                  }}
+                  sx={{
+                    backgroundColor: '#FFA000',
+                    color: '#0B132B',
+                    fontWeight: 900,
+                    fontSize: '0.84rem',
+                    textTransform: 'none',
+                    borderRadius: 2,
+                    py: 0.7,
+                    px: 2,
+                    boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
+                    '&:hover': { backgroundColor: '#FF8F00' },
+                  }}
+                >
+                  💾 Save & Book Current Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) →
+                </Button>
+              )}
             </Stack>
           </Paper>
         )}
@@ -693,27 +750,54 @@ SkyFire Crackers Sivakasi
                 `No previous bookings or customer account found for +91 ${mobileNumber}.`
               )}
             </Typography>
-            {onOpenShop && (
-              <Button
-                variant="contained"
-                onClick={() => {
-                  if (onClose) onClose()
-                  onOpenShop()
-                }}
-                sx={{
-                  backgroundColor: '#0B132B',
-                  color: '#FFA000',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  py: 1,
-                  px: 3,
-                  borderRadius: 2,
-                  '&:hover': { backgroundColor: '#1A2A56' },
-                }}
-              >
-                Explore Crackers Catalog →
-              </Button>
-            )}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="center" alignItems="center">
+              {onOpenShop && (
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    if (onClose) onClose()
+                    onOpenShop(customer)
+                  }}
+                  sx={{
+                    backgroundColor: '#0B132B',
+                    color: '#FFA000',
+                    fontWeight: 800,
+                    fontSize: '0.88rem',
+                    py: 1,
+                    px: 3,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': { backgroundColor: '#1A2A56' },
+                  }}
+                >
+                  Explore Crackers Catalog →
+                </Button>
+              )}
+
+              {customer && cart && cart.length > 0 && onProceedToCheckout && (
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    if (onClose) onClose()
+                    onProceedToCheckout(customer)
+                  }}
+                  sx={{
+                    backgroundColor: '#FFA000',
+                    color: '#0B132B',
+                    fontWeight: 900,
+                    fontSize: '0.88rem',
+                    py: 1,
+                    px: 3,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+                    '&:hover': { backgroundColor: '#FF8F00' },
+                  }}
+                >
+                  💾 Book Current Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) for {customer.customerName?.split(' ')[0]} →
+                </Button>
+              )}
+            </Stack>
           </Paper>
         ) : null}
 
