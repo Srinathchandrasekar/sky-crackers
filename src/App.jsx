@@ -18,6 +18,7 @@ import OrderSuccessModal from './Components/OrderSuccessModal'
 import RightCartDrawer from './Components/RightCartDrawer'
 import OrderPlacementModal from './Components/OrderPlacementModal'
 import OrderDetailsModal from './Components/OrderDetailsModal'
+import Footer from './Components/Footer'
 import HomePage from './Pages/HomePage'
 import CrackersListPage from './Pages/CrackersListPage'
 import CartPage from './Pages/CartPage'
@@ -380,6 +381,16 @@ function App() {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           onOpenPersonPage={(cust) => handleOpenPersonPage(cust, 'crackers')}
+        />
+
+        {/* Professional Footer with Compliance Policies & Contact Details for Razorpay */}
+        <Footer
+          onNavigate={(page) => {
+            setActivePage(page)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onOpenBrochure={() => setBrochureOpen(true)}
+          onOpenOffers={() => setOffersOpen(true)}
         />
       </Box>
     </ThemeProvider>
