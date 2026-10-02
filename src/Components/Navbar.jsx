@@ -80,7 +80,7 @@ export default function Navbar({
     { id: 'crackers', label: 'Crackers', icon: <StorefrontIcon fontSize="small" /> },
     {
       id: 'orders',
-      label: 'Order Details',
+      label: 'My Orders',
       icon: <ReceiptLongIcon fontSize="small" />,
       onClick: () => {
         if (onOpenOrderDetails) onOpenOrderDetails()

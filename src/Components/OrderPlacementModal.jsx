@@ -45,6 +45,8 @@ import ContactPhoneIcon from '@mui/icons-material/ContactPhone'
 import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout'
 import BookmarkAddedIcon from '@mui/icons-material/BookmarkAdded'
+import DownloadIcon from '@mui/icons-material/Download'
+import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 import { lookupCustomerApi, saveCustomerApi, createOrderApi } from '../services/api'
 import { CRACKERS_DATA } from '../data/crackersData'
 
@@ -853,23 +855,49 @@ export default function OrderPlacementModal({
                                 <Typography variant="caption" sx={{ color: '#475569', fontWeight: 600, display: 'block', mb: 0.8 }}>
                                   Crackers: {po.items.map((i) => `${i.productName} (x${i.quantity})`).join(', ')}
                                 </Typography>
-                                <Button
-                                  size="small"
-                                  variant="outlined"
-                                  startIcon={<ShoppingCartCheckoutIcon sx={{ fontSize: 16 }} />}
-                                  onClick={() => handleRestoreOrderItems(po)}
-                                  sx={{
-                                    textTransform: 'none',
-                                    fontWeight: 800,
-                                    fontSize: '0.75rem',
-                                    color: '#0369A1',
-                                    borderColor: '#7DD3FC',
-                                    backgroundColor: '#FFFFFF',
-                                    '&:hover': { backgroundColor: '#E0F2FE' },
-                                  }}
-                                >
-                                  Load These Crackers into Cart
-                                </Button>
+                                <Stack direction="row" spacing={1.5} sx={{ mt: 0.8 }} flexWrap="wrap">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    startIcon={<ShoppingCartCheckoutIcon sx={{ fontSize: 16 }} />}
+                                    onClick={() => handleRestoreOrderItems(po)}
+                                    sx={{
+                                      textTransform: 'none',
+                                      fontWeight: 800,
+                                      fontSize: '0.75rem',
+                                      color: '#0369A1',
+                                      borderColor: '#7DD3FC',
+                                      backgroundColor: '#FFFFFF',
+                                      '&:hover': { backgroundColor: '#E0F2FE' },
+                                    }}
+                                  >
+                                    Load These Crackers into Cart
+                                  </Button>
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
+                                    onClick={() => {
+                                      const orderForInvoice = {
+                                        ...po,
+                                        customerName: po.customerName || customerName || 'Valued Customer',
+                                        customerPhone: po.customerPhone || mobileNumber || '',
+                                        deliveryAddress: po.deliveryAddress || address || `${city} ${district}`.trim() || 'Tamil Nadu, India',
+                                      }
+                                      downloadStructuredInvoice(orderForInvoice)
+                                    }}
+                                    sx={{
+                                      textTransform: 'none',
+                                      fontWeight: 800,
+                                      fontSize: '0.75rem',
+                                      backgroundColor: '#FFA000',
+                                      color: '#0B132B',
+                                      '&:hover': { backgroundColor: '#FF8F00' },
+                                    }}
+                                  >
+                                    Download Invoice (பில் டவுன்லோட்)
+                                  </Button>
+                                </Stack>
                               </Box>
                             )}
                           </Box>

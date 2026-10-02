@@ -161,7 +161,7 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                     },
                   }}
                 >
-                  Shop 91 Crackers Now
+                  Shop Crackers Now
                 </Button>
 
                 <Button
@@ -278,7 +278,7 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                 Shop by Category
               </Typography>
               <Typography variant="body1" sx={{ color: '#64748B', fontSize: '0.95rem' }}>
-                Explore our full 91 items range with 80% Sivakasi factory discounts
+                Explore our complete range with 80% Sivakasi factory discounts
               </Typography>
             </Box>
 
@@ -302,7 +302,7 @@ export default function HomePage({ onShopNow, onCategorySelect, onOpenBrochure }
                 },
               }}
             >
-              View All 91 Products →
+              View All Products →
             </Button>
           </Box>
 

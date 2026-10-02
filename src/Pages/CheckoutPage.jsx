@@ -240,6 +240,9 @@ export default function CheckoutPage({
               // Transactionally save order to SQL Server after payment confirmation
               const orderRes = await createOrderApi({
                 customerId: Number(custId),
+                customerName: formData.fullName?.trim(),
+                customerPhone: formData.mobileNumber?.trim(),
+                deliveryAddress: fullAddress,
                 paymentMethod: 'RAZORPAY',
                 notes: `Razorpay Payment ID: ${response.razorpay_payment_id || 'CONFIRMED'}`,
                 items: itemsPayload,
@@ -251,9 +254,9 @@ export default function CheckoutPage({
                 existingOrders.unshift({
                   orderNumber: orderRes.orderNumber,
                   customerId: Number(custId),
-                  customerName: orderRes.customerName || formData.fullName,
-                  customerPhone: orderRes.customerPhone || formData.mobileNumber,
-                  deliveryAddress: orderRes.deliveryAddress || fullAddress,
+                  customerName: formData.fullName || orderRes.customerName || 'Valued Customer',
+                  customerPhone: formData.mobileNumber || orderRes.customerPhone || '',
+                  deliveryAddress: fullAddress || orderRes.deliveryAddress || 'Tamil Nadu, India',
                   totalAmount: orderRes.totalAmount || totalAmount,
                   subTotal: orderRes.subTotal || subtotal,
                   paymentMethod: 'RAZORPAY',
@@ -455,6 +458,9 @@ export default function CheckoutPage({
       // Transactionally save order and order items with CustomerId in SQL Server
       const orderRes = await createOrderApi({
         customerId: Number(custId),
+        customerName: formData.fullName?.trim(),
+        customerPhone: formData.mobileNumber?.trim(),
+        deliveryAddress: fullAddress,
         paymentMethod: 'ONLINE_PENDING',
         notes: `Online Payment Pending - saved by customer (+91 ${formData.mobileNumber})`,
         items: itemsPayload,
@@ -466,9 +472,9 @@ export default function CheckoutPage({
         existingOrders.unshift({
           orderNumber: orderRes.orderNumber,
           customerId: Number(custId),
-          customerName: orderRes.customerName || formData.fullName,
-          customerPhone: orderRes.customerPhone || formData.mobileNumber,
-          deliveryAddress: orderRes.deliveryAddress || fullAddress,
+          customerName: formData.fullName || orderRes.customerName || 'Valued Customer',
+          customerPhone: formData.mobileNumber || orderRes.customerPhone || '',
+          deliveryAddress: fullAddress || orderRes.deliveryAddress || 'Tamil Nadu, India',
           totalAmount: orderRes.totalAmount || totalAmount,
           subTotal: orderRes.subTotal || subtotal,
           paymentMethod: 'ONLINE_PENDING',
@@ -490,9 +496,9 @@ export default function CheckoutPage({
       const orderSummary = {
         orderId: orderRes.orderNumber,
         customer: {
-          name: orderRes.customerName || formData.fullName,
-          phone: orderRes.customerPhone || formData.mobileNumber,
-          address: orderRes.deliveryAddress || fullAddress,
+          name: formData.fullName || orderRes.customerName || 'Valued Customer',
+          phone: formData.mobileNumber || orderRes.customerPhone || '',
+          address: fullAddress || orderRes.deliveryAddress || 'Tamil Nadu, India',
         },
         paymentMethod: 'Online Payment (Pending / Pay Later)',
         items: cart,

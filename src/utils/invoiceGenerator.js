@@ -11,9 +11,20 @@ export function generateStructuredInvoiceHtml(order) {
   const discount = order.discountAmount || order.discount || 0
   const grandTotal = order.totalAmount || order.total || 0
 
-  const customerName = order.customerName || order.customer?.name || 'Valued Customer'
-  const customerPhone = order.customerPhone || order.customer?.phone || 'N/A'
-  const customerAddress = order.deliveryAddress || order.customer?.address || 'Tamil Nadu, India'
+  let customerName = order.customerName || order.customer?.name || order.customer?.fullName || 'Valued Customer'
+  if (typeof customerName === 'string' && (customerName.startsWith('Razorpay Payment ID:') || customerName.startsWith('Online Payment Pending'))) {
+    customerName = order.customer?.fullName || order.customer?.name || 'Valued Customer'
+  }
+  const customerPhone = order.customerPhone || order.customer?.phone || order.customer?.mobileNumber || 'N/A'
+  let customerAddress = order.deliveryAddress || order.customer?.address || ''
+  if (!customerAddress || customerAddress === 'Direct Sivakasi Transport' || customerAddress === 'Tamil Nadu, India') {
+    if (order.customer?.address) {
+      customerAddress = order.customer.address
+    } else if (order.customer?.doorNumber || order.customer?.streetName) {
+      customerAddress = [order.customer.doorNumber, order.customer.streetName, order.customer.area, order.customer.city, order.customer.district, order.customer.pinCode].filter(Boolean).join(', ')
+    }
+  }
+  if (!customerAddress) customerAddress = 'Tamil Nadu, India'
   const orderNumber = order.orderNumber || order.orderId || 'SFC-' + Date.now()
   const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('en-IN') : new Date().toLocaleString('en-IN')
 

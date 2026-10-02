@@ -13,7 +13,6 @@ import { theme } from './theme'
 import Navbar from './Components/Navbar'
 import FeaturesBanner from './Components/FeaturesBanner'
 import BrochureModal from './Components/BrochureModal'
-import OffersModal from './Components/OffersModal'
 import OrderSuccessModal from './Components/OrderSuccessModal'
 import RightCartDrawer from './Components/RightCartDrawer'
 import OrderPlacementModal from './Components/OrderPlacementModal'
@@ -40,18 +39,16 @@ function App() {
   const [orderModalOpen, setOrderModalOpen] = useState(false)
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false)
   const [brochureOpen, setBrochureOpen] = useState(false)
-  const [offersOpen, setOffersOpen] = useState(false)
   const [orderSuccessOpen, setOrderSuccessOpen] = useState(false)
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null)
 
-  // Handle mobile browser hardware back button navigation (prevents Chrome from exiting)
+  // Handle mobile browser hardware back button navigation with stepped page hierarchy
   useEffect(() => {
     const isAnyModalOpen =
       cartDrawerOpen ||
       orderModalOpen ||
       orderDetailsOpen ||
       brochureOpen ||
-      offersOpen ||
       orderSuccessOpen
 
     // Push history state whenever modal opens or user navigates away from home
@@ -60,6 +57,7 @@ function App() {
     }
 
     const handlePopState = () => {
+      // Step 1: Close active modals first
       if (orderDetailsOpen) {
         setOrderDetailsOpen(false)
       } else if (orderModalOpen) {
@@ -68,11 +66,22 @@ function App() {
         setCartDrawerOpen(false)
       } else if (brochureOpen) {
         setBrochureOpen(false)
-      } else if (offersOpen) {
-        setOffersOpen(false)
       } else if (orderSuccessOpen) {
         setOrderSuccessOpen(false)
-      } else if (activePage !== 'home') {
+      } else if (activePage === 'checkout') {
+        // Step 2: Checkout -> Cart
+        setActivePage('cart')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else if (activePage === 'cart') {
+        // Step 3: Cart -> Crackers
+        setActivePage('crackers')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else if (activePage === 'person-page') {
+        // Step 4: Person Hub -> Crackers
+        setActivePage('crackers')
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      } else if (activePage === 'crackers' || activePage === 'admin') {
+        // Step 5: Crackers / Admin -> Home
         setActivePage('home')
         window.scrollTo({ top: 0, behavior: 'smooth' })
       }
@@ -85,10 +94,34 @@ function App() {
     orderModalOpen,
     orderDetailsOpen,
     brochureOpen,
-    offersOpen,
     orderSuccessOpen,
     activePage,
   ])
+
+  // Cart restore handler with merging (preserves newly selected crackers)
+  const handleRestoreCart = (items) => {
+    if (!Array.isArray(items) || items.length === 0) return
+    setCart((prevCart) => {
+      const merged = [...prevCart]
+      items.forEach((newItem) => {
+        const idx = merged.findIndex(
+          (i) =>
+            i.product.id === newItem.product.id ||
+            i.product.sno === newItem.product.sno ||
+            i.product.name.toLowerCase() === newItem.product.name.toLowerCase()
+        )
+        if (idx > -1) {
+          merged[idx] = {
+            ...merged[idx],
+            quantity: merged[idx].quantity + newItem.quantity,
+          }
+        } else {
+          merged.push(newItem)
+        }
+      })
+      return merged
+    })
+  }
 
   // Cart total items count
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0)
@@ -370,13 +403,12 @@ function App() {
             setActivePage('checkout')
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
-          onRestoreCart={(items) => setCart(items)}
+          onRestoreCart={handleRestoreCart}
         />
 
         {/* Bottom Features Banner & Footer (Normal scroll flow) */}
         <FeaturesBanner
           isFrozen={false}
-          onOpenOffers={() => setOffersOpen(true)}
         />
 
         {/* Modals & Dialogs */}
@@ -386,14 +418,6 @@ function App() {
           onShopNow={() => {
             setActivePage('crackers')
             window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
-        />
-
-        <OffersModal
-          open={offersOpen}
-          onClose={() => setOffersOpen(false)}
-          onApplyCoupon={(code) => {
-            // Coupon logic
           }}
         />
 
@@ -413,7 +437,7 @@ function App() {
           onClose={() => setOrderDetailsOpen(false)}
           initialMobile={placedOrderDetails?.customer?.phone || customerData?.mobileNumber || ''}
           cart={cart}
-          onRestoreCart={(items) => setCart(items)}
+          onRestoreCart={handleRestoreCart}
           onOpenShop={(cust) => {
             if (cust) setCustomerData(cust)
             setOrderDetailsOpen(false)
@@ -436,7 +460,6 @@ function App() {
             window.scrollTo({ top: 0, behavior: 'smooth' })
           }}
           onOpenBrochure={() => setBrochureOpen(true)}
-          onOpenOffers={() => setOffersOpen(true)}
         />
       </Box>
     </ThemeProvider>

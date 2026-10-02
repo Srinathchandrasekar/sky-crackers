@@ -95,7 +95,7 @@ export default function OrderSuccessModal({
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
           {isSavedBooking
-            ? 'Your crackers booking has been safely stored in our database. You can review items anytime in Order Details!'
+            ? 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'
             : 'Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.'}
         </Typography>
 
@@ -223,7 +223,7 @@ export default function OrderSuccessModal({
                 },
               }}
             >
-              Check in Order Details (ஆர்டர் விபரங்கள்)
+              Check in My Orders (என் ஆர்டர்கள்)
             </Button>
           )}
 

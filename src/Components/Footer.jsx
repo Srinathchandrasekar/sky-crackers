@@ -314,10 +314,10 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               </Link>
               <Link
                 component="button"
-                onClick={onOpenOffers}
+                onClick={() => onNavigate?.('crackers')}
                 sx={{ color: '#CBD5E1', textAlign: 'left', textDecoration: 'none', fontSize: '0.88rem', '&:hover': { color: '#FFA000' } }}
               >
-                Festival Offers & Combos
+                Shop Crackers
               </Link>
               <Link
                 component="button"

@@ -354,7 +354,7 @@ export default function OrderDetailsModal({
           </Box>
           <Box>
             <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
-              Order Details & Saved Bookings (ஆர்டர் விபரங்கள்)
+              My Orders & Saved Bookings (என் ஆர்டர்கள்)
             </Typography>
             <Typography variant="caption" sx={{ color: '#94A3B8' }}>
               Retrieve your crackers, live payment status & transport dispatch details

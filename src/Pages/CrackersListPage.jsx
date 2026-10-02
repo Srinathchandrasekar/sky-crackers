@@ -117,7 +117,7 @@ export default function CrackersListPage({
         if (active && pData.status === 'fulfilled' && Array.isArray(pData.value) && pData.value.length > 0) {
           const mapped = pData.value.map((p) => {
             const local = CRACKERS_DATA.find(
-              (cd) => cd.sno === p.sno || cd.name.toLowerCase() === (p.englishName || '').toLowerCase()
+              (cd) => (p.sku && cd.sku === p.sku) || cd.sno === p.sno || cd.name.toLowerCase() === (p.englishName || '').toLowerCase()
             )
             return {
               id: `p-${p.productId}`,
@@ -125,7 +125,7 @@ export default function CrackersListPage({
               sno: p.sno,
               sku: p.sku,
               name: p.englishName || (local ? local.name : ''),
-              nameTamil: (local && local.tamilName) ? local.tamilName : (p.tamilName || ''),
+              nameTamil: (local && local.tamilName) ? local.tamilName : (p.tamilName || p.englishName || ''),
               category: p.categorySlug || (local ? local.category : ''),
               categorySlug: p.categorySlug || (local ? local.category : ''),
               categoryName: p.categoryName || (local ? local.category : ''),

@@ -1170,10 +1170,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
             <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 800, color: '#0F172A' }}>
-                  Full Product Price Catalog (Galaxy Crackers Price List 2026)
+                  Full Product Price Catalog - Sky Fire Crackers Price List 2026
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#64748B' }}>
-                  91 Crackers seeded in database • 80% Off Flat Discount Applied • Open for On-Demand Booking
+                  Complete Product Price List • 80% Off Flat Discount Applied • Open for On-Demand Booking
                 </Typography>
               </Box>
 
