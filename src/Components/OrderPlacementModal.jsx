@@ -105,6 +105,7 @@ export default function OrderPlacementModal({
   const [mobileNumber, setMobileNumber] = useState('')
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupDone, setLookupDone] = useState(false)
+  const [lookupServerError, setLookupServerError] = useState(false)
   const [isExistingCustomer, setIsExistingCustomer] = useState(false)
   const [previousOrders, setPreviousOrders] = useState([])
   const [cartRestoredNotice, setCartRestoredNotice] = useState('')
@@ -138,6 +139,7 @@ export default function OrderPlacementModal({
     setMobileNumber('')
     setLookupLoading(false)
     setLookupDone(false)
+    setLookupServerError(false)
     setIsExistingCustomer(false)
     setPreviousOrders([])
     setCustomerId(null)
@@ -246,6 +248,7 @@ export default function OrderPlacementModal({
       setLookupDone(true)
 
       if (res && res.exists && res.customer) {
+        setLookupServerError(false)
         setIsExistingCustomer(true)
         setCustomerId(res.customer.customerId)
         setCustomerName(res.customer.customerName || '')
@@ -270,12 +273,15 @@ export default function OrderPlacementModal({
           setIsEditingAddress(false)
         }
       } else {
-        // Customer profile not found
+        // Customer profile not found or cloud server 500 error
         setIsExistingCustomer(false)
         setCustomerId(null)
         setPreviousOrders([])
+        setLookupServerError(Boolean(res?.serverError))
 
-        if (activeTab === 0) {
+        if (res?.serverError) {
+          setFormError(`Cloud database returned HTTP 500. Your profile exists in SQL Server, but the MonsterASP backend needs SkyCrackers_Backend_Deploy.zip extracted. You can enter your delivery address below to complete your order immediately!`)
+        } else if (activeTab === 0) {
           setFormError(`No registered profile found for +91 ${phone}. Please switch to "New Customer" to register your delivery address.`)
         }
         setIsEditingAddress(true)
@@ -285,6 +291,7 @@ export default function OrderPlacementModal({
       setLookupDone(true)
       setIsExistingCustomer(false)
       setCustomerId(null)
+      setLookupServerError(true)
       setIsEditingAddress(true)
     } finally {
       setLookupLoading(false)
@@ -891,31 +898,35 @@ export default function OrderPlacementModal({
               </Box>
             )}
 
-            {/* NOT FOUND ALERT: Prominently guide to New Customer tab */}
+            {/* NOT FOUND OR SERVER ERROR ALERT */}
             {lookupDone && !isExistingCustomer && mobileNumber.length === 10 && (
-              <Box sx={{ mt: 2.5, p: 2.5, backgroundColor: '#FFFBEB', borderRadius: 2.5, border: '1px solid #FDE68A' }}>
+              <Box sx={{ mt: 2.5, p: 2.5, backgroundColor: lookupServerError ? '#FEF2F2' : '#FFFBEB', borderRadius: 2.5, border: lookupServerError ? '1px solid #FECACA' : '1px solid #FDE68A' }}>
                 <Stack spacing={1.5} alignItems="flex-start">
-                  <Alert severity="warning" icon={<WarningAmberIcon />} sx={{ width: '100%', borderRadius: 2 }}>
-                    <strong>You don't have an account!</strong> No registered profile found for <strong>+91 {mobileNumber}</strong> in our database.
+                  <Alert severity={lookupServerError ? "error" : "warning"} icon={<WarningAmberIcon />} sx={{ width: '100%', borderRadius: 2 }}>
+                    {lookupServerError ? (
+                      <span><strong>Cloud Server Error (HTTP 500):</strong> Your profile exists in the SQL Server, but the MonsterASP backend needs the latest build uploaded (<code>SkyCrackers_Backend_Deploy.zip</code>). You can enter your delivery address below to complete your order now!</span>
+                    ) : (
+                      <span><strong>You don't have an account!</strong> No registered profile found for <strong>+91 {mobileNumber}</strong> in our database.</span>
+                    )}
                   </Alert>
-                  <Typography variant="body2" sx={{ color: '#92400E' }}>
-                    Click below to create a new customer account and save your delivery address.
+                  <Typography variant="body2" sx={{ color: lookupServerError ? '#991B1B' : '#92400E' }}>
+                    Click below to fill in your delivery address and confirm your booking.
                   </Typography>
                   <Button
                     variant="contained"
                     startIcon={<HowToRegIcon />}
                     onClick={handleCreateNewAccount}
                     sx={{
-                      backgroundColor: '#B45309',
+                      backgroundColor: lookupServerError ? '#DC2626' : '#B45309',
                       color: '#FFFFFF',
                       fontWeight: 800,
                       textTransform: 'none',
                       borderRadius: 2,
                       px: 2.5,
-                      '&:hover': { backgroundColor: '#92400E' },
+                      '&:hover': { backgroundColor: lookupServerError ? '#B91C1C' : '#92400E' },
                     }}
                   >
-                    Create New Account Now →
+                    Enter Delivery Details Now →
                   </Button>
                 </Stack>
               </Box>

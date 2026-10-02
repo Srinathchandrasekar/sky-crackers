@@ -204,12 +204,14 @@ export const lookupCustomerApi = async (mobileNumber) => {
 
   // 2. Query cloud API
   let cloudRes = null
+  let cloudErrStatus = null
   try {
     cloudRes = await fetchJson('/customers/lookup', {
       method: 'POST',
       body: JSON.stringify({ MobileNumber: cleanMobile }),
     })
   } catch (err) {
+    cloudErrStatus = err.status || 500
     console.warn('Cloud lookup warning, using local session match:', err)
   }
 
@@ -220,6 +222,7 @@ export const lookupCustomerApi = async (mobileNumber) => {
     const fullAddress = c.address || c.Address || `${c.doorNumber || c.DoorNumber || ''}, ${c.streetName || c.StreetName || ''}, ${c.city || c.City || ''}`.trim()
     return {
       exists: true,
+      serverError: false,
       message: cloudRes.message || `Account found for ${custName}.`,
       customerId: custId,
       customerName: custName,
@@ -253,6 +256,7 @@ export const lookupCustomerApi = async (mobileNumber) => {
     const fullAddress = localFound.Address || localFound.address || `${localFound.DoorNumber || localFound.doorNumber || ''}, ${localFound.StreetName || localFound.streetName || ''}, ${localFound.City || localFound.city || ''}`.trim()
     return {
       exists: true,
+      serverError: false,
       message: `Account found for ${custName}.`,
       customerId: custId,
       customerName: custName,
@@ -280,7 +284,14 @@ export const lookupCustomerApi = async (mobileNumber) => {
     }
   }
 
-  return { exists: false, message: 'No existing profile found. Please register as a new customer.' }
+  return {
+    exists: false,
+    serverError: Boolean(cloudErrStatus),
+    status: cloudErrStatus,
+    message: cloudErrStatus
+      ? `Server error (${cloudErrStatus}). The MonsterASP backend requires deployment.`
+      : 'No existing profile found. Please register as a new customer.',
+  }
 }
 
 export const getCustomerByIdApi = (id, token) => {
