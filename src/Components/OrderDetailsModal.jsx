@@ -68,9 +68,13 @@ export default function OrderDetailsModal({
   const [payingOrderId, setPayingOrderId] = useState(null)
 
   useEffect(() => {
-    if (open && initialMobile && initialMobile.length === 10) {
-      setMobileNumber(initialMobile)
-      handleSearch(initialMobile)
+    if (open && initialMobile) {
+      const digits = (initialMobile || '').replace(/\D/g, '')
+      const clean = digits.length >= 10 ? digits.slice(-10) : digits
+      if (clean.length === 10) {
+        setMobileNumber(clean)
+        handleSearch(clean)
+      }
     } else if (open) {
       setErrorMsg('')
       setSuccessMsg('')

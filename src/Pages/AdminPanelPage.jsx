@@ -280,26 +280,35 @@ export default function AdminPanelPage({ onExitAdmin }) {
 
   // --- 2. AUTHENTICATED ADMIN DASHBOARD ---
   return (
-    <Box sx={{ py: 4, minHeight: '85vh', backgroundColor: '#F8FAFC' }}>
-      <Container maxWidth="xl">
+    <Box sx={{ py: { xs: 2, sm: 4 }, minHeight: '85vh', backgroundColor: '#F8FAFC' }}>
+      <Container maxWidth="xl" sx={{ px: { xs: 1.5, sm: 3 } }}>
         {/* Top Header */}
-        <Box sx={{ mb: 3.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box
+          sx={{
+            mb: { xs: 2.5, sm: 3.5 },
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' },
+            gap: 2,
+          }}
+        >
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B' }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', fontSize: { xs: '1.35rem', sm: '1.75rem', md: '2.1rem' } }}>
               Admin Orders & Parcel Dispatch Center
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748B' }}>
+            <Typography variant="body2" sx={{ color: '#64748B', fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
               Direct Customer Orders & Wholesaler Packing Feed (<code>SkyCrackersDB</code>)
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1.5} alignItems="center">
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: { xs: '100%', sm: 'auto' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
             <Button
               startIcon={<RefreshIcon />}
               onClick={loadData}
               variant="outlined"
               size="small"
-              sx={{ borderRadius: 2, textTransform: 'none', borderColor: '#CBD5E1', color: '#0B132B' }}
+              sx={{ borderRadius: 2, textTransform: 'none', borderColor: '#CBD5E1', color: '#0B132B', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
             >
               Refresh Data
             </Button>
@@ -308,7 +317,7 @@ export default function AdminPanelPage({ onExitAdmin }) {
               onClick={handleLogout}
               variant="contained"
               size="small"
-              sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: '#DC2626', color: '#FFFFFF' }}
+              sx={{ borderRadius: 2, textTransform: 'none', backgroundColor: '#DC2626', color: '#FFFFFF', fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
             >
               Logout
             </Button>
@@ -322,83 +331,89 @@ export default function AdminPanelPage({ onExitAdmin }) {
         )}
 
         {/* Navigation Tabs */}
-        <Paper elevation={0} sx={{ mb: 3.5, borderRadius: 2.5, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
+        <Paper elevation={0} sx={{ mb: { xs: 2.5, sm: 3.5 }, borderRadius: 2.5, border: '1px solid #E2E8F0', overflow: 'hidden' }}>
           <Tabs
             value={activeTab}
             onChange={(e, val) => setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
             indicatorColor="secondary"
             textColor="inherit"
             sx={{
               backgroundColor: '#FFFFFF',
+              minHeight: 48,
+              '& .MuiTabs-scrollButtons': { color: '#0B132B' },
               '& .Mui-selected': { color: '#B45309', fontWeight: 800 },
+              '& .MuiTab-root': { py: 1, px: { xs: 1.5, sm: 2.5 }, minHeight: 48, fontSize: { xs: '0.8rem', sm: '0.875rem' } },
             }}
           >
             <Tab icon={<DashboardIcon fontSize="small" />} iconPosition="start" label="Overview" />
-            <Tab icon={<ShoppingCartIcon fontSize="small" />} iconPosition="start" label={`Customer Bookings & Parcels (${orders.length})`} />
-            <Tab icon={<MenuBookIcon fontSize="small" />} iconPosition="start" label={`Product Catalog (${products.length} Items)`} />
+            <Tab icon={<ShoppingCartIcon fontSize="small" />} iconPosition="start" label={`Bookings (${orders.length})`} />
+            <Tab icon={<MenuBookIcon fontSize="small" />} iconPosition="start" label={`Catalog (${products.length})`} />
           </Tabs>
         </Paper>
 
         {/* TAB 0: OVERVIEW & STATS */}
         {activeTab === 0 && dashboard && (
-          <Stack spacing={3}>
+          <Stack spacing={{ xs: 2, sm: 3 }}>
             {/* Metric KPI Cards */}
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} sm={6} md={3}>
-                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>TOTAL CUSTOMER BOOKINGS</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5 }}>{dashboard.totalBookings}</Typography>
-                  <Typography variant="caption" sx={{ color: '#16A34A', fontWeight: 600 }}>{dashboard.todayBookings} placed today</Typography>
+            <Grid container spacing={{ xs: 1.5, sm: 2.5 }}>
+              <Grid item xs={6} sm={6} md={3}>
+                <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, borderRadius: 2.5, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>TOTAL BOOKINGS</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5, fontSize: { xs: '1.4rem', sm: '2rem' } }}>{dashboard.totalBookings}</Typography>
+                  <Typography variant="caption" sx={{ color: '#16A34A', fontWeight: 600, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>{dashboard.todayBookings} placed today</Typography>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
-                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>TOTAL REVENUE</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5 }}>₹{dashboard.totalRevenue?.toLocaleString('en-IN')}</Typography>
-                  <Typography variant="caption" sx={{ color: '#16A34A', fontWeight: 600 }}>₹{dashboard.todayRevenue?.toLocaleString('en-IN')} today</Typography>
+              <Grid item xs={6} sm={6} md={3}>
+                <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, borderRadius: 2.5, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>TOTAL REVENUE</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5, fontSize: { xs: '1.4rem', sm: '2rem' } }}>₹{dashboard.totalRevenue?.toLocaleString('en-IN')}</Typography>
+                  <Typography variant="caption" sx={{ color: '#16A34A', fontWeight: 600, display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>₹{dashboard.todayRevenue?.toLocaleString('en-IN')} today</Typography>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
-                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>PARCELS TO PACK & SEND</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#F59E0B', mt: 0.5 }}>{dashboard.pendingBookings}</Typography>
-                  <Typography variant="caption" sx={{ color: '#64748B' }}>Awaiting packaging / dispatch</Typography>
+              <Grid item xs={6} sm={6} md={3}>
+                <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, borderRadius: 2.5, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>PARCELS TO PACK</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#F59E0B', mt: 0.5, fontSize: { xs: '1.4rem', sm: '2rem' } }}>{dashboard.pendingBookings}</Typography>
+                  <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>Awaiting dispatch</Typography>
                 </Paper>
               </Grid>
 
-              <Grid item xs={12} sm={6} md={3}>
-                <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>REGISTERED CUSTOMERS</Typography>
-                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5 }}>{dashboard.totalCustomersCount}</Typography>
-                  <Typography variant="caption" sx={{ color: '#64748B' }}>Saved in SQL Server</Typography>
+              <Grid item xs={6} sm={6} md={3}>
+                <Paper elevation={0} sx={{ p: { xs: 1.8, sm: 2.5 }, borderRadius: 2.5, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>REGISTERED USERS</Typography>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0B132B', mt: 0.5, fontSize: { xs: '1.4rem', sm: '2rem' } }}>{dashboard.totalCustomersCount}</Typography>
+                  <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>Saved in SQL Server</Typography>
                 </Paper>
               </Grid>
             </Grid>
 
             {/* Quick explanation banner of business flow */}
-            <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: '1px solid #BAE6FD', backgroundColor: '#F0F9FF' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Inventory2Icon sx={{ color: '#0284C7', fontSize: 32 }} />
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3, border: '1px solid #BAE6FD', backgroundColor: '#F0F9FF' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Inventory2Icon sx={{ color: '#0284C7', fontSize: { xs: 26, sm: 32 } }} />
                 <Box>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0369A1' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0369A1', fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                     On-Demand Booking & Parcel Model
                   </Typography>
-                  <Typography variant="body2" sx={{ color: '#0284C7', fontSize: '0.85rem' }}>
-                    Customers browse 91 catalog products and place bookings via Razorpay. Admin opens each order's <strong>Packing Sheet</strong>, buys the required crackers from the wholesaler, packs them into a parcel with the customer's delivery sticker, and dispatches!
+                  <Typography variant="body2" sx={{ color: '#0284C7', fontSize: { xs: '0.78rem', sm: '0.85rem' } }}>
+                    Customers browse catalog products and book online or choose Pay Later. Admin opens each order's <strong>Packing Sheet</strong>, packs the parcel, and dispatches!
                   </Typography>
                 </Box>
               </Box>
             </Paper>
 
             {/* Recent Orders Table */}
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0B132B', mb: 2 }}>
+            <Paper elevation={0} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0B132B', mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 Recent Bookings (Live SQL Server Feed)
               </Typography>
-              <TableContainer>
-                <Table size="small">
+              <TableContainer sx={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                <Table size="small" sx={{ minWidth: 600 }}>
                   <TableHead sx={{ backgroundColor: '#F8FAFC' }}>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 700 }}>Booking #</TableCell>
@@ -508,7 +523,195 @@ export default function AdminPanelPage({ onExitAdmin }) {
               </Stack>
             </Box>
 
-            <TableContainer>
+            {/* MOBILE VIEW (< md): Responsive Card-based Orders Feed */}
+            <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+              {orders.length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 5, color: '#64748B' }}>
+                  No orders found in this filter.
+                </Box>
+              ) : (
+                orders.map((ord) => {
+                  const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
+                  const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
+                  return (
+                    <Paper
+                      key={ord.orderId || ord.orderNumber}
+                      elevation={0}
+                      sx={{
+                        p: 2,
+                        mb: 2,
+                        borderRadius: 2.5,
+                        border: '1.5px solid #E2E8F0',
+                        backgroundColor: '#FFFFFF',
+                      }}
+                    >
+                      {/* Card Top: Order Number & Status */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0B132B', fontFamily: 'monospace' }}>
+                          #{ord.orderNumber}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={ord.orderStatus}
+                          sx={{
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                            backgroundColor:
+                              ord.orderStatus === 'Delivered'
+                                ? '#ECFDF5'
+                                : ord.orderStatus === 'Cancelled'
+                                ? '#FEF2F2'
+                                : ord.orderStatus === 'Shipped'
+                                ? '#EFF6FF'
+                                : '#FFFBEB',
+                            color:
+                              ord.orderStatus === 'Delivered'
+                                ? '#065F46'
+                                : ord.orderStatus === 'Cancelled'
+                                ? '#991B1B'
+                                : ord.orderStatus === 'Shipped'
+                                ? '#1E40AF'
+                                : '#B45309',
+                          }}
+                        />
+                      </Box>
+
+                      {/* Customer & Phone with direct dialer button */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, backgroundColor: '#F8FAFC', p: 1.2, borderRadius: 2 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 800, color: '#0F172A' }}>
+                            {ord.customerName}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B' }}>
+                            {new Date(ord.createdAt).toLocaleDateString()} at {new Date(ord.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          href={`tel:${ord.customerPhone}`}
+                          startIcon={<PhoneIcon sx={{ fontSize: 14 }} />}
+                          sx={{
+                            borderRadius: 2,
+                            textTransform: 'none',
+                            fontWeight: 800,
+                            fontSize: '0.75rem',
+                            borderColor: '#FFA000',
+                            color: '#B45309',
+                            py: 0.3,
+                            px: 1,
+                          }}
+                        >
+                          Call
+                        </Button>
+                      </Box>
+
+                      {/* Delivery Address */}
+                      <Typography variant="caption" sx={{ color: '#475569', display: 'block', mb: 1.2 }}>
+                        📍 {ord.deliveryAddress}
+                      </Typography>
+
+                      {/* Crackers count & Total Amount */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, pb: 1, borderBottom: '1px dashed #E2E8F0' }}>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block' }}>
+                            {ord.items?.length || 0} Products ({ord.items?.reduce((a, b) => a + b.quantity, 0) || 0} Boxes)
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 900, color: '#16A34A', fontSize: '1.1rem' }}>
+                            ₹{ord.totalAmount}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : <HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
+                          label={isPaid ? 'Paid' : 'Pay Later'}
+                          sx={{
+                            backgroundColor: isPaid ? '#ECFDF5' : '#FFF7ED',
+                            color: isPaid ? '#065F46' : '#C2410C',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                            border: isPaid ? '1px solid #A7F3D0' : '1px solid #FED7AA',
+                          }}
+                        />
+                      </Box>
+
+                      {/* Items Expand / Collapse */}
+                      <Button
+                        size="small"
+                        onClick={() => setExpandedOrderId(isExpanded ? null : (ord.orderId || ord.orderNumber))}
+                        endIcon={isExpanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
+                        sx={{ textTransform: 'none', fontSize: '0.75rem', fontWeight: 700, color: '#0284C7', p: 0, mb: 1.5 }}
+                      >
+                        {isExpanded ? 'Hide Items' : `View ${ord.items?.length || 0} Cracker Items`}
+                      </Button>
+
+                      <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                        <Box sx={{ mb: 1.5, p: 1.5, backgroundColor: '#F8FAFC', borderRadius: 2 }}>
+                          {(ord.items || []).map((it, i) => (
+                            <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', py: 0.4, borderBottom: '1px solid #EDF2F7', fontSize: '0.78rem' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#0F172A' }}>
+                                {it.productName}
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 800, color: '#0284C7' }}>
+                                {it.quantity} box(es) - ₹{it.totalPrice}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Collapse>
+
+                      {/* Action Buttons Row */}
+                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<LocalShippingIcon sx={{ fontSize: '14px !important' }} />}
+                          onClick={() => {
+                            setSelectedOrderDetails(ord)
+                            setPackedChecklist({})
+                          }}
+                          sx={{
+                            flex: 1,
+                            fontSize: '0.75rem',
+                            py: 0.6,
+                            textTransform: 'none',
+                            backgroundColor: '#0B132B',
+                            color: '#FFA000',
+                            fontWeight: 800,
+                            '&:hover': { backgroundColor: '#1A2A56' },
+                          }}
+                        >
+                          Packing Sheet
+                        </Button>
+                        {ord.orderStatus !== 'Shipped' && ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleStatusChange(ord.orderId, 'Shipped')}
+                            sx={{ fontSize: '0.75rem', py: 0.6, textTransform: 'none', borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
+                          >
+                            Dispatched
+                          </Button>
+                        )}
+                        {ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={() => handleStatusChange(ord.orderId, 'Delivered')}
+                            sx={{ fontSize: '0.75rem', py: 0.6, textTransform: 'none', backgroundColor: '#16A34A', color: '#FFFFFF', fontWeight: 800 }}
+                          >
+                            Delivered
+                          </Button>
+                        )}
+                      </Stack>
+                    </Paper>
+                  )
+                })
+              )}
+            </Box>
+
+            {/* DESKTOP VIEW (>= md): Full Table */}
+            <TableContainer sx={{ display: { xs: 'none', md: 'block' }, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <Table size="small">
                 <TableHead sx={{ backgroundColor: '#F8FAFC' }}>
                   <TableRow>
@@ -847,8 +1050,8 @@ export default function AdminPanelPage({ onExitAdmin }) {
               />
             </Box>
 
-            <TableContainer sx={{ maxHeight: 600 }}>
-              <Table stickyHeader size="small">
+            <TableContainer sx={{ maxHeight: 600, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+              <Table stickyHeader size="small" sx={{ minWidth: 650 }}>
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>SNo</TableCell>
@@ -885,29 +1088,43 @@ export default function AdminPanelPage({ onExitAdmin }) {
 
       {/* View Full Packing & Parcel Details Modal */}
       {selectedOrderDetails && (
-        <Dialog open onClose={() => setSelectedOrderDetails(null)} maxWidth="md" fullWidth>
-          <DialogTitle sx={{ backgroundColor: '#0B132B', color: '#FFFFFF', py: 2 }}>
+        <Dialog
+          open
+          onClose={() => setSelectedOrderDetails(null)}
+          maxWidth="md"
+          fullWidth
+          PaperProps={{
+            sx: {
+              m: { xs: 1, sm: 3 },
+              width: { xs: 'calc(100% - 16px)', sm: 'auto' },
+              maxHeight: '92vh',
+              borderRadius: 3,
+            },
+          }}
+        >
+          <DialogTitle sx={{ backgroundColor: '#0B132B', color: '#FFFFFF', py: 2, px: { xs: 2, sm: 3 } }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: '#FFA000' }}>
-                  📦 Parcel Packing Slip & Invoice #{selectedOrderDetails.orderNumber}
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#FFA000', fontSize: { xs: '0.95rem', sm: '1.25rem' } }}>
+                  📦 Packing Slip #{selectedOrderDetails.orderNumber}
                 </Typography>
-                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
                   Placed on: {new Date(selectedOrderDetails.createdAt).toLocaleString()}
                 </Typography>
               </Box>
               <Chip
+                size="small"
                 label={selectedOrderDetails.orderStatus}
                 sx={{
                   backgroundColor: '#FFA000',
                   color: '#0B132B',
                   fontWeight: 800,
-                  fontSize: '0.8rem',
+                  fontSize: '0.75rem',
                 }}
               />
             </Box>
           </DialogTitle>
-          <DialogContent sx={{ p: 3, pt: 3 }}>
+          <DialogContent sx={{ p: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 } }}>
             <Grid container spacing={2.5} sx={{ mb: 3, mt: 0.5 }}>
               {/* Customer Parcel Delivery Label */}
               <Grid item xs={12} sm={6}>

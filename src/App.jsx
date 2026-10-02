@@ -305,12 +305,16 @@ function App() {
           orderDetails={placedOrderDetails}
           onClose={() => setOrderSuccessOpen(false)}
           onContinueShopping={handleOrderFinished}
+          onViewOrderDetails={() => {
+            setOrderSuccessOpen(false)
+            setOrderDetailsOpen(true)
+          }}
         />
 
         <OrderDetailsModal
           open={orderDetailsOpen}
           onClose={() => setOrderDetailsOpen(false)}
-          initialMobile={customerData?.mobileNumber || ''}
+          initialMobile={placedOrderDetails?.customer?.phone || customerData?.mobileNumber || ''}
           onRestoreCart={(items) => setCart(items)}
           onOpenShop={() => {
             setOrderDetailsOpen(false)
