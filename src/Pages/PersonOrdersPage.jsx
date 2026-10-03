@@ -41,18 +41,25 @@ import CreditCardIcon from '@mui/icons-material/CreditCard'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 import { lookupCustomerApi, getOrdersListApi, updateOrderStatusApi } from '../services/api'
 
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    if (window.Razorpay) {
-      resolve(true)
-      return
-    }
-    const script = document.createElement('script')
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-    script.onload = () => resolve(true)
-    script.onerror = () => resolve(false)
-    document.body.appendChild(script)
-  })
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import TextField from '@mui/material/TextField'
+import InputAdornment from '@mui/material/InputAdornment'
+import CloseIcon from '@mui/icons-material/Close'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import QrCode2Icon from '@mui/icons-material/QrCode2'
+import WhatsAppIcon from '@mui/icons-material/WhatsApp'
+
+const UPI_CONFIG = {
+  upiId: 'suryasrivenkatesh-1@okicici',
+  payeeName: 'Sri',
+  storeName: 'Sky Fire Crackers',
+  bankName: 'HDFC Bank',
+  whatsappPhone: '918056704353',
+  displayPhone: '+91 80567 04353',
+  qrImage: '/gpay_qr.png',
 }
 
 export default function PersonOrdersPage({
@@ -151,84 +158,59 @@ export default function PersonOrdersPage({
     }
   }
 
-  // Handle Pay Now with Razorpay
-  const handlePayNow = async (order) => {
+  const [upiModalOrder, setUpiModalOrder] = useState(null)
+  const [upiUtrInput, setUpiUtrInput] = useState('')
+  const [copiedUpi, setCopiedUpi] = useState(false)
+  const [submittingUtr, setSubmittingUtr] = useState(false)
+
+  // Handle Pay Now with Direct UPI Modal
+  const handlePayNow = (order) => {
+    setUpiModalOrder(order)
+    setUpiUtrInput('')
+    setErrorMsg('')
+  }
+
+  const handleConfirmUpiModal = async () => {
+    if (!upiModalOrder) return
+    const cleanUtr = upiUtrInput.trim()
+    if (!cleanUtr) {
+      setErrorMsg('Please enter your 12-digit UPI Reference / UTR Number.')
+      return
+    }
+    setSubmittingUtr(true)
+    setErrorMsg('')
     try {
-      setPayingOrderId(order.orderId || order.orderNumber)
-      setErrorMsg('')
-
-      const scriptLoaded = await loadRazorpayScript()
-      if (!scriptLoaded) {
-        setErrorMsg('Razorpay payment gateway failed to load. Please check internet connection.')
-        setPayingOrderId(null)
-        return
-      }
-
-      const rzpKey = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_TihKhwOYL8AwVm'
-      const amountPaise = Math.max(100, Math.round((Number(order.totalAmount) || 0) * 100))
-
-      const options = {
-        key: rzpKey,
-        amount: amountPaise,
-        currency: 'INR',
-        name: 'SkyFire Crackers Sivakasi',
-        description: `Payment for Order #${order.orderNumber || order.orderId}`,
-        image: 'https://cdn-icons-png.flaticon.com/512/3595/3595455.png',
-        prefill: {
-          name: order.customerName || customer?.customerName || '',
-          contact: order.customerPhone || customer?.mobileNumber || '',
-          email: customer?.email || 'customer@skycrackers.com',
-        },
-        theme: {
-          color: '#FFA000',
-        },
-        handler: async function (response) {
-          try {
-            await updateOrderStatusApi(order.orderId || order.orderNumber, {
-              orderStatus: 'Confirmed',
-              paymentStatus: 'Completed',
-              paymentMethod: 'Online Razorpay',
-              transactionId: response.razorpay_payment_id,
-            })
-            try {
-              const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
-              const updated = existingOrders.map((o) => {
-                if (String(o.orderId) === String(order.orderId) || String(o.orderNumber) === String(order.orderNumber)) {
-                  return { ...o, paymentStatus: 'Completed', paymentMethod: 'Online Razorpay', transactionId: response.razorpay_payment_id }
-                }
-                return o
-              })
-              localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
-            } catch (lsErr) {
-              console.warn('LocalStorage sync warning:', lsErr)
-            }
-            setSuccessMsg(`Payment Successful! Payment ID: ${response.razorpay_payment_id}`)
-            loadPersonData()
-          } catch (updateErr) {
-            console.error('Payment sync error:', updateErr)
-            setSuccessMsg(`Payment received! ID: ${response.razorpay_payment_id}`)
-            loadPersonData()
-          } finally {
-            setPayingOrderId(null)
-          }
-        },
-        modal: {
-          ondismiss: function () {
-            setPayingOrderId(null)
-          },
-        },
-      }
-
-      const rzp = new window.Razorpay(options)
-      rzp.on('payment.failed', function (resp) {
-        setPayingOrderId(null)
-        setErrorMsg(resp.error?.description || 'Payment could not be completed.')
+      const orderIdOrNum = upiModalOrder.orderId || upiModalOrder.orderNumber
+      await updateOrderStatusApi(orderIdOrNum, {
+        orderStatus: 'Confirmed',
+        paymentStatus: 'Completed',
+        paymentMethod: 'UPI (GPay / PhonePe)',
+        notes: `Paid via UPI - UTR: ${cleanUtr} (Account: ${UPI_CONFIG.upiId})`,
       })
-      rzp.open()
+      try {
+        const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        const updated = existingOrders.map((o) => {
+          if (String(o.orderId) === String(orderIdOrNum) || String(o.orderNumber) === String(orderIdOrNum)) {
+            return {
+              ...o,
+              paymentStatus: 'Completed',
+              paymentMethod: 'UPI (GPay / PhonePe)',
+              notes: `UPI UTR: ${cleanUtr}`,
+            }
+          }
+          return o
+        })
+        localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
+      } catch (lsErr) {}
+
+      setSuccessMsg(`Payment Confirmed for #${upiModalOrder.orderNumber}! (UTR: ${cleanUtr})`)
+      setUpiModalOrder(null)
+      loadPersonData()
     } catch (err) {
-      console.error('Pay now error:', err)
-      setErrorMsg('Payment gateway initialization error.')
-      setPayingOrderId(null)
+      console.error('Update payment error:', err)
+      setErrorMsg('Failed to update payment status. Please try again.')
+    } finally {
+      setSubmittingUtr(false)
     }
   }
 
@@ -812,22 +794,22 @@ export default function PersonOrdersPage({
                                 <Button
                                   variant="contained"
                                   size="small"
-                                  disabled={isPaying}
+                                  disabled={submittingUtr}
                                   onClick={() => handlePayNow(ord)}
-                                  startIcon={isPaying ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <CreditCardIcon />}
+                                  startIcon={<QrCode2Icon />}
                                   sx={{
-                                    backgroundColor: '#FFA000',
-                                    color: '#0B132B',
+                                    backgroundColor: '#16A34A',
+                                    color: '#FFFFFF',
                                     fontWeight: 900,
                                     fontSize: '0.8rem',
                                     borderRadius: 2,
                                     py: 0.6,
                                     px: 2,
                                     textTransform: 'none',
-                                    '&:hover': { backgroundColor: '#FF8F00' },
+                                    '&:hover': { backgroundColor: '#15803D' },
                                   }}
                                 >
-                                  {isPaying ? 'Opening Gateway...' : 'Pay Online Now →'}
+                                  Pay via UPI / QR →
                                 </Button>
                               )}
 
@@ -861,6 +843,207 @@ export default function PersonOrdersPage({
           </Grid>
         </Grid>
       </Container>
+
+      {/* UPI Payment Modal Dialog */}
+      {upiModalOrder && (
+        <Dialog
+          open={Boolean(upiModalOrder)}
+          onClose={() => setUpiModalOrder(null)}
+          maxWidth="xs"
+          fullWidth
+          PaperProps={{
+            sx: { borderRadius: 3, p: 1 },
+          }}
+        >
+          <DialogTitle sx={{ pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box>
+              <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0B132B' }}>
+                Pay via UPI / GPay / PhonePe
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748B' }}>
+                Order #{upiModalOrder.orderNumber} • ₹{upiModalOrder.totalAmount}
+              </Typography>
+            </Box>
+            <IconButton size="small" onClick={() => setUpiModalOrder(null)}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent sx={{ textAlign: 'center', pt: 1 }}>
+            {/* Amount Banner */}
+            <Box sx={{ p: 1.5, backgroundColor: '#0B132B', borderRadius: 2, color: '#FFFFFF', mb: 2 }}>
+              <Typography variant="caption" sx={{ color: '#FFA000', fontWeight: 800 }}>
+                AMOUNT TO PAY
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 900, color: '#FFFFFF' }}>
+                ₹{upiModalOrder.totalAmount?.toLocaleString('en-IN')}
+              </Typography>
+            </Box>
+
+            {/* QR Code */}
+            <Box
+              sx={{
+                display: 'inline-block',
+                p: 1.2,
+                backgroundColor: '#FFFFFF',
+                borderRadius: 2,
+                border: '2px solid #86EFAC',
+                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.15)',
+                mb: 1.5,
+              }}
+            >
+              <Box
+                component="img"
+                src={UPI_CONFIG.qrImage}
+                alt="GPay QR Code"
+                sx={{
+                  width: 190,
+                  height: 190,
+                  display: 'block',
+                  objectFit: 'contain',
+                }}
+              />
+            </Box>
+
+            {/* UPI ID */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: '#F8FAFC',
+                p: 1,
+                px: 1.5,
+                borderRadius: 2,
+                border: '1px solid #CBD5E1',
+                mb: 1.5,
+              }}
+            >
+              <Box sx={{ textAlign: 'left' }}>
+                <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                  UPI ID ({UPI_CONFIG.bankName})
+                </Typography>
+                <Typography variant="body2" sx={{ fontWeight: 800, color: '#0B132B', fontSize: '0.82rem' }}>
+                  {UPI_CONFIG.upiId}
+                </Typography>
+              </Box>
+              <Button
+                size="small"
+                variant="contained"
+                onClick={() => {
+                  navigator?.clipboard?.writeText(UPI_CONFIG.upiId)
+                  setCopiedUpi(true)
+                  setTimeout(() => setCopiedUpi(false), 2500)
+                }}
+                startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                sx={{
+                  backgroundColor: copiedUpi ? '#15803D' : '#0B132B',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
+                  fontSize: '0.72rem',
+                  textTransform: 'none',
+                  px: 1.2,
+                  py: 0.4,
+                  borderRadius: 1.5,
+                }}
+              >
+                {copiedUpi ? 'Copied!' : 'Copy'}
+              </Button>
+            </Box>
+
+            {/* Mobile Pay Links */}
+            <Typography variant="caption" sx={{ color: '#334155', fontWeight: 700, display: 'block', mb: 0.8 }}>
+              Mobile-ல் இருந்தால் ஆப்பை கிளிக் செய்யவும்:
+            </Typography>
+            <Grid container spacing={0.8} sx={{ mb: 1.5 }}>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  component="a"
+                  href={`upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${upiModalOrder.totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${upiModalOrder.orderNumber}`)}`}
+                  sx={{
+                    borderColor: '#4285F4',
+                    color: '#1E40AF',
+                    backgroundColor: '#EFF6FF',
+                    fontWeight: 800,
+                    fontSize: '0.74rem',
+                    textTransform: 'none',
+                    py: 0.6,
+                    borderRadius: 2,
+                  }}
+                >
+                  Google Pay
+                </Button>
+              </Grid>
+              <Grid item xs={6}>
+                <Button
+                  fullWidth
+                  size="small"
+                  variant="outlined"
+                  component="a"
+                  href={`upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${upiModalOrder.totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${upiModalOrder.orderNumber}`)}`}
+                  sx={{
+                    borderColor: '#5F259F',
+                    color: '#5F259F',
+                    backgroundColor: '#FAF5FF',
+                    fontWeight: 800,
+                    fontSize: '0.74rem',
+                    textTransform: 'none',
+                    py: 0.6,
+                    borderRadius: 2,
+                  }}
+                >
+                  PhonePe
+                </Button>
+              </Grid>
+            </Grid>
+
+            {/* UTR Input */}
+            <Box sx={{ textAlign: 'left', mb: 1 }}>
+              <Typography variant="caption" sx={{ fontWeight: 800, color: '#0B132B', mb: 0.5, display: 'block' }}>
+                Enter 12-Digit UPI Ref / UTR No <span style={{ color: '#DC2626' }}>*</span>
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="e.g. 428394829103"
+                value={upiUtrInput}
+                onChange={(e) => setUpiUtrInput(e.target.value.replace(/[^0-9a-zA-Z]/g, '').slice(0, 16))}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <CheckCircleIcon sx={{ color: '#16A34A', fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button onClick={() => setUpiModalOrder(null)} sx={{ color: '#64748B', textTransform: 'none' }}>
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              disabled={submittingUtr || !upiUtrInput.trim()}
+              onClick={handleConfirmUpiModal}
+              startIcon={submittingUtr ? <CircularProgress size={16} sx={{ color: '#FFFFFF' }} /> : <CheckCircleIcon fontSize="small" />}
+              sx={{
+                background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+                color: '#FFFFFF',
+                fontWeight: 900,
+                textTransform: 'none',
+                borderRadius: '20px',
+                px: 2.5,
+              }}
+            >
+              {submittingUtr ? 'Verifying...' : 'Submit Payment Verification'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   )
 }

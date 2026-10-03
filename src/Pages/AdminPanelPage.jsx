@@ -1419,17 +1419,17 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
               <Grid item xs={12} sm={6}>
                 <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, height: '100%', borderColor: '#CBD5E1' }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0B132B', mb: 1 }}>
-                    Payment Summary (Razorpay)
+                    Payment Summary (UPI / Direct Wholesale)
                   </Typography>
                   <Typography variant="body2">
-                    <strong>Gateway:</strong> {selectedOrderDetails.paymentMethod}
+                    <strong>Payment Mode:</strong> {selectedOrderDetails.paymentMethod}
                   </Typography>
                   <Typography variant="body2">
                     <strong>Payment Status:</strong> {selectedOrderDetails.paymentStatus || 'Paid'}
                   </Typography>
                   {selectedOrderDetails.notes && (
-                    <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mt: 0.5 }}>
-                      <strong>Gateway Ref:</strong> {selectedOrderDetails.notes}
+                    <Typography variant="caption" sx={{ color: '#0369A1', display: 'block', mt: 0.5, fontWeight: 700 }}>
+                      <strong>Payment / UTR Ref:</strong> {selectedOrderDetails.notes}
                     </Typography>
                   )}
                   <Divider sx={{ my: 1 }} />
