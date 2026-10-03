@@ -1,30 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
-    <radialGradient id="burstGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#FFF9C4" />
-      <stop offset="40%" stop-color="#FFD54F" />
-      <stop offset="70%" stop-color="#FFA000" />
-      <stop offset="100%" stop-color="#E65100" />
-    </radialGradient>
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1E293B" />
-      <stop offset="100%" stop-color="#070C1E" />
-    </radialGradient>
+    <linearGradient id="headerBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFA000" />
+      <stop offset="100%" stop-color="#FF6F00" />
+    </linearGradient>
   </defs>
-  <rect width="64" height="64" rx="16" fill="url(#bgGrad)"/>
-  <!-- Central Sparkle Core -->
-  <circle cx="32" cy="32" r="7" fill="url(#burstGrad)" />
-  <!-- Rays -->
-  <path d="M32 6 L32 20 M32 44 L32 58 M6 32 L20 32 M44 32 L58 32" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/>
-  <path d="M14 14 L24 24 M40 40 L50 50 M14 50 L24 40 M40 24 L50 14" stroke="#FFA000" stroke-width="2.5" stroke-linecap="round"/>
-  <!-- Stars -->
-  <circle cx="32" cy="11" r="2.5" fill="#FFE082" />
-  <circle cx="32" cy="53" r="2.5" fill="#FFE082" />
-  <circle cx="11" cy="32" r="2.5" fill="#FFE082" />
-  <circle cx="53" cy="32" r="2.5" fill="#FFE082" />
-  <circle cx="17" cy="17" r="2" fill="#FF8F00" />
-  <circle cx="47" cy="47" r="2" fill="#FF8F00" />
-  <circle cx="17" cy="47" r="2" fill="#FF8F00" />
-  <circle cx="47" cy="17" r="2" fill="#FF8F00" />
-  <circle cx="32" cy="32" r="3.5" fill="#FFFFFF" />
+  <!-- Circular Golden Badge (Exact Match to Header Logo) -->
+  <circle cx="32" cy="32" r="30" fill="url(#headerBadgeGrad)" />
+  
+  <!-- AutoAwesome Sparkles in Deep Navy #0B132B -->
+  <g fill="#0B132B">
+    <!-- Center Main 4-point sparkle -->
+    <path d="M34 16 L37.5 27 L48 30.5 L37.5 34 L34 45 L30.5 34 L20 30.5 L30.5 27 Z"/>
+    <!-- Top-left sparkle -->
+    <path d="M19 15 L20.8 20.2 L26 22 L20.8 23.8 L19 29 L17.2 23.8 L12 22 L17.2 20.2 Z"/>
+    <!-- Bottom-right sparkle -->
+    <path d="M45 39 L46.5 43.5 L51 45 L46.5 46.5 L45 51 L43.5 46.5 L39 45 L43.5 43.5 Z"/>
+  </g>
 </svg>

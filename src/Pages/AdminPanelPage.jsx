@@ -89,6 +89,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
+  const [paymentFilter, setPaymentFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [catalogSearch, setCatalogSearch] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
@@ -198,6 +199,111 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
 
   const handlePrintSlip = () => {
     window.print()
+  }
+
+  const displayedOrders = orders.filter((ord) => {
+    if (paymentFilter === 'all') return true
+    const pStatus = (ord.paymentStatus || '').toLowerCase()
+    if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success'
+    if (paymentFilter === 'Pending') return pStatus === 'pending' || !pStatus
+    if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
+    if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
+    return true
+  })
+
+  const renderPaymentChip = (paymentStatus) => {
+    const p = (paymentStatus || '').toLowerCase()
+    if (p === 'completed' || p === 'paid' || p === 'success') {
+      return (
+        <Chip
+          size="small"
+          icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
+          label="Payment Completed"
+          sx={{
+            backgroundColor: '#ECFDF5',
+            color: '#065F46',
+            fontWeight: 800,
+            fontSize: '0.72rem',
+            border: '1px solid #A7F3D0',
+          }}
+        />
+      )
+    }
+    if (p === 'failed' || p === 'fail') {
+      return (
+        <Chip
+          size="small"
+          label="Payment Failed"
+          sx={{
+            backgroundColor: '#FEF2F2',
+            color: '#991B1B',
+            fontWeight: 800,
+            fontSize: '0.72rem',
+            border: '1px solid #FECACA',
+          }}
+        />
+      )
+    }
+    if (p === 'cancelled' || p === 'canceled') {
+      return (
+        <Chip
+          size="small"
+          label="Order Cancelled"
+          sx={{
+            backgroundColor: '#F1F5F9',
+            color: '#475569',
+            fontWeight: 800,
+            fontSize: '0.72rem',
+            border: '1px solid #CBD5E1',
+          }}
+        />
+      )
+    }
+    return (
+      <Chip
+        size="small"
+        icon={<HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
+        label="Payment Pending"
+        sx={{
+          backgroundColor: '#FFF7ED',
+          color: '#C2410C',
+          fontWeight: 800,
+          fontSize: '0.72rem',
+          border: '1px solid #FED7AA',
+        }}
+      />
+    )
+  }
+
+  const handleUpdatePaymentStatus = async (ord, newPaymentStatus) => {
+    if (!ord) return
+    handleCloseContextMenu()
+    try {
+      const orderIdOrNum = ord.orderId || ord.orderNumber
+      await updateOrderStatusApi(orderIdOrNum, {
+        orderStatus: newPaymentStatus === 'Cancelled' ? 'Cancelled' : ord.orderStatus,
+        paymentStatus: newPaymentStatus,
+      })
+      try {
+        const existing = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        const updated = existing.map((o) => {
+          if (String(o.orderId) === String(orderIdOrNum) || String(o.orderNumber) === String(orderIdOrNum)) {
+            return {
+              ...o,
+              paymentStatus: newPaymentStatus,
+              orderStatus: newPaymentStatus === 'Cancelled' ? 'Cancelled' : o.orderStatus,
+            }
+          }
+          return o
+        })
+        localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
+      } catch (lsErr) {}
+
+      setActionSuccess(`Order #${ord.orderNumber} payment marked as ${newPaymentStatus}`)
+      loadData()
+    } catch (err) {
+      console.error('Failed to update payment status:', err)
+    }
   }
 
   const filteredProducts = products.filter((p) => {
@@ -568,16 +674,46 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   />
                 ))}
               </Stack>
+
+              {/* Payment Status Filter Chips */}
+              <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748B', mr: 0.5 }}>
+                  Payment Filter:
+                </Typography>
+                {[
+                  { id: 'all', label: 'All Payments' },
+                  { id: 'Completed', label: 'Completed (Paid)', color: '#16A34A' },
+                  { id: 'Pending', label: 'Payment Pending', color: '#D97706' },
+                  { id: 'Failed', label: 'Payment Failed', color: '#DC2626' },
+                  { id: 'Cancelled', label: 'Cancelled', color: '#475569' },
+                ].map((pf) => (
+                  <Chip
+                    key={pf.id}
+                    label={pf.label}
+                    size="small"
+                    onClick={() => setPaymentFilter(pf.id)}
+                    variant={paymentFilter === pf.id ? 'filled' : 'outlined'}
+                    sx={{
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      fontSize: '0.74rem',
+                      backgroundColor: paymentFilter === pf.id ? (pf.color || '#0B132B') : 'transparent',
+                      color: paymentFilter === pf.id ? '#FFFFFF' : (pf.color || '#475569'),
+                      borderColor: pf.color || '#CBD5E1',
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
 
             {/* MOBILE VIEW (< md): Responsive Card-based Orders Feed */}
             <Box sx={{ display: { xs: 'block', md: 'none' } }}>
-              {orders.length === 0 ? (
+              {displayedOrders.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 5, color: '#64748B' }}>
-                  No orders found in this filter.
+                  No orders found matching status and payment filters.
                 </Box>
               ) : (
-                orders.map((ord) => {
+                displayedOrders.map((ord) => {
                   const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                   const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                   return (
@@ -816,14 +952,14 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {orders.length === 0 ? (
+                  {displayedOrders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={9} sx={{ textAlign: 'center', py: 5, color: '#64748B' }}>
                         No orders found in this filter.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    orders.map((ord) => {
+                    displayedOrders.map((ord) => {
                       const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                       const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                       return (
@@ -891,18 +1027,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               ₹{ord.totalAmount}
                             </TableCell>
                             <TableCell>
-                              <Chip
-                                size="small"
-                                icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : <HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
-                                label={isPaid ? 'Payment Completed' : 'Payment Pending'}
-                                sx={{
-                                  backgroundColor: isPaid ? '#ECFDF5' : '#FFF7ED',
-                                  color: isPaid ? '#065F46' : '#C2410C',
-                                  fontWeight: 800,
-                                  fontSize: '0.72rem',
-                                  border: isPaid ? '1px solid #A7F3D0' : '1px solid #FED7AA',
-                                }}
-                              />
+                              {renderPaymentChip(ord.paymentStatus)}
                             </TableCell>
                             <TableCell>
                               <Chip
@@ -1473,6 +1598,31 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
             <ListItemText primary={`Call Customer (+91 ${contextMenu.order.customerPhone})`} />
           </MenuItem>
         )}
+        <Divider sx={{ my: 0.5 }} />
+        <MenuItem onClick={() => handleUpdatePaymentStatus(contextMenu?.order, 'Completed')}>
+          <ListItemIcon>
+            <CheckCircleIcon fontSize="small" sx={{ color: '#16A34A' }} />
+          </ListItemIcon>
+          <ListItemText primary="Mark Payment as Completed (Paid)" />
+        </MenuItem>
+        <MenuItem onClick={() => handleUpdatePaymentStatus(contextMenu?.order, 'Pending')}>
+          <ListItemIcon>
+            <HourglassBottomIcon fontSize="small" sx={{ color: '#D97706' }} />
+          </ListItemIcon>
+          <ListItemText primary="Mark Payment as Pending" />
+        </MenuItem>
+        <MenuItem onClick={() => handleUpdatePaymentStatus(contextMenu?.order, 'Failed')}>
+          <ListItemIcon>
+            <CloseIcon fontSize="small" sx={{ color: '#DC2626' }} />
+          </ListItemIcon>
+          <ListItemText primary="Mark Payment as Failed" />
+        </MenuItem>
+        <MenuItem onClick={() => handleUpdatePaymentStatus(contextMenu?.order, 'Cancelled')}>
+          <ListItemIcon>
+            <CloseIcon fontSize="small" sx={{ color: '#64748B' }} />
+          </ListItemIcon>
+          <ListItemText primary="Mark Order as Cancelled" />
+        </MenuItem>
       </Menu>
     </Box>
   )

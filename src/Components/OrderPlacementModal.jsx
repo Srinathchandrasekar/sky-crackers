@@ -709,8 +709,8 @@ export default function OrderPlacementModal({
                   </Box>
                 ) : (
                   /* Editable Address Inputs */
-                  <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                    <Grid item xs={12} sm={6}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                       <TextField
                         fullWidth
                         size="small"
@@ -719,8 +719,6 @@ export default function OrderPlacementModal({
                         onChange={(e) => setCustomerName(e.target.value)}
                         required
                       />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
                       <TextField
                         fullWidth
                         size="small"
@@ -728,20 +726,18 @@ export default function OrderPlacementModal({
                         value={emailAddress}
                         onChange={(e) => setEmailAddress(e.target.value)}
                       />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <TextField
-                        fullWidth
-                        size="small"
-                        multiline
-                        minRows={2}
-                        label="Delivery Address (Door No, Building, Street Name)"
-                        value={address}
-                        onChange={(e) => setAddress(e.target.value)}
-                        required
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={2}
+                      label="Delivery Address (Door No, Building, Street Name)"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      required
+                    />
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr 1fr' }, gap: 2 }}>
                       <TextField
                         fullWidth
                         size="small"
@@ -750,8 +746,6 @@ export default function OrderPlacementModal({
                         onChange={(e) => setCity(e.target.value)}
                         required
                       />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
                       <TextField
                         fullWidth
                         select
@@ -770,8 +764,6 @@ export default function OrderPlacementModal({
                           </MenuItem>
                         ))}
                       </TextField>
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
                       <TextField
                         fullWidth
                         size="small"
@@ -780,8 +772,8 @@ export default function OrderPlacementModal({
                         onChange={(e) => setPinCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         required
                       />
-                    </Grid>
-                  </Grid>
+                    </Box>
+                  </Box>
                 )}
 
                 {/* Cart restored notice */}
@@ -966,61 +958,53 @@ export default function OrderPlacementModal({
                 </Typography>
               </Stack>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Customer Full Name"
-                    placeholder="e.g. S. Muthu Kumar"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                    helperText="Primary recipient name for parcel receipt"
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="10-Digit Mobile / WhatsApp Number"
-                    placeholder="e.g. 9876543210"
-                    value={mobileNumber}
-                    onChange={handleMobileChange}
-                    helperText="Required for booking confirmation & transport updates"
-                    InputProps={{
-                      startAdornment: (
-                        <Box component="span" sx={{ color: '#64748B', mr: 1, fontWeight: 700 }}>
-                          +91
-                        </Box>
-                      ),
-                    }}
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Alternate Mobile Number (Optional)"
-                    placeholder="e.g. 9443123456"
-                    value={alternatePhone}
-                    onChange={(e) => setAlternatePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
-                    helperText="Optional backup contact number"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    label="Email Address (Optional)"
-                    placeholder="e.g. customer@gmail.com"
-                    value={emailAddress}
-                    onChange={(e) => setEmailAddress(e.target.value)}
-                    helperText="Optional for digital invoice copy"
-                  />
-                </Grid>
-              </Grid>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Customer Full Name"
+                  placeholder="e.g. S. Muthu Kumar"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  helperText="Primary recipient name for parcel receipt"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="10-Digit Mobile / WhatsApp Number"
+                  placeholder="e.g. 9876543210"
+                  value={mobileNumber}
+                  onChange={handleMobileChange}
+                  helperText="Required for booking confirmation & transport updates"
+                  InputProps={{
+                    startAdornment: (
+                      <Box component="span" sx={{ color: '#64748B', mr: 1, fontWeight: 700 }}>
+                        +91
+                      </Box>
+                    ),
+                  }}
+                  required
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Alternate Mobile Number (Optional)"
+                  placeholder="e.g. 9443123456"
+                  value={alternatePhone}
+                  onChange={(e) => setAlternatePhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  helperText="Optional backup contact number"
+                />
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Email Address (Optional)"
+                  placeholder="e.g. customer@gmail.com"
+                  value={emailAddress}
+                  onChange={(e) => setEmailAddress(e.target.value)}
+                  helperText="Optional for digital invoice copy"
+                />
+              </Box>
             </Box>
 
             <Divider sx={{ my: 2.5 }} />
@@ -1034,22 +1018,20 @@ export default function OrderPlacementModal({
                 </Typography>
               </Stack>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    multiline
-                    minRows={2}
-                    label="Full Delivery Address (Door No, Building, Street Name)"
-                    placeholder="e.g. No. 14/2, Anna Nagar Main Road, Sivakasi West"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    helperText="Provide full street address to avoid transport delivery delays"
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  multiline
+                  minRows={2}
+                  label="Full Delivery Address (Door No, Building, Street Name)"
+                  placeholder="e.g. No. 14/2, Anna Nagar Main Road, Sivakasi West"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  helperText="Provide full street address to avoid transport delivery delays"
+                  required
+                />
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <TextField
                     fullWidth
                     size="small"
@@ -1058,8 +1040,6 @@ export default function OrderPlacementModal({
                     value={landmark}
                     onChange={(e) => setLandmark(e.target.value)}
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     size="small"
@@ -1069,8 +1049,8 @@ export default function OrderPlacementModal({
                     onChange={(e) => setCity(e.target.value)}
                     required
                   />
-                </Grid>
-                <Grid item xs={12} sm={6}>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
                   <TextField
                     fullWidth
                     select
@@ -1100,8 +1080,6 @@ export default function OrderPlacementModal({
                       </MenuItem>
                     ))}
                   </TextField>
-                </Grid>
-                <Grid item xs={12} sm={6}>
                   <TextField
                     fullWidth
                     size="small"
@@ -1112,8 +1090,8 @@ export default function OrderPlacementModal({
                     helperText="6-digit Indian Postal PIN code"
                     required
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </Box>
           </Paper>
         )}
@@ -1229,18 +1207,24 @@ export default function OrderPlacementModal({
               variant="contained"
               disabled={submitLoading || cart.length === 0}
               onClick={handleConfirmOrder}
-              startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
+              startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#FFFFFF' }} /> : <CheckCircleIcon fontSize="small" />}
               sx={{
-                backgroundColor: '#FFA000',
-                color: '#0B132B',
+                background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+                color: '#FFFFFF',
                 fontWeight: 900,
-                fontSize: { xs: '0.86rem', sm: '0.92rem' },
-                px: { xs: 2, sm: 2.8 },
-                py: { xs: 0.9, sm: 1.1 },
-                borderRadius: 2,
-                boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+                fontSize: { xs: '0.86rem', sm: '0.94rem' },
+                px: { xs: 2.2, sm: 3.5 },
+                py: { xs: 1, sm: 1.2 },
+                borderRadius: '24px',
+                boxShadow: '0 4px 16px rgba(22, 163, 74, 0.4)',
                 textTransform: 'none',
-                '&:hover': { backgroundColor: '#FF8F00' },
+                letterSpacing: '0.02em',
+                transition: 'all 0.25s ease',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
+                  boxShadow: '0 6px 22px rgba(22, 163, 74, 0.55)',
+                  transform: 'translateY(-1px)',
+                },
               }}
             >
               {submitLoading ? 'Saving & Proceeding...' : `Confirm & Proceed to Payment (₹${totalAmount}) →`}
@@ -1283,18 +1267,24 @@ export default function OrderPlacementModal({
             variant="contained"
             disabled={submitLoading || cart.length === 0}
             onClick={handleConfirmOrder}
-            startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#0B132B' }} /> : <CheckCircleIcon fontSize="small" />}
+            startIcon={submitLoading ? <CircularProgress size={16} sx={{ color: '#FFFFFF' }} /> : <CheckCircleIcon fontSize="small" />}
             sx={{
-              backgroundColor: '#FFA000',
-              color: '#0B132B',
+              background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+              color: '#FFFFFF',
               fontWeight: 900,
-              fontSize: { xs: '0.86rem', sm: '0.92rem' },
-              px: { xs: 2, sm: 2.8 },
-              py: { xs: 0.9, sm: 1.1 },
-              borderRadius: 2,
-              boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
+              fontSize: { xs: '0.86rem', sm: '0.94rem' },
+              px: { xs: 2.2, sm: 3.5 },
+              py: { xs: 1, sm: 1.2 },
+              borderRadius: '24px',
+              boxShadow: '0 4px 16px rgba(22, 163, 74, 0.4)',
               textTransform: 'none',
-              '&:hover': { backgroundColor: '#FF8F00' },
+              letterSpacing: '0.02em',
+              transition: 'all 0.25s ease',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
+                boxShadow: '0 6px 22px rgba(22, 163, 74, 0.55)',
+                transform: 'translateY(-1px)',
+              },
             }}
           >
             {submitLoading ? 'Saving Customer...' : `Save Details & Proceed to Payment (₹${totalAmount}) →`}

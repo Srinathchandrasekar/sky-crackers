@@ -24,6 +24,7 @@ import LocalShippingIcon from '@mui/icons-material/LocalShipping'
 import PolicyIcon from '@mui/icons-material/Policy'
 import SecurityIcon from '@mui/icons-material/Security'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
 
 const policiesData = {
   about: {
@@ -235,19 +236,18 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5 }}>
               <Box
                 sx={{
-                  width: 38,
-                  height: 38,
+                  width: 40,
+                  height: 40,
                   borderRadius: '50%',
-                  bgcolor: '#FFA000',
+                  background: 'linear-gradient(135deg, #FFA000 0%, #FF6F00 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontWeight: 900,
-                  color: '#070C1E',
-                  fontSize: '1.2rem',
+                  boxShadow: '0 0 15px rgba(255, 160, 0, 0.6)',
+                  flexShrink: 0,
                 }}
               >
-                🎆
+                <AutoAwesomeIcon sx={{ color: '#0B132B', fontSize: 24 }} />
               </Box>
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 900, color: '#FFA000', lineHeight: 1.1 }}>
@@ -404,8 +404,8 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 <WhatsAppIcon sx={{ color: '#25D366', fontSize: 18 }} />
                 <Typography variant="body2" sx={{ color: '#CBD5E1', fontSize: '0.84rem' }}>
-                  <a href="https://wa.me/919597167401" target="_blank" rel="noopener noreferrer" style={{ color: '#34D399', textDecoration: 'none', fontWeight: 700 }}>
-                    WhatsApp: +91 95971 67401
+                  <a href="https://wa.me/918056704353" target="_blank" rel="noopener noreferrer" style={{ color: '#34D399', textDecoration: 'none', fontWeight: 700 }}>
+                    WhatsApp: +91 80567 04353
                   </a>
                 </Typography>
               </Box>

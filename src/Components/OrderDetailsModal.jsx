@@ -481,7 +481,7 @@ export default function OrderDetailsModal({
 
             {/* Direct Action Buttons for this customer */}
             <Divider sx={{ my: 1.5 }} />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center" justifyContent="flex-end" flexWrap="wrap">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="stretch" justifyContent="flex-end" flexWrap="wrap">
               <Button
                 variant="contained"
                 size="small"
@@ -492,16 +492,17 @@ export default function OrderDetailsModal({
                   backgroundColor: '#0B132B',
                   color: '#FFA000',
                   fontWeight: 900,
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   textTransform: 'none',
-                  borderRadius: 2,
-                  py: 0.7,
-                  px: 2,
-                  border: '1px solid #FFA000',
-                  '&:hover': { backgroundColor: '#1A2A56' },
+                  borderRadius: '20px',
+                  py: 0.8,
+                  px: 2.2,
+                  border: '1.5px solid #FFA000',
+                  boxShadow: '0 2px 8px rgba(11, 19, 43, 0.25)',
+                  '&:hover': { backgroundColor: '#1A2A56', borderColor: '#FFB300' },
                 }}
               >
-                👤 Open {customer.customerName?.split(' ')[0]}'s Page (Selected & Saved Products + Payment) →
+                👤 Customer Hub (Saved Bookings & Status) →
               </Button>
 
               <Button
@@ -511,15 +512,16 @@ export default function OrderDetailsModal({
                   if (onOpenShop) onOpenShop(customer)
                 }}
                 sx={{
-                  color: '#0284C7',
-                  borderColor: '#0284C7',
+                  color: '#0B132B',
+                  borderColor: '#CBD5E1',
+                  backgroundColor: '#F8FAFC',
                   fontWeight: 800,
-                  fontSize: '0.82rem',
+                  fontSize: '0.84rem',
                   textTransform: 'none',
-                  borderRadius: 2,
-                  py: 0.7,
+                  borderRadius: '20px',
+                  py: 0.8,
                   px: 2,
-                  '&:hover': { backgroundColor: '#F0F9FF' },
+                  '&:hover': { backgroundColor: '#F1F5F9', borderColor: '#94A3B8' },
                 }}
               >
                 🛒 Select Crackers →
@@ -533,19 +535,21 @@ export default function OrderDetailsModal({
                     if (onProceedToCheckout) onProceedToCheckout(customer)
                   }}
                   sx={{
-                    backgroundColor: '#FFA000',
-                    color: '#0B132B',
+                    background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+                    color: '#FFFFFF',
                     fontWeight: 900,
                     fontSize: '0.84rem',
                     textTransform: 'none',
-                    borderRadius: 2,
-                    py: 0.7,
-                    px: 2,
-                    boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
-                    '&:hover': { backgroundColor: '#FF8F00' },
+                    borderRadius: '20px',
+                    py: 0.8,
+                    px: 2.2,
+                    boxShadow: '0 3px 10px rgba(22, 163, 74, 0.35)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
+                    },
                   }}
                 >
-                  💾 Save & Book Current Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) →
+                  💾 Save & Book Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) →
                 </Button>
               )}
             </Stack>
@@ -802,14 +806,29 @@ export default function OrderDetailsModal({
             })}
           </Stack>
         ) : searched && !loading && !errorMsg ? (
-          <Paper elevation={0} sx={{ p: 3.5, textAlign: 'center', borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0B132B', mb: 1 }}>
+          <Paper elevation={0} sx={{ p: { xs: 2.5, sm: 3.5 }, textAlign: 'center', borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
+            <Box
+              sx={{
+                width: 54,
+                height: 54,
+                borderRadius: '50%',
+                backgroundColor: '#FEF3C7',
+                color: '#B45309',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+              }}
+            >
+              <ReceiptLongIcon sx={{ fontSize: 28 }} />
+            </Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0B132B', mb: 0.8 }}>
               {customer ? `Verified Account: ${customer.customerName}` : 'No Bookings Found'}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, maxWidth: 500, mx: 'auto' }}>
+            <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, maxWidth: 500, mx: 'auto', lineHeight: 1.6 }}>
               {customer ? (
                 <span>
-                  Your address details are verified and saved in the database! However, no crackers bookings have been placed yet under <strong>+91 {customer.mobileNumber}</strong>. You can choose crackers from our catalog and book now!
+                  Your address details are verified in our database! However, no crackers bookings have been placed yet under <strong>+91 {customer.mobileNumber}</strong>. You can choose crackers from our catalog and book now!
                 </span>
               ) : (
                 `No previous bookings or customer account found for +91 ${mobileNumber}.`
@@ -824,18 +843,20 @@ export default function OrderDetailsModal({
                     onOpenShop(customer)
                   }}
                   sx={{
-                    backgroundColor: '#0B132B',
-                    color: '#FFA000',
-                    fontWeight: 800,
+                    background: 'linear-gradient(135deg, #FFA000 0%, #FF8F00 100%)',
+                    color: '#0B132B',
+                    fontWeight: 900,
                     fontSize: '0.88rem',
                     py: 1,
                     px: 3,
-                    borderRadius: 2,
+                    borderRadius: '24px',
+                    boxShadow: '0 4px 14px rgba(255, 160, 0, 0.35)',
                     textTransform: 'none',
-                    '&:hover': { backgroundColor: '#1A2A56' },
+                    width: { xs: '100%', sm: 'auto' },
+                    '&:hover': { backgroundColor: '#FF8F00' },
                   }}
                 >
-                  Explore Crackers Catalog →
+                  Explore Crackers Catalog & Shop →
                 </Button>
               )}
 
@@ -847,19 +868,20 @@ export default function OrderDetailsModal({
                     onProceedToCheckout(customer)
                   }}
                   sx={{
-                    backgroundColor: '#FFA000',
-                    color: '#0B132B',
+                    background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
+                    color: '#FFFFFF',
                     fontWeight: 900,
                     fontSize: '0.88rem',
                     py: 1,
                     px: 3,
-                    borderRadius: 2,
+                    borderRadius: '24px',
+                    boxShadow: '0 4px 14px rgba(22, 163, 74, 0.35)',
                     textTransform: 'none',
-                    boxShadow: '0 3px 10px rgba(255, 160, 0, 0.3)',
-                    '&:hover': { backgroundColor: '#FF8F00' },
+                    width: { xs: '100%', sm: 'auto' },
+                    '&:hover': { background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)' },
                   }}
                 >
-                  💾 Book Current Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) for {customer.customerName?.split(' ')[0]} →
+                  Book Current Cart ({cart.reduce((s, i) => s + i.quantity, 0)} boxes) →
                 </Button>
               )}
             </Stack>

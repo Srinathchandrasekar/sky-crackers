@@ -202,7 +202,8 @@ function App() {
         address: person.address || person.deliveryAddress || prev?.address || '',
       }))
     }
-    setPersonPreviousPage(fromPage === 'person-page' ? 'crackers' : fromPage)
+    const safeFrom = (fromPage && fromPage !== 'home' && fromPage !== 'person-page') ? fromPage : 'crackers'
+    setPersonPreviousPage(safeFrom)
     setOrderDetailsOpen(false)
     setActivePage('person-page')
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -337,7 +338,8 @@ function App() {
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
               onBack={() => {
-                setActivePage(personPreviousPage || 'crackers')
+                const target = (personPreviousPage && personPreviousPage !== 'home' && personPreviousPage !== 'person-page') ? personPreviousPage : 'crackers'
+                setActivePage(target)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
             />
