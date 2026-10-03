@@ -47,6 +47,7 @@ import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout'
 import BookmarkAddedIcon from '@mui/icons-material/BookmarkAdded'
 import DownloadIcon from '@mui/icons-material/Download'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
+import { cleanAddressDisplay, formatStructuredAddress } from '../utils/addressUtils'
 import { lookupCustomerApi, saveCustomerApi, createOrderApi } from '../services/api'
 import { CRACKERS_DATA } from '../data/crackersData'
 
@@ -353,7 +354,13 @@ export default function OrderPlacementModal({
     setSubmitLoading(true)
 
     try {
-      const fullDeliveryAddress = `${address.trim()}${landmark.trim() ? `, Landmark: ${landmark.trim()}` : ''}, ${city.trim()}, ${district.trim()} - ${pinCode.trim()}`
+      const fullDeliveryAddress = formatStructuredAddress({
+        streetName: address.trim(),
+        landmark: landmark.trim(),
+        city: city.trim(),
+        district: district.trim(),
+        pinCode: pinCode.trim(),
+      })
 
       // 1. Save or update customer record in SQL Server
       const customerPayload = {

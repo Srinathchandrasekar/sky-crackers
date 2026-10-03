@@ -39,6 +39,7 @@ import VerifiedIcon from '@mui/icons-material/Verified'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
 import CreditCardIcon from '@mui/icons-material/CreditCard'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
+import { cleanAddressDisplay } from '../utils/addressUtils'
 import { lookupCustomerApi, getOrdersListApi, updateOrderStatusApi } from '../services/api'
 
 import Dialog from '@mui/material/Dialog'
@@ -220,7 +221,7 @@ export default function PersonOrdersPage({
       ...order,
       customerName: order.customerName || customer?.customerName,
       customerPhone: order.customerPhone || customer?.mobileNumber,
-      deliveryAddress: order.deliveryAddress || customer?.address,
+      deliveryAddress: cleanAddressDisplay(order.deliveryAddress || customer?.address),
       paymentStatus: order.paymentStatus || 'Pending',
       paymentMethod: order.paymentMethod || 'Online Payment (Pending / Pay Later)',
     })
@@ -237,7 +238,7 @@ export default function PersonOrdersPage({
 
   const personName = customer?.customerName || customer?.fullName || 'Customer'
   const personPhone = customer?.mobileNumber || customer?.customerPhone || phone || ''
-  const personAddress = customer?.address || customer?.streetName || 'Tamil Nadu, India'
+  const personAddress = cleanAddressDisplay(customer?.address || customer?.streetName || 'Tamil Nadu, India')
 
   return (
     <Box sx={{ minHeight: '85vh', backgroundColor: '#F8FAFC', py: { xs: 2.5, sm: 4 } }}>
@@ -879,29 +880,49 @@ export default function PersonOrdersPage({
               </Typography>
             </Box>
 
-            {/* QR Code */}
+            {/* Dynamic Clean QR Code */}
             <Box
               sx={{
                 display: 'inline-block',
-                p: 1.2,
+                p: 1.5,
                 backgroundColor: '#FFFFFF',
-                borderRadius: 2,
-                border: '2px solid #86EFAC',
-                boxShadow: '0 4px 12px rgba(22, 163, 74, 0.15)',
+                borderRadius: 3,
+                border: '2px solid #22C55E',
+                boxShadow: '0 4px 14px rgba(22, 163, 74, 0.15)',
                 mb: 1.5,
               }}
             >
               <Box
                 component="img"
-                src={UPI_CONFIG.qrImage}
-                alt="GPay QR Code"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=8&data=${encodeURIComponent(
+                  `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${upiModalOrder.totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${upiModalOrder.orderNumber}`)}`
+                )}`}
+                alt="UPI Payment QR Code"
                 sx={{
-                  width: 190,
-                  height: 190,
+                  width: 200,
+                  height: 200,
                   display: 'block',
                   objectFit: 'contain',
+                  borderRadius: 1.5,
                 }}
               />
+              <Box
+                sx={{
+                  mt: 1,
+                  py: 0.5,
+                  px: 1.2,
+                  backgroundColor: '#DCFCE7',
+                  borderRadius: 1.5,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                }}
+              >
+                <CheckCircleIcon sx={{ fontSize: 16, color: '#15803D' }} />
+                <Typography variant="caption" sx={{ fontWeight: 800, color: '#166534', fontSize: '0.78rem' }}>
+                  ₹{upiModalOrder.totalAmount?.toLocaleString('en-IN')} Pre-filled
+                </Typography>
+              </Box>
             </Box>
 
             {/* UPI ID */}

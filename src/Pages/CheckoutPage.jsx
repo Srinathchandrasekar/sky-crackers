@@ -35,6 +35,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import SendIcon from '@mui/icons-material/Send'
 import DownloadIcon from '@mui/icons-material/Download'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
+import { cleanAddressDisplay, formatStructuredAddress } from '../utils/addressUtils'
 
 const TAMIL_NADU_DISTRICTS = [
   'Ariyalur',
@@ -104,14 +105,19 @@ export default function CheckoutPage({
     district: customerData?.district || '',
     pincode: customerData?.pinCode || customerData?.pincode || '',
     address: customerData
-      ? (customerData.address || [customerData.doorNumber, customerData.streetName, customerData.area, customerData.city, customerData.district]
-          .filter(Boolean)
-          .join(', ') + (customerData.pinCode || customerData.pincode ? ` - ${customerData.pinCode || customerData.pincode}` : ''))
+      ? cleanAddressDisplay(
+          customerData.address ||
+          formatStructuredAddress(customerData)
+        )
       : '',
   })
 
   useEffect(() => {
     if (customerData) {
+      const cleanAddr = cleanAddressDisplay(
+        customerData.address ||
+        formatStructuredAddress(customerData)
+      )
       setFormData({
         fullName: customerData.fullName || customerData.customerName || '',
         mobileNumber: customerData.mobileNumber || '',
@@ -121,9 +127,7 @@ export default function CheckoutPage({
         city: customerData.city || '',
         district: customerData.district || '',
         pincode: customerData.pinCode || customerData.pincode || '',
-        address: customerData.address || [customerData.doorNumber, customerData.streetName, customerData.area, customerData.city, customerData.district]
-          .filter(Boolean)
-          .join(', ') + (customerData.pinCode || customerData.pincode ? ` - ${customerData.pinCode || customerData.pincode}` : ''),
+        address: cleanAddr,
       })
     }
   }, [customerData])
@@ -131,7 +135,6 @@ export default function CheckoutPage({
   const [paymentMethod, setPaymentMethod] = useState('upi') // 'upi' or 'whatsapp'
   const [utrNumber, setUtrNumber] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
-  const [qrType, setQrType] = useState('gpay') // 'gpay' or 'dynamic'
   const [errorMsg, setErrorMsg] = useState('')
 
   // Calculations (Zero delivery fee!)
@@ -143,7 +146,7 @@ export default function CheckoutPage({
 
   const upiOrderId = `ORD${Date.now().toString().slice(-6)}`
   const dynamicUpiUri = `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${upiOrderId}`)}`
-  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(dynamicUpiUri)}`
+  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(dynamicUpiUri)}`
 
   const handleCopyUpi = () => {
     if (navigator?.clipboard?.writeText) {
@@ -224,14 +227,14 @@ export default function CheckoutPage({
         }
       })
 
-      const fullAddress = [
-        formData.doorNumber?.trim(),
-        formData.streetName?.trim(),
-        formData.area?.trim(),
-        formData.city?.trim(),
-        formData.district?.trim(),
-        formData.pincode?.trim() ? `- ${formData.pincode.trim()}` : ''
-      ].filter(Boolean).join(', ') || formData.address
+      const fullAddress = formatStructuredAddress({
+        doorNumber: formData.doorNumber,
+        streetName: formData.streetName || formData.address,
+        area: formData.area,
+        city: formData.city,
+        district: formData.district,
+        pincode: formData.pincode,
+      }) || cleanAddressDisplay(formData.address)
 
       const isUpi = paymentMethod === 'upi'
       const paymentMethodLabel = isUpi ? 'UPI' : 'WHATSAPP_ENQUIRY'
@@ -292,18 +295,20 @@ export default function CheckoutPage({
 
       const orderSummary = {
         orderId: orderNum,
+        isPaid: isUpi,
+        paymentStatus: paymentStatus,
         customer: {
           name: orderRes.customerName || formData.fullName,
           phone: orderRes.customerPhone || formData.mobileNumber,
-          address: orderRes.deliveryAddress || fullAddress,
+          address: cleanAddressDisplay(orderRes.deliveryAddress || fullAddress),
         },
         paymentMethod: isUpi ? `Direct UPI (GPay/PhonePe - UTR: ${utrNumber.trim()})` : 'WhatsApp Enquiry (Pay Later)',
-        paymentStatus: paymentStatus,
         items: cart,
         subtotal: orderRes.subTotal || subtotal,
         discount: 0,
         delivery: 0,
         total: orderRes.totalAmount || totalAmount,
+        utrNumber: isUpi ? utrNumber.trim() : null,
       }
 
       // Automatically trigger download of structured invoice bill!
@@ -871,58 +876,47 @@ export default function CheckoutPage({
                     Google Pay • PhonePe • Paytm • BHIM • CRED
                   </Typography>
 
-                  {/* QR Image Box */}
+                  {/* Clean Generated QR Code Box */}
                   <Box
                     sx={{
                       display: 'inline-block',
-                      p: 1.2,
+                      p: 1.5,
                       backgroundColor: '#FFFFFF',
-                      borderRadius: 2,
-                      border: '2px solid #86EFAC',
-                      boxShadow: '0 4px 12px rgba(22, 163, 74, 0.15)',
-                      mb: 1.2,
+                      borderRadius: 3,
+                      border: '2px solid #22C55E',
+                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.15)',
+                      mb: 1.5,
                     }}
                   >
                     <Box
                       component="img"
-                      src={qrType === 'gpay' ? UPI_CONFIG.qrImage : dynamicQrCodeUrl}
+                      src={dynamicQrCodeUrl}
                       alt="UPI Payment QR Code"
                       sx={{
-                        width: { xs: 180, sm: 200 },
-                        height: { xs: 180, sm: 200 },
+                        width: { xs: 200, sm: 220 },
+                        height: { xs: 200, sm: 220 },
                         display: 'block',
                         objectFit: 'contain',
-                        borderRadius: 1,
+                        borderRadius: 1.5,
                       }}
                     />
-                  </Box>
-
-                  {/* QR Mode Switcher */}
-                  <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 1.5 }}>
-                    <Chip
-                      size="small"
-                      clickable
-                      onClick={() => setQrType('gpay')}
-                      label="Original GPay QR"
+                    <Box
                       sx={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        backgroundColor: qrType === 'gpay' ? '#15803D' : '#DCFCE7',
-                        color: qrType === 'gpay' ? '#FFFFFF' : '#15803D',
+                        mt: 1.2,
+                        py: 0.5,
+                        px: 1.2,
+                        backgroundColor: '#DCFCE7',
+                        borderRadius: 1.5,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 0.6,
                       }}
-                    />
-                    <Chip
-                      size="small"
-                      clickable
-                      onClick={() => setQrType('dynamic')}
-                      label={`Exact Amount QR (₹${totalAmount})`}
-                      sx={{
-                        fontSize: '0.72rem',
-                        fontWeight: 700,
-                        backgroundColor: qrType === 'dynamic' ? '#15803D' : '#DCFCE7',
-                        color: qrType === 'dynamic' ? '#FFFFFF' : '#15803D',
-                      }}
-                    />
+                    >
+                      <CheckCircleIcon sx={{ fontSize: 16, color: '#15803D' }} />
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#166534', fontSize: '0.8rem' }}>
+                        Amount: ₹{totalAmount.toLocaleString('en-IN')} Pre-filled
+                      </Typography>
+                    </Box>
                   </Box>
 
                   {/* Copy UPI ID Box */}

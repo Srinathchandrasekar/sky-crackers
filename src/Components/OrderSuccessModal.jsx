@@ -22,6 +22,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
+import { cleanAddressDisplay } from '../utils/addressUtils'
 
 export default function OrderSuccessModal({
   open,
@@ -32,17 +33,21 @@ export default function OrderSuccessModal({
 }) {
   if (!orderDetails) return null
 
-  const isSavedBooking =
-    orderDetails.paymentStatus?.toLowerCase() === 'pending' ||
-    orderDetails.paymentMethod?.toLowerCase().includes('saved') ||
-    orderDetails.paymentMethod?.toLowerCase().includes('pending') ||
-    orderDetails.paymentMethod?.toLowerCase().includes('pay later')
+  const isPaid =
+    orderDetails.isPaid ||
+    orderDetails.paymentStatus?.toLowerCase() === 'completed' ||
+    orderDetails.paymentStatus?.toLowerCase() === 'paid'
+
+  const isWhatsApp =
+    orderDetails.paymentMethod?.toLowerCase().includes('whatsapp')
+
+  const isSavedBooking = !isPaid && !isWhatsApp
 
   const handleDownloadInvoice = () => {
     downloadStructuredInvoice({
       ...orderDetails,
-      paymentStatus: isSavedBooking ? 'Pending' : 'Completed',
-      paymentMethod: isSavedBooking ? 'Online Payment (Pending)' : 'Online Payment (Razorpay)',
+      paymentStatus: isPaid ? 'Completed' : 'Pending',
+      paymentMethod: orderDetails.paymentMethod || (isPaid ? 'Direct UPI' : 'Pending'),
     })
   }
 
@@ -67,23 +72,23 @@ export default function OrderSuccessModal({
             width: 72,
             height: 72,
             borderRadius: '50%',
-            backgroundColor: '#DCFCE7',
+            backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 12px auto',
-            boxShadow: '0 0 20px rgba(34, 197, 94, 0.3)',
+            boxShadow: isPaid ? '0 0 20px rgba(34, 197, 94, 0.3)' : '0 0 20px rgba(245, 158, 11, 0.3)',
           }}
         >
-          <CheckCircleIcon sx={{ fontSize: 46, color: '#16A34A' }} />
+          <CheckCircleIcon sx={{ fontSize: 46, color: isPaid ? '#16A34A' : '#D97706' }} />
         </Box>
 
         <Chip
-          icon={<AutoAwesomeIcon sx={{ color: '#B45309 !important', fontSize: 16 }} />}
-          label={isSavedBooking ? 'BOOKING SAVED IN DATABASE' : 'ORDER PLACED SUCCESSFULLY'}
+          icon={<AutoAwesomeIcon sx={{ color: isPaid ? '#15803D !important' : '#B45309 !important', fontSize: 16 }} />}
+          label={isPaid ? 'PAYMENT CONFIRMED (PAID)' : isWhatsApp ? 'WHATSAPP BOOKING CONFIRMED' : 'BOOKING SAVED IN DATABASE'}
           sx={{
-            backgroundColor: '#FEF3C7',
-            color: '#B45309',
+            backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
+            color: isPaid ? '#15803D' : '#B45309',
             fontWeight: 800,
             fontSize: '0.72rem',
             mb: 1.2,
@@ -91,12 +96,18 @@ export default function OrderSuccessModal({
         />
 
         <Typography variant="h5" sx={{ fontWeight: 900, color: '#0F172A', mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-          {isSavedBooking ? 'Booking Saved Successfully! 🎉' : 'Thank You for Your Order! 🎉'}
+          {isPaid
+            ? 'Payment Received & Order Placed! 🎉'
+            : isWhatsApp
+            ? 'Booking Confirmed via WhatsApp! 💥'
+            : 'Booking Saved Successfully! 🎉'}
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-          {isSavedBooking
-            ? 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'
-            : 'Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.'}
+          {isPaid
+            ? `Your payment of ₹${orderDetails.total?.toLocaleString('en-IN')} has been confirmed. Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.`
+            : isWhatsApp
+            ? 'Your crackers booking has been sent directly to our Sivakasi WhatsApp team (+91 80567 04353). We will verify dispatch and transport collection with you!'
+            : 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'}
         </Typography>
 
         {/* Order Summary Paper */}
@@ -123,19 +134,39 @@ export default function OrderSuccessModal({
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>
-                Payment Method:
+                Payment Status:
               </Typography>
               <Chip
                 size="small"
-                label={isSavedBooking ? 'Online Payment (Pending / Pay Later)' : (orderDetails.paymentMethod || 'Online Payment')}
+                icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : undefined}
+                label={isPaid ? 'Payment Completed (Paid)' : isWhatsApp ? 'WhatsApp Enquiry (Pending)' : 'Online Payment (Pending / Pay Later)'}
                 sx={{
-                  backgroundColor: isSavedBooking ? '#FEF3C7' : '#DCFCE7',
-                  color: isSavedBooking ? '#B45309' : '#15803D',
-                  fontWeight: 800,
+                  backgroundColor: isPaid ? '#DCFCE7' : isWhatsApp ? '#E0F2FE' : '#FEF3C7',
+                  color: isPaid ? '#15803D' : isWhatsApp ? '#0369A1' : '#B45309',
+                  fontWeight: 900,
                   fontSize: '0.72rem',
                 }}
               />
             </Box>
+
+            {orderDetails.utrNumber && (
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700 }}>
+                  UPI Ref / UTR:
+                </Typography>
+                <Chip
+                  size="small"
+                  label={orderDetails.utrNumber}
+                  sx={{
+                    backgroundColor: '#EFF6FF',
+                    color: '#1E40AF',
+                    fontWeight: 800,
+                    fontSize: '0.72rem',
+                    border: '1px solid #BFDBFE',
+                  }}
+                />
+              </Box>
+            )}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <Typography variant="caption" sx={{ color: '#64748B', fontWeight: 700, mt: 0.3 }}>
@@ -143,7 +174,7 @@ export default function OrderSuccessModal({
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 600, color: '#0F172A', textAlign: 'right', maxWidth: '65%', fontSize: '0.82rem' }}>
                 <strong>{orderDetails.customer?.name}</strong> (+91 {orderDetails.customer?.phone})<br />
-                {orderDetails.customer?.address}
+                {cleanAddressDisplay(orderDetails.customer?.address)}
               </Typography>
             </Box>
 
