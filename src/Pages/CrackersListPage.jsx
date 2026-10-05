@@ -120,23 +120,21 @@ export default function CrackersListPage({
               (cd) => (p.sku && cd.sku === p.sku) || cd.sno === p.sno || cd.name.toLowerCase() === (p.englishName || '').toLowerCase()
             )
             return {
-              id: `p-${p.productId}`,
-              productId: p.productId,
+              id: `p-${p.productId || p.sno}`,
+              productId: p.productId || p.sno,
               sno: p.sno,
-              sku: p.sku,
+              sku: p.sku || `sfc-${p.sno}`,
               name: p.englishName || (local ? local.name : ''),
               nameTamil: (local && local.tamilName) ? local.tamilName : (p.tamilName || p.englishName || ''),
-              category: p.categorySlug || (local ? local.category : ''),
-              categorySlug: p.categorySlug || (local ? local.category : ''),
-              categoryName: p.categoryName || (local ? local.category : ''),
-              originalPrice: Number(p.originalPrice),
-              discountPrice: Number(p.discountPrice),
-              discountPercent: p.discountPercent || 80,
+              category: p.categorySlug || (local ? local.category : 'all'),
+              categorySlug: p.categorySlug || (local ? local.category : 'all'),
+              categoryName: p.categoryName || (local ? local.category : 'All Crackers'),
+              originalPrice: Number(p.actualRate || p.discountPrice || p.originalPrice || (local ? local.discountPrice : 0)),
+              discountPrice: Number(p.actualRate || p.discountPrice || (local ? local.discountPrice : 0)),
+              discountPercent: 0,
               pieces: p.pieces || (local ? local.pieces : '1 Box'),
-              stock: p.stockQuantity,
-              inStock: p.stockQuantity > 0,
-              rating: Number(p.rating) || (local ? local.rating : 4.7),
-              reviews: p.reviewsCount || (local ? local.reviews : 100),
+              rating: Number(p.rating) || (local ? local.rating : 4.8),
+              reviews: p.reviewsCount || (local ? local.reviews : 120),
               image: (local && local.image) ? local.image : getCategoryFallbackImage(p.categorySlug),
               description: p.description || (local ? local.description : p.englishName),
             }
@@ -146,7 +144,7 @@ export default function CrackersListPage({
         }
 
         if (active && cData.status === 'fulfilled' && Array.isArray(cData.value) && cData.value.length > 0) {
-          const totalCount = pData.status === 'fulfilled' ? pData.value.length : 91
+          const totalCount = pData.status === 'fulfilled' ? pData.value.length : 81
           const mappedCats = [
             { id: 'all', name: 'All Crackers', count: totalCount, icon: 'auto_awesome' },
             ...cData.value.map((c) => ({
@@ -658,25 +656,25 @@ export default function CrackersListPage({
                       },
                     }}
                   >
-                    {/* Discount & S.No Badges */}
+                    {/* S.No Badge on Top Left */}
                     <Chip
-                      label={`${product.discountPercent}% OFF`}
+                      label={`#${product.sno}`}
                       size="small"
                       sx={{
                         position: 'absolute',
                         top: { xs: 6, sm: 8 },
                         left: { xs: 6, sm: 8 },
                         zIndex: 2,
-                        backgroundColor: '#FFA000',
-                        color: '#0B132B',
-                        fontWeight: 900,
-                        fontSize: { xs: '0.66rem', sm: '0.74rem' },
+                        backgroundColor: 'rgba(11, 19, 43, 0.9)',
+                        color: '#FFA000',
+                        fontWeight: 800,
+                        fontSize: { xs: '0.68rem', sm: '0.76rem' },
                         height: { xs: 20, sm: 24 },
-                        px: { xs: 0.2, sm: 0.5 },
+                        backdropFilter: 'blur(4px)',
                       }}
                     />
 
-                    {inCartQty > 0 ? (
+                    {inCartQty > 0 && (
                       <Chip
                         icon={<CheckCircleIcon sx={{ fontSize: { xs: '11px !important', sm: '13px !important' }, color: '#0B132B !important' }} />}
                         label={`In Cart (${inCartQty})`}
@@ -692,23 +690,6 @@ export default function CrackersListPage({
                           fontSize: { xs: '0.64rem', sm: '0.74rem' },
                           height: { xs: 20, sm: 24 },
                           boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                        }}
-                      />
-                    ) : (
-                      <Chip
-                        label={`#${product.sno}`}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: { xs: 6, sm: 8 },
-                          right: { xs: 6, sm: 8 },
-                          zIndex: 2,
-                          backgroundColor: 'rgba(11, 19, 43, 0.88)',
-                          color: '#FFA000',
-                          fontWeight: 800,
-                          fontSize: { xs: '0.66rem', sm: '0.74rem' },
-                          height: { xs: 20, sm: 24 },
-                          backdropFilter: 'blur(4px)',
                         }}
                       />
                     )}
@@ -815,19 +796,6 @@ export default function CrackersListPage({
                           >
                             ₹{product.discountPrice}
                           </Typography>
-                          {product.originalPrice > product.discountPrice && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                color: '#94A3B8',
-                                textDecoration: 'line-through',
-                                fontSize: { xs: '0.68rem', sm: '0.75rem' },
-                                display: 'block',
-                              }}
-                            >
-                              ₹{product.originalPrice}
-                            </Typography>
-                          )}
                         </Box>
                       </Box>
 

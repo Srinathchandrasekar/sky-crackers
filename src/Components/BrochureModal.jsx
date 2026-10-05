@@ -378,7 +378,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                 </Typography>
                 <Stack direction="row" spacing={2} justifyContent="center">
                   <Button variant="contained" onClick={() => setViewMode('table')} sx={{ backgroundColor: '#FFA000', color: '#0B132B' }}>
-                    View 84-Item Price Table
+                    View 81-Item Price Table
                   </Button>
                   <Button variant="outlined" onClick={handleDownloadPdf} sx={{ color: '#FFFFFF', borderColor: '#FFFFFF' }}>
                     Download Official PDF
@@ -411,7 +411,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
             </Box>
           </Box>
         ) : (
-          /* TABLE MODE: Fullscreen Interactive Searchable 84-Item Catalog Table */
+          /* TABLE MODE: Fullscreen Interactive Searchable 81-Item Catalog Table */
           <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%', backgroundColor: '#F8FAFC' }}>
             {/* Search Bar Bar */}
             <Box

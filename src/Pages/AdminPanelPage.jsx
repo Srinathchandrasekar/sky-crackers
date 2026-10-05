@@ -1289,7 +1289,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
           </Paper>
         )}
 
-        {/* TAB 2: PRODUCT CATALOG (91 ITEMS - NO STOCK LIMIT) */}
+        {/* TAB 2: PRODUCT CATALOG (81 ITEMS - NO STOCK LIMIT) */}
         {activeTab === 2 && (
           <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: '1px solid #E2E8F0', backgroundColor: '#FFFFFF' }}>
             <Box sx={{ mb: 2.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
@@ -1298,7 +1298,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   Full Product Price Catalog - Sky Fire Crackers Price List 2026
                 </Typography>
                 <Typography variant="body2" sx={{ color: '#64748B' }}>
-                  Complete Product Price List • 80% Off Flat Discount Applied • Open for On-Demand Booking
+                  Complete Product Price List • Direct Factory Wholesale Rates • Open for On-Demand Booking
                 </Typography>
               </Box>
 
@@ -1328,23 +1328,21 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                     <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Tamil Name</TableCell>
                     <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Category</TableCell>
                     <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Packing Unit</TableCell>
-                    <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Original Price</TableCell>
-                    <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Booking Price (80% Off)</TableCell>
+                    <TableCell sx={{ fontWeight: 700, backgroundColor: '#F8FAFC' }}>Actual Wholesale Rate (₹)</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filteredProducts.map((p) => (
-                    <TableRow key={p.productId} hover>
+                    <TableRow key={p.productId || p.sno} hover>
                       <TableCell sx={{ fontWeight: 600 }}>{p.sno}</TableCell>
-                      <TableCell sx={{ color: '#64748B' }}>{p.sku}</TableCell>
-                      <TableCell sx={{ fontWeight: 700, color: '#0B132B' }}>{p.englishName}</TableCell>
-                      <TableCell sx={{ color: '#475569' }}>{p.tamilName || '-'}</TableCell>
+                      <TableCell sx={{ color: '#64748B' }}>{p.sku || `sfc-${p.sno}`}</TableCell>
+                      <TableCell sx={{ fontWeight: 700, color: '#0B132B' }}>{p.englishName || p.name}</TableCell>
+                      <TableCell sx={{ color: '#475569' }}>{p.tamilName || p.nameTamil || '-'}</TableCell>
                       <TableCell>
-                        <Chip size="small" label={p.categoryName} sx={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9' }} />
+                        <Chip size="small" label={p.categoryName || p.category} sx={{ fontSize: '0.72rem', backgroundColor: '#F1F5F9' }} />
                       </TableCell>
                       <TableCell sx={{ fontWeight: 600, color: '#0284C7' }}>{p.pieces || '1 Box'}</TableCell>
-                      <TableCell sx={{ color: '#94A3B8', textDecoration: 'line-through' }}>₹{p.originalPrice}</TableCell>
-                      <TableCell sx={{ fontWeight: 800, color: '#16A34A', fontSize: '0.92rem' }}>₹{p.discountPrice}</TableCell>
+                      <TableCell sx={{ fontWeight: 800, color: '#16A34A', fontSize: '0.92rem' }}>₹{p.discountPrice || p.actualRate || p.originalPrice}.00</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
