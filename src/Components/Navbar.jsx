@@ -28,7 +28,10 @@ import PhoneIcon from '@mui/icons-material/Phone'
 import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import ReceiptLongIcon from '@mui/icons-material/ReceiptLong'
+import PersonIcon from '@mui/icons-material/Person'
+import LogoutIcon from '@mui/icons-material/Logout'
 import { getHealthApi } from '../services/api'
+import CustomerProfileMenu from './CustomerProfileMenu'
 
 export default function Navbar({
   activePage,
@@ -39,11 +42,15 @@ export default function Navbar({
   onOpenBrochure,
   onOpenCart,
   onOpenOrderDetails,
+  loggedInCustomer,
+  onOpenLogin,
+  onLogout,
 }) {
   const theme = useTheme()
   const isMobile = useMediaQuery(theme.breakpoints.down('md'))
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [apiStatus, setApiStatus] = React.useState('checking')
+  const [profileAnchorEl, setProfileAnchorEl] = React.useState(null)
 
   React.useEffect(() => {
     let mounted = true
@@ -349,6 +356,57 @@ export default function Navbar({
                   <ShoppingCartIcon sx={{ fontSize: 20 }} />
                 </Badge>
               </Button>
+
+              {/* Customer Profile / Login Button (Desktop) */}
+              {loggedInCustomer ? (
+                <Button
+                  onClick={(e) => setProfileAnchorEl(e.currentTarget)}
+                  startIcon={<PersonIcon sx={{ color: '#FFA000' }} />}
+                  sx={{
+                    color: '#FFFFFF',
+                    backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                    border: '1.5px solid rgba(255, 160, 0, 0.45)',
+                    borderRadius: '20px',
+                    px: 1.8,
+                    py: 0.6,
+                    fontSize: '0.84rem',
+                    fontWeight: 800,
+                    textTransform: 'none',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 160, 0, 0.28)',
+                      borderColor: '#FFA000',
+                      transform: 'translateY(-1px)',
+                    },
+                  }}
+                >
+                  {loggedInCustomer.customerName || loggedInCustomer.fullName || 'My Account'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={onOpenLogin}
+                  startIcon={<LockOutlinedIcon sx={{ color: '#FFA000', fontSize: 17 }} />}
+                  sx={{
+                    color: '#FFFFFF',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.25)',
+                    borderRadius: '20px',
+                    px: 1.8,
+                    py: 0.6,
+                    fontSize: '0.84rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    transition: 'all 0.2s',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                      borderColor: '#FFA000',
+                      color: '#FFA000',
+                    },
+                  }}
+                >
+                  Login / OTP
+                </Button>
+              )}
             </Box>
           )}
 
@@ -363,6 +421,36 @@ export default function Navbar({
               >
                 <PhoneIcon sx={{ fontSize: { xs: 20, sm: 22 } }} />
               </IconButton>
+
+              {/* Mobile Profile / Login Icon */}
+              {loggedInCustomer ? (
+                <IconButton
+                  onClick={(e) => setProfileAnchorEl(e.currentTarget)}
+                  sx={{
+                    color: '#FFA000',
+                    backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                    border: '1px solid rgba(255, 160, 0, 0.4)',
+                    p: { xs: 0.7, sm: 0.9 },
+                    mr: 0.5,
+                  }}
+                >
+                  <PersonIcon sx={{ fontSize: { xs: 19, sm: 21 } }} />
+                </IconButton>
+              ) : (
+                <IconButton
+                  onClick={onOpenLogin}
+                  sx={{
+                    color: '#FFFFFF',
+                    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                    p: { xs: 0.7, sm: 0.9 },
+                    mr: 0.5,
+                  }}
+                  title="Login with Mobile OTP"
+                >
+                  <LockOutlinedIcon sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                </IconButton>
+              )}
+
               <IconButton
                 onClick={() => (onOpenCart ? onOpenCart() : handleNavClick('cart'))}
                 sx={{ color: '#FFFFFF', mr: 0.5, p: { xs: 0.8, sm: 1 } }}
@@ -390,6 +478,19 @@ export default function Navbar({
               </IconButton>
             </Box>
           )}
+
+          {/* Customer Profile Dropdown Menu */}
+          <CustomerProfileMenu
+            customer={loggedInCustomer}
+            anchorEl={profileAnchorEl}
+            open={Boolean(profileAnchorEl)}
+            onClose={() => setProfileAnchorEl(null)}
+            onLogout={() => {
+              setProfileAnchorEl(null)
+              if (onLogout) onLogout()
+            }}
+            onOpenOrderDetails={onOpenOrderDetails}
+          />
         </Toolbar>
       </Container>
 
@@ -478,6 +579,100 @@ export default function Navbar({
               />
             </ListItemButton>
           </ListItem>
+
+          {/* Customer Login / Profile in Mobile Drawer */}
+          {loggedInCustomer ? (
+            <>
+              <ListItem disablePadding sx={{ mb: 1 }}>
+                <Box
+                  sx={{
+                    width: '100%',
+                    p: 1.5,
+                    borderRadius: 2,
+                    backgroundColor: 'rgba(255, 160, 0, 0.15)',
+                    border: '1px solid rgba(255, 160, 0, 0.35)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.2,
+                  }}
+                >
+                  <PersonIcon sx={{ color: '#FFA000' }} />
+                  <Box sx={{ overflow: 'hidden' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 800, color: '#FFFFFF' }} noWrap>
+                      {loggedInCustomer.customerName || loggedInCustomer.fullName || 'My Account'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#FFA000', fontSize: '0.72rem' }}>
+                      +91 {loggedInCustomer.mobileNumber} (Verified)
+                    </Typography>
+                  </Box>
+                </Box>
+              </ListItem>
+
+              <ListItem disablePadding sx={{ mb: 1 }}>
+                <ListItemButton
+                  onClick={() => {
+                    setMobileOpen(false)
+                    if (onLogout) onLogout()
+                  }}
+                  sx={{
+                    borderRadius: 2.5,
+                    py: 1,
+                    px: 2,
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    color: '#F87171',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(239, 68, 68, 0.25)',
+                    },
+                  }}
+                >
+                  <Box sx={{ mr: 2, display: 'flex', color: '#F87171' }}>
+                    <LogoutIcon fontSize="small" />
+                  </Box>
+                  <ListItemText
+                    primary="Log Out (வெளியேறு)"
+                    primaryTypographyProps={{
+                      fontWeight: 800,
+                      fontSize: '0.9rem',
+                      color: 'inherit',
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            </>
+          ) : (
+            <ListItem disablePadding sx={{ mb: 1 }}>
+              <ListItemButton
+                onClick={() => {
+                  setMobileOpen(false)
+                  if (onOpenLogin) onOpenLogin()
+                }}
+                sx={{
+                  borderRadius: 2.5,
+                  py: 1.2,
+                  px: 2,
+                  backgroundColor: 'rgba(255, 160, 0, 0.2)',
+                  color: '#FFA000',
+                  border: '1px solid rgba(255, 160, 0, 0.4)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 160, 0, 0.3)',
+                  },
+                }}
+              >
+                <Box sx={{ mr: 2, display: 'flex', color: '#FFA000' }}>
+                  <LockOutlinedIcon fontSize="small" />
+                </Box>
+                <ListItemText
+                  primary="Login / OTP (உள்நுழைக)"
+                  primaryTypographyProps={{
+                    fontWeight: 800,
+                    fontSize: '0.95rem',
+                    color: 'inherit',
+                  }}
+                />
+              </ListItemButton>
+            </ListItem>
+          )}
         </List>
 
         {/* Mobile Helpline */}

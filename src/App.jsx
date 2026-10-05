@@ -17,6 +17,7 @@ import OrderSuccessModal from './Components/OrderSuccessModal'
 import RightCartDrawer from './Components/RightCartDrawer'
 import OrderPlacementModal from './Components/OrderPlacementModal'
 import OrderDetailsModal from './Components/OrderDetailsModal'
+import CustomerLoginModal from './Components/CustomerLoginModal'
 import Footer from './Components/Footer'
 import HomePage from './Pages/HomePage'
 import CrackersListPage from './Pages/CrackersListPage'
@@ -31,8 +32,26 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [cart, setCart] = useState([])
-  const [customerData, setCustomerData] = useState(null)
   const [selectedPerson, setSelectedPerson] = useState(null)
+
+  // Persistent Authenticated Customer State (Restores automatically on page refresh)
+  const [loggedInCustomer, setLoggedInCustomer] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sky_logged_in_customer')
+      return saved ? JSON.parse(saved) : null
+    } catch (e) {
+      return null
+    }
+  })
+
+  const [customerData, setCustomerData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sky_logged_in_customer') || localStorage.getItem('sky_current_customer')
+      return saved ? JSON.parse(saved) : null
+    } catch (e) {
+      return null
+    }
+  })
 
   // Drawer & Modals state
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false)
@@ -40,7 +59,16 @@ function App() {
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false)
   const [brochureOpen, setBrochureOpen] = useState(false)
   const [orderSuccessOpen, setOrderSuccessOpen] = useState(false)
+  const [loginModalOpen, setLoginModalOpen] = useState(false)
+  const [loginRedirectAction, setLoginRedirectAction] = useState(null)
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null)
+
+  // Synchronize customerData whenever loggedInCustomer changes
+  useEffect(() => {
+    if (loggedInCustomer) {
+      setCustomerData(loggedInCustomer)
+    }
+  }, [loggedInCustomer])
 
   // Handle mobile browser hardware back button navigation with stepped page hierarchy
   useEffect(() => {
@@ -209,6 +237,44 @@ function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Handle Login Success (from OTP verification modal)
+  const handleLoginSuccess = (profile) => {
+    setLoggedInCustomer(profile)
+    setCustomerData(profile)
+    setLoginModalOpen(false)
+    if (loginRedirectAction === 'checkout') {
+      setLoginRedirectAction(null)
+      setActivePage('checkout')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Handle Logout (Explicitly clears session as requested)
+  const handleLogout = () => {
+    localStorage.removeItem('sky_logged_in_customer')
+    localStorage.removeItem('sky_current_customer')
+    setLoggedInCustomer(null)
+    setCustomerData(null)
+    if (activePage === 'checkout') {
+      setActivePage('cart')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }
+
+  // Handle proceeding to checkout from Cart / Cart Drawer
+  const handleProceedToCheckout = () => {
+    if (loggedInCustomer) {
+      setCustomerData(loggedInCustomer)
+      setCartDrawerOpen(false)
+      setActivePage('checkout')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else {
+      setCartDrawerOpen(false)
+      setLoginRedirectAction('checkout')
+      setLoginModalOpen(true)
+    }
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -234,6 +300,9 @@ function App() {
           onOpenBrochure={() => setBrochureOpen(true)}
           onOpenCart={() => setCartDrawerOpen(true)}
           onOpenOrderDetails={() => setOrderDetailsOpen(true)}
+          loggedInCustomer={loggedInCustomer}
+          onOpenLogin={() => setLoginModalOpen(true)}
+          onLogout={handleLogout}
         />
 
         {/* Dynamic Page Content */}
@@ -271,9 +340,7 @@ function App() {
                 setActivePage('crackers')
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
-              onProceedToPayment={() => {
-                setOrderModalOpen(true)
-              }}
+              onProceedToPayment={handleProceedToCheckout}
             />
           )}
 
@@ -390,7 +457,7 @@ function App() {
           cart={cart}
           onUpdateQuantity={handleUpdateQuantity}
           onRemoveItem={handleRemoveItem}
-          onProceedToOrder={() => setOrderModalOpen(true)}
+          onProceedToOrder={handleProceedToCheckout}
         />
 
         {/* Order Placement Modal (Phone Verification & DB Save) */}
@@ -455,7 +522,18 @@ function App() {
           onOpenPersonPage={(cust) => handleOpenPersonPage(cust, 'crackers')}
         />
 
-        {/* Professional Footer with Compliance Policies & Contact Details for Razorpay */}
+        {/* 6-Digit SMS OTP Customer Login & Verification Modal */}
+        <CustomerLoginModal
+          open={loginModalOpen}
+          onClose={() => {
+            setLoginModalOpen(false)
+            setLoginRedirectAction(null)
+          }}
+          onLoginSuccess={handleLoginSuccess}
+          initialMobile={customerData?.mobileNumber || ''}
+        />
+
+        {/* Professional Footer with Compliance Policies & Contact Details for Direct UPI */}
         <Footer
           onNavigate={(page) => {
             setActivePage(page)
