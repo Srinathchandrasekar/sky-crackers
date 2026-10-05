@@ -43,9 +43,19 @@ export default function OrderSuccessModal({
 
   const isSavedBooking = !isPaid && !isWhatsApp
 
+  // Accurately compute real items total so modal never shows wrong database defaults
+  const computedTotal = (orderDetails.items || []).reduce((sum, item) => {
+    const qty = Number(item.quantity || 1)
+    const price = Number(item.product?.discountPrice ?? item.unitPrice ?? 0)
+    return sum + (price * qty)
+  }, 0)
+  const displayTotal = computedTotal > 0 ? computedTotal : Number(orderDetails.total || 0)
+
   const handleDownloadInvoice = () => {
     downloadStructuredInvoice({
       ...orderDetails,
+      total: displayTotal,
+      subtotal: displayTotal,
       paymentStatus: isPaid ? 'Completed' : 'Pending',
       paymentMethod: orderDetails.paymentMethod || (isPaid ? 'Direct UPI' : 'Pending'),
     })
@@ -104,7 +114,7 @@ export default function OrderSuccessModal({
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
           {isPaid
-            ? `Your payment of ₹${orderDetails.total?.toLocaleString('en-IN')} has been confirmed. Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.`
+            ? `Your payment of ₹${displayTotal.toLocaleString('en-IN')} has been confirmed. Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.`
             : isWhatsApp
             ? 'Your crackers booking has been sent directly to our Sivakasi WhatsApp team (+91 80567 04353). We will verify dispatch and transport collection with you!'
             : 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'}
@@ -227,7 +237,7 @@ export default function OrderSuccessModal({
                 Total {isSavedBooking ? 'Booking Amount' : 'Paid'}
               </Typography>
               <Typography variant="h6" sx={{ fontWeight: 900, color: '#0B132B' }}>
-                ₹{orderDetails.total}
+                ₹{displayTotal.toLocaleString('en-IN')}
               </Typography>
             </Box>
           </Stack>

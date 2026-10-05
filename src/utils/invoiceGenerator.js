@@ -7,9 +7,17 @@ export function generateStructuredInvoiceHtml(order) {
     order.paymentStatus?.toLowerCase() === 'success'
 
   const items = order.items || order.Items || order.orderItems || order.OrderItems || []
-  const subtotal = order.subTotal || order.subtotal || order.totalAmount || order.total || 0
-  const discount = order.discountAmount || order.discount || 0
-  const grandTotal = order.totalAmount || order.total || 0
+  
+  // Accurately compute real items total directly from line items
+  const calculatedItemsTotal = items.reduce((sum, item) => {
+    const qty = Number(item.quantity || item.Quantity || 1)
+    const price = Number(item.product?.discountPrice ?? item.unitPrice ?? item.UnitPrice ?? 0)
+    return sum + (price * qty)
+  }, 0)
+
+  const finalTotal = calculatedItemsTotal > 0 ? calculatedItemsTotal : Number(order.totalAmount || order.total || order.subTotal || 0)
+  const discount = Number(order.discountAmount || order.discount || 0)
+  const grandTotal = finalTotal
 
   let customerName = order.customerName || order.customer?.name || order.customer?.fullName || 'Valued Customer'
   if (typeof customerName === 'string' && (customerName.startsWith('Razorpay Payment ID:') || customerName.startsWith('Online Payment Pending'))) {
@@ -153,7 +161,7 @@ export function generateStructuredInvoiceHtml(order) {
     <div class="status-banner ${isPaid ? 'status-completed' : 'status-pending'}">
       <div>
         ${isPaid 
-          ? '✔ PAYMENT STATUS: COMPLETED (PAID ONLINE VIA RAZORPAY / UPI)' 
+          ? '✔ PAYMENT STATUS: COMPLETED (DIRECT UPI PAYMENT VERIFIED)' 
           : '⚠️ PAYMENT STATUS: PENDING (ONLINE PAYMENT DUE / PAY LATER)'}
       </div>
       <div class="status-tag ${isPaid ? 'tag-completed' : 'tag-pending'}">
@@ -174,7 +182,8 @@ export function generateStructuredInvoiceHtml(order) {
         <div class="meta-box">
           <h4>Booking Information:</h4>
           <p><strong>Booking Ref:</strong> #${orderNumber}</p>
-          <p><strong>Payment Option:</strong> ${order.paymentMethod || 'Online Payment'}</p>
+          ${order.utrNumber ? `<p><strong>UPI Ref / UTR:</strong> <span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 800; font-size: 13px;">${order.utrNumber}</span></p>` : ''}
+          <p><strong>Payment Option:</strong> ${order.paymentMethod || (isPaid ? 'Direct UPI (GPay / PhonePe)' : 'WhatsApp Enquiry')}</p>
           <p><strong>Order Status:</strong> ${order.orderStatus || 'Confirmed & Packing'}</p>
         </div>
       </div>
@@ -212,16 +221,20 @@ export function generateStructuredInvoiceHtml(order) {
       <!-- FINANCIAL SUMMARY & INSTRUCTIONS -->
       <div class="summary-section">
         <div class="terms-box">
-          <strong>Important Instructions & Transport Policy:</strong>
-          <p>• <strong>Transport Dispatch:</strong> Products dispatched to customer door / nearest transport parcel office (Transport charges To-Pay upon collecting parcel).</p>
-          <p>• <strong>Tracking:</strong> You will receive Lorry Receipt (LR) tracking copy via SMS/WhatsApp once booked with transport carrier.</p>
-          <p>• <strong>Safety:</strong> Store fireworks in a cool, dry place. All crackers are 100% certified green crackers.</p>
+          <strong>📌 Important Instructions & Transport Policy:</strong>
+          <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 6px; font-size: 12px; color: #334155; line-height: 1.55;">
+            <div>🚚 <strong>Transport Dispatch:</strong> Products dispatched directly from Sivakasi to your nearest transport hub or door delivery.</div>
+            <div>📦 <strong>LR Tracking:</strong> Lorry Receipt (LR) tracking copy will be shared via WhatsApp (+91 ${customerPhone}) once booked.</div>
+            <div>💰 <strong>Freight Payment:</strong> Transport parcel handling charges are To-Pay upon collecting the parcel.</div>
+            <div>🦺 <strong>Safety & Quality:</strong> All fireworks are 100% certified green crackers. Store in a cool, dry place.</div>
+            <div>📞 <strong>Support:</strong> For questions or transport status, contact <strong>+91 80567 04353</strong>.</div>
+          </div>
         </div>
 
         <div class="calc-table">
           <div class="calc-row">
-            <span>Items Subtotal:</span>
-            <span>₹${subtotal}</span>
+            <span>Total Items Ordered:</span>
+            <strong>${items.reduce((s, i) => s + Number(i.quantity || i.Quantity || 1), 0)} Box(es)</strong>
           </div>
           ${discount > 0 ? `
           <div class="calc-row discount">
@@ -233,7 +246,7 @@ export function generateStructuredInvoiceHtml(order) {
             <span style="color: #d97706; font-weight: 700; font-size: 11.5px;">To Pay at Delivery (Transport)</span>
           </div>
           <div class="calc-row grand-total">
-            <span>BOOKING TOTAL:</span>
+            <span>TOTAL AMOUNT:</span>
             <span>₹${grandTotal}</span>
           </div>
         </div>

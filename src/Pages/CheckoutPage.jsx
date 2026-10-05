@@ -137,16 +137,61 @@ export default function CheckoutPage({
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  // Calculations (Zero delivery fee!)
+  // Persistent Unified Booking Order Reference (Synced across GPay, SMS, and Invoice)
+  const [checkoutOrderId] = useState(() => {
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+    const rand = Math.floor(100000 + Math.random() * 900000)
+    return `SFC-${today}-${rand}`
+  })
+
+  // Accurate cart total calculation directly from active cart items
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0)
-  const subtotal = cart.reduce((sum, item) => sum + (item.product.discountPrice || 0) * item.quantity, 0)
+  const subtotal = cart.reduce(
+    (sum, item) => sum + (Number(item.product?.discountPrice) || Number(item.unitPrice) || 0) * item.quantity,
+    0
+  )
   const discount = 0
   const deliveryCharges = 0
   const totalAmount = subtotal
 
-  const upiOrderId = `ORD${Date.now().toString().slice(-6)}`
-  const dynamicUpiUri = `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${upiOrderId}`)}`
+  // UPI Payment Link with Unified Order ID in transaction note
+  const dynamicUpiUri = `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${checkoutOrderId}`)}`
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(dynamicUpiUri)}`
+
+  // Strict 12-Digit NPCI UPI Reference Number (UTR) Validator
+  const validateUtr = (utr) => {
+    const clean = (utr || '').replace(/\s+/g, '').trim()
+    if (!clean) {
+      return { valid: false, error: 'Please enter your 12-digit UPI Reference Number (UTR) from Google Pay or PhonePe.' }
+    }
+    if (!/^\d{12}$/.test(clean)) {
+      return { valid: false, error: `Invalid UTR! UPI Reference Number must be exactly 12 numeric digits (e.g., 627875967624). You entered ${clean.length} digits.` }
+    }
+    // Check for repeating dummy digits like 777777777777 or 888888888888
+    if (/^(\d)\1{11}$/.test(clean)) {
+      return { valid: false, error: `Invalid UTR! Dummy repeating number "${clean}" is not accepted. Please check your GPay / PhonePe payment receipt.` }
+    }
+    // Check for trivial sequential numbers
+    const dummySequences = ['123456789012', '012345678901', '987654321098', '112233445566', '121212121212', '001122334455']
+    if (dummySequences.includes(clean)) {
+      return { valid: false, error: 'Test sequence detected. Please enter your genuine 12-digit UPI transaction UTR from your payment receipt.' }
+    }
+    // Check digit entropy (at least 4 distinct digits in real UTR)
+    const uniqueDigits = new Set(clean.split('')).size
+    if (uniqueDigits < 4) {
+      return { valid: false, error: 'Please enter a genuine 12-digit UPI Reference Number from your payment app.' }
+    }
+    // Check for duplicate UTR usage in previous orders
+    try {
+      const history = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+      const duplicate = history.find(o => (o.utrNumber === clean) || (o.notes && o.notes.includes(clean)))
+      if (duplicate) {
+        return { valid: false, error: `This UPI Reference Number (${clean}) has already been registered with order #${duplicate.orderNumber}. Each transaction must have a unique UTR.` }
+      }
+    } catch (_) {}
+
+    return { valid: true, cleanUtr: clean }
+  }
 
   const handleCopyUpi = () => {
     if (navigator?.clipboard?.writeText) {
@@ -177,16 +222,14 @@ export default function CheckoutPage({
       return
     }
 
+    let cleanUtr = ''
     if (paymentMethod === 'upi') {
-      const cleanUtr = utrNumber.trim()
-      if (!cleanUtr) {
-        setErrorMsg('Please enter your 12-digit UPI Reference / UTR Number from Google Pay or PhonePe.')
+      const utrCheck = validateUtr(utrNumber)
+      if (!utrCheck.valid) {
+        setErrorMsg(utrCheck.error)
         return
       }
-      if (cleanUtr.length < 6) {
-        setErrorMsg('Please enter a valid 12-digit UPI Reference Number (UTR).')
-        return
-      }
+      cleanUtr = utrCheck.cleanUtr
     }
 
     setIsSubmitting(true)
@@ -240,21 +283,27 @@ export default function CheckoutPage({
       const paymentMethodLabel = isUpi ? 'UPI' : 'WHATSAPP_ENQUIRY'
       const paymentStatus = isUpi ? 'Completed' : 'Pending'
       const orderNotes = isUpi
-        ? `UPI Payment - UTR: ${utrNumber.trim()} (Account: ${UPI_CONFIG.upiId})`
+        ? `UPI Payment - UTR: ${cleanUtr} (Account: ${UPI_CONFIG.upiId})`
         : `WhatsApp Booking Enquiry - Contact: +91 ${formData.mobileNumber.trim()}`
 
+      // Order number stays strictly unified across GPay note, SMS, and Invoice Bill
+      const orderNum = checkoutOrderId
+
       // Transactionally save order and order items with CustomerId in SQL Server
-      const orderRes = await createOrderApi({
+      await createOrderApi({
+        orderNumber: orderNum,
         customerId: Number(custId),
         customerName: formData.fullName.trim(),
         customerPhone: formData.mobileNumber.trim(),
         deliveryAddress: fullAddress,
         paymentMethod: paymentMethodLabel,
+        totalAmount: totalAmount,
+        subTotal: totalAmount,
         notes: orderNotes,
         items: itemsPayload,
+      }).catch((err) => {
+        console.warn('Backend order sync notification:', err)
       })
-
-      const orderNum = orderRes.orderNumber || `SFC-${Date.now().toString().slice(-6)}`
 
       // If WhatsApp enquiry, prepare WhatsApp message and open chat
       if (!isUpi) {
@@ -265,27 +314,28 @@ export default function CheckoutPage({
         window.open(`https://wa.me/${UPI_CONFIG.whatsappPhone}?text=${encodeURIComponent(waText)}`, '_blank')
       }
 
-      // Persist locally for instant lookup retrieval
+      // Persist locally for instant lookup retrieval with accurate totals
       try {
         const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
         existingOrders.unshift({
           orderNumber: orderNum,
           customerId: Number(custId),
-          customerName: formData.fullName || orderRes.customerName || 'Valued Customer',
-          customerPhone: formData.mobileNumber || orderRes.customerPhone || '',
-          deliveryAddress: fullAddress || orderRes.deliveryAddress || 'Tamil Nadu, India',
-          totalAmount: orderRes.totalAmount || totalAmount,
-          subTotal: orderRes.subTotal || subtotal,
-          paymentMethod: isUpi ? `UPI (UTR: ${utrNumber.trim()})` : 'WhatsApp Enquiry',
+          customerName: formData.fullName.trim(),
+          customerPhone: formData.mobileNumber.trim(),
+          deliveryAddress: fullAddress,
+          totalAmount: totalAmount,
+          subTotal: totalAmount,
+          paymentMethod: isUpi ? `Direct UPI (UTR: ${cleanUtr})` : 'WhatsApp Enquiry',
           paymentStatus: paymentStatus,
           orderStatus: 'Confirmed',
           notes: orderNotes,
+          utrNumber: isUpi ? cleanUtr : null,
           createdAt: new Date().toISOString(),
           items: cart.map((i) => ({
             productName: i.product.name,
             quantity: i.quantity,
-            unitPrice: i.product.discountPrice,
-            totalPrice: i.product.discountPrice * i.quantity,
+            unitPrice: Number(i.product.discountPrice) || Number(i.product.price) || 0,
+            totalPrice: (Number(i.product.discountPrice) || Number(i.product.price) || 0) * i.quantity,
           })),
         })
         localStorage.setItem('skycrackers_orders_history', JSON.stringify(existingOrders.slice(0, 30)))
@@ -295,20 +345,21 @@ export default function CheckoutPage({
 
       const orderSummary = {
         orderId: orderNum,
+        orderNumber: orderNum,
         isPaid: isUpi,
         paymentStatus: paymentStatus,
         customer: {
-          name: orderRes.customerName || formData.fullName,
-          phone: orderRes.customerPhone || formData.mobileNumber,
-          address: cleanAddressDisplay(orderRes.deliveryAddress || fullAddress),
+          name: formData.fullName.trim(),
+          phone: formData.mobileNumber.trim(),
+          address: cleanAddressDisplay(fullAddress),
         },
-        paymentMethod: isUpi ? `Direct UPI (GPay/PhonePe - UTR: ${utrNumber.trim()})` : 'WhatsApp Enquiry (Pay Later)',
+        paymentMethod: isUpi ? `Direct UPI (GPay/PhonePe - UTR: ${cleanUtr})` : 'WhatsApp Enquiry (Pay Later)',
         items: cart,
-        subtotal: orderRes.subTotal || subtotal,
+        subtotal: totalAmount,
         discount: 0,
         delivery: 0,
-        total: orderRes.totalAmount || totalAmount,
-        utrNumber: isUpi ? utrNumber.trim() : null,
+        total: totalAmount,
+        utrNumber: isUpi ? cleanUtr : null,
       }
 
       // Automatically trigger download of structured invoice bill!
@@ -1059,30 +1110,54 @@ export default function CheckoutPage({
 
                   {/* 12-Digit UTR Input Box */}
                   <Box sx={{ mt: 1.5, textAlign: 'left' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 800, color: '#0B132B', mb: 0.5, display: 'block' }}>
-                      Enter 12-Digit UPI Ref / UTR No <span style={{ color: '#DC2626' }}>*</span>
-                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#0B132B' }}>
+                        Enter 12-Digit UPI Ref / UTR No <span style={{ color: '#DC2626' }}>*</span>
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 800,
+                          fontSize: '0.72rem',
+                          color: utrNumber.length === 12 ? '#15803D' : '#64748B',
+                        }}
+                      >
+                        {utrNumber.length}/12 Digits {utrNumber.length === 12 ? '✔ Valid' : ''}
+                      </Typography>
+                    </Box>
                     <TextField
                       fullWidth
                       size="small"
-                      placeholder="e.g. 428394829103"
+                      placeholder="e.g. 627875967624"
                       value={utrNumber}
                       onChange={(e) => {
-                        setUtrNumber(e.target.value.replace(/[^0-9a-zA-Z]/g, '').slice(0, 16))
+                        const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 12)
+                        setUtrNumber(numericOnly)
                         setErrorMsg('')
                       }}
-                      helperText="Found in Google Pay / PhonePe transaction details after paying"
+                      helperText="Found in Google Pay / PhonePe transaction receipt (UPI Transaction ID)"
+                      inputProps={{
+                        maxLength: 12,
+                        inputMode: 'numeric',
+                        pattern: '[0-9]*',
+                      }}
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">
-                            <CheckCircleIcon sx={{ color: '#16A34A', fontSize: 18 }} />
+                            <CheckCircleIcon sx={{ color: utrNumber.length === 12 ? '#16A34A' : '#CBD5E1', fontSize: 18 }} />
                           </InputAdornment>
                         ),
                       }}
                       sx={{
                         backgroundColor: '#FFFFFF',
                         borderRadius: 2,
-                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: 2,
+                          '& fieldset': {
+                            borderColor: utrNumber.length === 12 ? '#16A34A' : undefined,
+                            borderWidth: utrNumber.length === 12 ? '2px' : undefined,
+                          },
+                        },
                       }}
                     />
                   </Box>

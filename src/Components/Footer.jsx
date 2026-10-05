@@ -87,7 +87,7 @@ const policiesData = {
           </ul>
         </Typography>
         <Typography variant="body2" paragraph>
-          <strong>3. Payment Information Security:</strong> All digital transactions (UPI, Credit/Debit Cards, Net Banking) are securely routed through <strong>Razorpay Payment Gateway</strong>, a Reserve Bank of India (RBI) authorized payment aggregator. We do NOT capture, store, or have access to your bank passwords, CVVs, or UPI PINs. Communication is protected via bank-grade 256-bit SSL encryption.
+          <strong>3. Payment Information Security:</strong> All digital transactions (Google Pay, PhonePe, Paytm, BHIM, UPI) are directly processed through <strong>Official Bank UPI / NPCI Network</strong> with HDFC Bank. We do NOT capture, store, or have access to your bank passwords, CVVs, or UPI PINs. Communication is protected via bank-grade 256-bit SSL encryption.
         </Typography>
         <Typography variant="body2" paragraph>
           <strong>4. Non-Disclosure & Data Protection:</strong> We do NOT sell, rent, trade, or share your contact numbers or personal information with any third-party marketing firms. Your information is protected under industry standard data security safeguards.
@@ -126,7 +126,7 @@ const policiesData = {
           <strong>2. Damaged or Defective Items:</strong> While we ensure supreme multi-layer packaging, in the rare event of transit carton damage or missing items, contact our customer support team within 48 hours of receipt via WhatsApp (+91 95971 67401 / +91 80567 04353). Upon verification, we will provide an immediate free product replacement or issue a full refund.
         </Typography>
         <Typography variant="body2" paragraph>
-          <strong>3. Refund Processing Timelines:</strong> Approved refunds are automatically credited back to the original source account via Razorpay within <strong>5 to 7 business working days</strong>.
+          <strong>3. Refund Processing Timelines:</strong> Approved refunds are directly transferred back to the customer's UPI ID / original bank account within <strong>1 to 2 business working days</strong>.
         </Typography>
       </Box>
     ),
@@ -272,7 +272,7 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
               />
               <Chip
                 icon={<SecurityIcon sx={{ fontSize: 16, color: '#38BDF8 !important' }} />}
-                label="Razorpay Secure"
+                label="100% UPI Secure"
                 size="small"
                 sx={{ bgcolor: 'rgba(56, 189, 248, 0.1)', color: '#38BDF8', fontWeight: 700, fontSize: '0.72rem' }}
               />
@@ -329,7 +329,7 @@ export default function Footer({ onNavigate, onOpenBrochure, onOpenOffers }) {
             </Box>
           </Grid>
 
-          {/* Column 3: Legal & Razorpay Compliance */}
+          {/* Column 3: Legal & Policies */}
           <Grid item xs={6} sm={4} md={3}>
             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#FFA000', mb: 2 }}>
               Legal & Policies
