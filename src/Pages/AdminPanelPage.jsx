@@ -61,6 +61,7 @@ import {
   updateOrderStatusApi,
   getProductsApi,
 } from '../services/api'
+import { CRACKERS_DATA } from '../data/crackersData'
 
 export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken') || '')
@@ -86,7 +87,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   // Dashboard Data State
   const [dashboard, setDashboard] = useState(null)
   const [orders, setOrders] = useState([])
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState(CRACKERS_DATA)
   const [loading, setLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
@@ -119,7 +120,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
 
       setDashboard(dashData)
       setOrders(ordersData)
-      setProducts(prodsData)
+      setProducts(prodsData && prodsData.length === 81 ? prodsData : CRACKERS_DATA)
     } catch (err) {
       console.error('Failed to load admin data:', err)
     } finally {

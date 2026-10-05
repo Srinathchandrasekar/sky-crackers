@@ -45,7 +45,6 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import WifiIcon from '@mui/icons-material/Wifi'
 import WifiOffIcon from '@mui/icons-material/WifiOff'
 import { CATEGORIES, CRACKERS_DATA } from '../data/crackersData'
-import { getProductsApi, getCategoriesApi } from '../services/api'
 import sparklersImg from '../assets/sparklers.jpg'
 import flowerPotImg from '../assets/flowerpot.jpg'
 import rocketsImg from '../assets/rockets.jpg'
@@ -99,74 +98,11 @@ export default function CrackersListPage({
     if (setSearchQuery) setSearchQuery(val)
   }
 
-  // Live Backend API Data States
-  const [productsList, setProductsList] = useState(CRACKERS_DATA)
-  const [categoriesList, setCategoriesList] = useState(CATEGORIES)
-  const [isLiveConnected, setIsLiveConnected] = useState(false)
-  const [loadingApi, setLoadingApi] = useState(true)
-
-  useEffect(() => {
-    let active = true
-    async function fetchApiData() {
-      try {
-        const [pData, cData] = await Promise.allSettled([
-          getProductsApi(),
-          getCategoriesApi(),
-        ])
-
-        if (active && pData.status === 'fulfilled' && Array.isArray(pData.value) && pData.value.length > 0) {
-          const mapped = pData.value.map((p) => {
-            const local = CRACKERS_DATA.find(
-              (cd) => (p.sku && cd.sku === p.sku) || cd.sno === p.sno || cd.name.toLowerCase() === (p.englishName || '').toLowerCase()
-            )
-            return {
-              id: `p-${p.productId || p.sno}`,
-              productId: p.productId || p.sno,
-              sno: p.sno,
-              sku: p.sku || `sfc-${p.sno}`,
-              name: p.englishName || (local ? local.name : ''),
-              nameTamil: (local && local.tamilName) ? local.tamilName : (p.tamilName || p.englishName || ''),
-              category: p.categorySlug || (local ? local.category : 'all'),
-              categorySlug: p.categorySlug || (local ? local.category : 'all'),
-              categoryName: p.categoryName || (local ? local.category : 'All Crackers'),
-              originalPrice: Number(p.actualRate || p.discountPrice || p.originalPrice || (local ? local.discountPrice : 0)),
-              discountPrice: Number(p.actualRate || p.discountPrice || (local ? local.discountPrice : 0)),
-              discountPercent: 0,
-              pieces: p.pieces || (local ? local.pieces : '1 Box'),
-              rating: Number(p.rating) || (local ? local.rating : 4.8),
-              reviews: p.reviewsCount || (local ? local.reviews : 120),
-              image: (local && local.image) ? local.image : getCategoryFallbackImage(p.categorySlug),
-              description: p.description || (local ? local.description : p.englishName),
-            }
-          })
-          setProductsList(mapped)
-          setIsLiveConnected(true)
-        }
-
-        if (active && cData.status === 'fulfilled' && Array.isArray(cData.value) && cData.value.length > 0) {
-          const totalCount = pData.status === 'fulfilled' ? pData.value.length : 81
-          const mappedCats = [
-            { id: 'all', name: 'All Crackers', count: totalCount, icon: 'auto_awesome' },
-            ...cData.value.map((c) => ({
-              id: c.slug,
-              name: c.name,
-              count: c.productsCount,
-              icon: c.icon || 'auto_awesome',
-            })),
-          ]
-          setCategoriesList(mappedCats)
-        }
-      } catch (err) {
-        console.warn('Backend API connection warning, using local dataset:', err)
-      } finally {
-        if (active) setLoadingApi(false)
-      }
-    }
-    fetchApiData()
-    return () => {
-      active = false
-    }
-  }, [])
+  // Authoritative Master Catalog of 81 Sivakasi Factory Crackers
+  const [productsList] = useState(CRACKERS_DATA)
+  const [categoriesList] = useState(CATEGORIES)
+  const isLiveConnected = true
+  const loadingApi = false
 
   // Map category icons
   const getCategoryIcon = (iconName, isSelected) => {
