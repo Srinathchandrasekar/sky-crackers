@@ -9,15 +9,15 @@ export const STORE_INFO = {
 }
 
 export const CATEGORIES = [
-  { id: 'all', name: 'All Crackers', count: 81, icon: 'auto_awesome' },
-  { id: 'sound_crackers', name: 'One Sound Crackers', count: 6, icon: 'crisis_alert' },
-  { id: 'flowerpots', name: 'Flowerpots', count: 5, icon: 'local_fire_department' },
-  { id: 'ground_chakkaras', name: 'Ground Chakkaras', count: 4, icon: 'radio_button_checked' },
-  { id: 'sparklers', name: 'Sparklers', count: 12, icon: 'flare' },
-  { id: 'children_garland', name: 'Bijili & Garlands', count: 11, icon: 'auto_awesome' },
-  { id: 'paper_bombs', name: 'Mega Bombs', count: 8, icon: 'crisis_alert' },
-  { id: 'sky_shots', name: 'Sky Shots & Rockets', count: 14, icon: 'rocket_launch' },
-  { id: 'fountain_items', name: 'Fancy & Novelty', count: 21, icon: 'flare' },
+  { id: 'all', name: 'All Crackers', nameTamil: 'அனைத்து பட்டாசுகள்', count: 81, icon: 'auto_awesome' },
+  { id: 'sound_crackers', name: 'One Sound Crackers', nameTamil: 'ஒலி வெடிகள்', count: 6, icon: 'crisis_alert' },
+  { id: 'flowerpots', name: 'Flowerpots', nameTamil: 'பூந்தொட்டி வகைகள்', count: 5, icon: 'local_fire_department' },
+  { id: 'ground_chakkaras', name: 'Ground Chakkaras', nameTamil: 'தரைச்சக்கரம் வகைகள்', count: 4, icon: 'radio_button_checked' },
+  { id: 'sparklers', name: 'Sparklers', nameTamil: 'கம்பி மத்தாப்பு வகைகள்', count: 12, icon: 'flare' },
+  { id: 'children_garland', name: 'Bijili & Garlands', nameTamil: 'பிஜிலி & சரவெடி வகைகள்', count: 11, icon: 'auto_awesome' },
+  { id: 'paper_bombs', name: 'Mega Bombs', nameTamil: 'மெகா பாம் வெடிகள்', count: 8, icon: 'crisis_alert' },
+  { id: 'sky_shots', name: 'Sky Shots & Rockets', nameTamil: 'வானவெடி & ராக்கெட்', count: 14, icon: 'rocket_launch' },
+  { id: 'fountain_items', name: 'Fancy & Novelty', nameTamil: 'ஃபேன்ஸி & ஸ்பெஷல் வெடிகள்', count: 21, icon: 'flare' },
 ]
 
 export const CRACKERS_DATA = [

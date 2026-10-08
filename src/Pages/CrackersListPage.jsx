@@ -228,6 +228,369 @@ export default function CrackersListPage({
   const normHelper = (s) => (s || '').toLowerCase().replace(/[-_\s]+/g, '')
   const currentCategoryObj = categoriesList.find((c) => normHelper(c.id) === normHelper(selectedCategory)) || categoriesList[0]
 
+  const groupedSections = useMemo(() => {
+    const norm = (s) => (s || '').toLowerCase().replace(/[-_\s]+/g, '')
+    const selectedNorm = norm(selectedCategory)
+
+    if (selectedNorm && selectedNorm !== 'all') {
+      const catObj = categoriesList.find((c) => norm(c.id) === selectedNorm) || {
+        id: selectedCategory,
+        name: currentCategoryObj?.name || selectedCategory,
+        nameTamil: currentCategoryObj?.nameTamil || '',
+        icon: currentCategoryObj?.icon || 'auto_awesome',
+      }
+      return [
+        {
+          category: catObj,
+          products: filteredCrackers,
+        },
+      ]
+    }
+
+    const sections = []
+    const matchedProductIds = new Set()
+
+    categoriesList.forEach((cat) => {
+      if (cat.id === 'all') return
+      const catNorm = norm(cat.id)
+      const catProducts = filteredCrackers.filter((p) => {
+        const prodCat = norm(p.category)
+        const prodSlug = norm(p.categorySlug)
+        return prodCat === catNorm || prodSlug === catNorm || prodCat.includes(catNorm) || catNorm.includes(prodCat)
+      })
+
+      if (catProducts.length > 0) {
+        catProducts.forEach((p) => matchedProductIds.add(p.id))
+        sections.push({
+          category: cat,
+          products: catProducts,
+        })
+      }
+    })
+
+    const remaining = filteredCrackers.filter((p) => !matchedProductIds.has(p.id))
+    if (remaining.length > 0) {
+      sections.push({
+        category: {
+          id: 'other',
+          name: 'Special Crackers',
+          nameTamil: 'சிறப்பு பட்டாசுகள்',
+          icon: 'auto_awesome',
+        },
+        products: remaining,
+      })
+    }
+
+    return sections
+  }, [filteredCrackers, selectedCategory, categoriesList, currentCategoryObj])
+
+  const renderProductCard = (product) => {
+    const inCartItem = cart.find(
+      (ci) =>
+        ci.product.id === product.id ||
+        ci.product.productId === product.productId ||
+        ci.product.sno === product.sno
+    )
+    const inCartQty = inCartItem ? inCartItem.quantity : 0
+    const currentQty = getItemQuantity(product.id)
+
+    return (
+      <Card
+        key={product.id}
+        elevation={0}
+        sx={{
+          borderRadius: 3,
+          border: inCartQty > 0 ? '2px solid #FFA000' : '1px solid #E2E8F0',
+          overflow: 'hidden',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          backgroundColor: '#FFFFFF',
+          boxShadow: inCartQty > 0 ? '0 8px 22px rgba(255, 160, 0, 0.2)' : 'none',
+          transition: 'all 0.25s ease',
+          '&:hover': {
+            transform: 'translateY(-3px)',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+          },
+        }}
+      >
+        {/* S.No Badge on Top Left */}
+        <Chip
+          label={`#${product.sno}`}
+          size="small"
+          sx={{
+            position: 'absolute',
+            top: { xs: 6, sm: 8 },
+            left: { xs: 6, sm: 8 },
+            zIndex: 2,
+            backgroundColor: 'rgba(11, 19, 43, 0.9)',
+            color: '#FFA000',
+            fontWeight: 800,
+            fontSize: { xs: '0.68rem', sm: '0.76rem' },
+            height: { xs: 20, sm: 24 },
+            backdropFilter: 'blur(4px)',
+          }}
+        />
+
+        {inCartQty > 0 && (
+          <Chip
+            icon={<CheckCircleIcon sx={{ fontSize: { xs: '11px !important', sm: '13px !important' }, color: '#0B132B !important' }} />}
+            label={`In Cart (${inCartQty})`}
+            size="small"
+            sx={{
+              position: 'absolute',
+              top: { xs: 6, sm: 8 },
+              right: { xs: 6, sm: 8 },
+              zIndex: 2,
+              backgroundColor: '#FFA000',
+              color: '#0B132B',
+              fontWeight: 900,
+              fontSize: { xs: '0.64rem', sm: '0.74rem' },
+              height: { xs: 20, sm: 24 },
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+            }}
+          />
+        )}
+
+        {/* Product Image - Compact Ratio */}
+        <Box
+          sx={{
+            pt: '62%',
+            position: 'relative',
+            backgroundColor: '#F1F5F9',
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            component="img"
+            src={product.image}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            onError={(e) => {
+              e.currentTarget.onerror = null
+              e.currentTarget.src = sparklersImg
+            }}
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              transition: 'transform 0.4s ease',
+              '&:hover': {
+                transform: 'scale(1.06)',
+              },
+            }}
+          />
+        </Box>
+
+        {/* Card Body */}
+        <CardContent sx={{ p: { xs: 1.2, sm: 1.8 }, pb: { xs: '10px !important', sm: '14px !important' }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+          <Typography
+            variant="subtitle1"
+            sx={{
+              fontWeight: 800,
+              color: '#0F172A',
+              fontSize: { xs: '0.84rem', sm: '1.05rem' },
+              lineHeight: 1.25,
+              height: { xs: 34, sm: 38 },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              display: '-webkit-box',
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: 'vertical',
+            }}
+          >
+            {product.name}
+          </Typography>
+
+          {/* Tamil Name */}
+          <Typography
+            variant="caption"
+            sx={{
+              color: '#B45309',
+              fontWeight: 700,
+              fontSize: { xs: '0.7rem', sm: '0.82rem' },
+              display: 'block',
+              mb: { xs: 0.5, sm: 1 },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {product.nameTamil || product.tamilName || ''}
+          </Typography>
+
+          {/* Packing & Price Row */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              mb: { xs: 1, sm: 1.5 },
+            }}
+          >
+            <Chip
+              size="small"
+              label={product.pieces || '1 Box'}
+              sx={{
+                height: { xs: 18, sm: 22 },
+                fontSize: { xs: '0.64rem', sm: '0.72rem' },
+                fontWeight: 700,
+                backgroundColor: '#F1F5F9',
+                color: '#475569',
+              }}
+            />
+
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
+                  color: '#16A34A',
+                  fontSize: { xs: '1.05rem', sm: '1.35rem' },
+                  lineHeight: 1,
+                }}
+              >
+                ₹{product.discountPrice}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ mt: 'auto' }}>
+            {inCartQty > 0 ? (
+              /* Interactive In-Cart State */
+              <Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    backgroundColor: '#FFFBEB',
+                    border: '1.5px solid #FDE68A',
+                    borderRadius: 2,
+                    mb: 0.8,
+                    px: { xs: 0.5, sm: 1 },
+                    py: { xs: 0.2, sm: 0.4 },
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, -1)}
+                    sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
+                  >
+                    <RemoveIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
+                  </IconButton>
+                  <Typography variant="body2" sx={{ fontWeight: 900, color: '#92400E', fontSize: { xs: '0.78rem', sm: '0.92rem' } }}>
+                    {inCartQty} in Cart
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, 1)}
+                    sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
+                  >
+                    <AddIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
+                  </IconButton>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '13px !important', sm: '16px !important' } }} />}
+                  onClick={() => (onOpenCart ? onOpenCart() : handleAdd(product))}
+                  sx={{
+                    backgroundColor: '#0B132B',
+                    color: '#FFA000',
+                    fontWeight: 800,
+                    fontSize: { xs: '0.74rem', sm: '0.85rem' },
+                    py: { xs: 0.5, sm: 0.7 },
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: '#1E293B',
+                    },
+                  }}
+                >
+                  View Cart →
+                </Button>
+              </Box>
+            ) : (
+              /* Initial Add to Cart State */
+              <Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 2,
+                    mb: 0.8,
+                    py: { xs: 0.2, sm: 0.3 },
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={() => handleQuantityChange(product.id, -1)}
+                    disabled={currentQty <= 1}
+                    sx={{ p: { xs: 0.3, sm: 0.5 } }}
+                  >
+                    <RemoveIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
+                  </IconButton>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      px: { xs: 1, sm: 2 },
+                      fontWeight: 800,
+                      fontSize: { xs: '0.82rem', sm: '0.96rem' },
+                      minWidth: 20,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {currentQty}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleQuantityChange(product.id, 1)}
+                    sx={{ p: { xs: 0.3, sm: 0.5 } }}
+                  >
+                    <AddIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
+                  </IconButton>
+                </Box>
+
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '14px !important', sm: '18px !important' } }} />}
+                  onClick={() => handleAdd(product)}
+                  sx={{
+                    backgroundColor: '#FFA000',
+                    color: '#0B132B',
+                    fontWeight: 900,
+                    fontSize: { xs: '0.76rem', sm: '0.92rem' },
+                    py: { xs: 0.65, sm: 0.9 },
+                    borderRadius: 2,
+                    boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: '#FF8F00',
+                      boxShadow: '0 4px 12px rgba(255, 160, 0, 0.45)',
+                    },
+                  }}
+                >
+                  Add to Cart
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Box sx={{ pt: { xs: 1.5, md: 3 }, pb: { xs: 12, md: 14 }, backgroundColor: '#F8FAFC', minHeight: '80vh', width: '100%' }}>
       <Container maxWidth={false} sx={{ px: { xs: 1.25, sm: 2.5, md: 3.5, lg: 4 } }}>
@@ -547,327 +910,114 @@ export default function CrackersListPage({
               </Box>
             )}
 
-            {/* Product Cards Grid - 2 columns on mobile */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(2, 1fr)',
-                  sm: 'repeat(2, 1fr)',
-                  md: 'repeat(3, 1fr)',
-                  lg: 'repeat(4, 1fr)',
-                  xl: 'repeat(5, 1fr)',
-                },
-                gap: { xs: 1.25, sm: 2 },
-              }}
-            >
-              {filteredCrackers.map((product) => {
-                const inCartItem = cart.find(
-                  (ci) =>
-                    ci.product.id === product.id ||
-                    ci.product.productId === product.productId ||
-                    ci.product.sno === product.sno
-                )
-                const inCartQty = inCartItem ? inCartItem.quantity : 0
-                const currentQty = getItemQuantity(product.id)
-
-                return (
-                  <Card
-                    key={product.id}
-                    elevation={0}
-                    sx={{
-                      borderRadius: 3,
-                      border: inCartQty > 0 ? '2px solid #FFA000' : '1px solid #E2E8F0',
-                      overflow: 'hidden',
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      position: 'relative',
-                      backgroundColor: '#FFFFFF',
-                      boxShadow: inCartQty > 0 ? '0 8px 22px rgba(255, 160, 0, 0.2)' : 'none',
-                      transition: 'all 0.25s ease',
-                      '&:hover': {
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                      },
-                    }}
-                  >
-                    {/* S.No Badge on Top Left */}
-                    <Chip
-                      label={`#${product.sno}`}
-                      size="small"
-                      sx={{
-                        position: 'absolute',
-                        top: { xs: 6, sm: 8 },
-                        left: { xs: 6, sm: 8 },
-                        zIndex: 2,
-                        backgroundColor: 'rgba(11, 19, 43, 0.9)',
-                        color: '#FFA000',
-                        fontWeight: 800,
-                        fontSize: { xs: '0.68rem', sm: '0.76rem' },
-                        height: { xs: 20, sm: 24 },
-                        backdropFilter: 'blur(4px)',
-                      }}
-                    />
-
-                    {inCartQty > 0 && (
-                      <Chip
-                        icon={<CheckCircleIcon sx={{ fontSize: { xs: '11px !important', sm: '13px !important' }, color: '#0B132B !important' }} />}
-                        label={`In Cart (${inCartQty})`}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: { xs: 6, sm: 8 },
-                          right: { xs: 6, sm: 8 },
-                          zIndex: 2,
-                          backgroundColor: '#FFA000',
-                          color: '#0B132B',
-                          fontWeight: 900,
-                          fontSize: { xs: '0.64rem', sm: '0.74rem' },
-                          height: { xs: 20, sm: 24 },
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                        }}
-                      />
-                    )}
-
-                    {/* Product Image - Compact Ratio */}
+            {/* Grouped Category-Wise Products Sections */}
+            {groupedSections.map((section) => (
+              <Box
+                key={section.category.id}
+                id={`category-${section.category.id}`}
+                sx={{
+                  mb: { xs: 4, sm: 5.5 },
+                  scrollMarginTop: '100px',
+                }}
+              >
+                {/* High Visibility Category Heading Banner */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: 1.5,
+                    p: { xs: 1.4, sm: 1.8 },
+                    px: { xs: 1.8, sm: 2.2 },
+                    mb: { xs: 1.5, sm: 2 },
+                    borderRadius: 2.5,
+                    backgroundColor: '#0B132B',
+                    color: '#FFFFFF',
+                    borderLeft: '6px solid #FFA000',
+                    boxShadow: '0 4px 14px rgba(11, 19, 43, 0.12)',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
                     <Box
                       sx={{
-                        pt: '62%',
-                        position: 'relative',
-                        backgroundColor: '#F1F5F9',
-                        overflow: 'hidden',
+                        width: { xs: 34, sm: 38 },
+                        height: { xs: 34, sm: 38 },
+                        borderRadius: '50%',
+                        backgroundColor: 'rgba(255, 160, 0, 0.2)',
+                        border: '1.5px solid #FFA000',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#FFA000',
+                        flexShrink: 0,
                       }}
                     >
-                      <Box
-                        component="img"
-                        src={product.image}
-                        alt={product.name}
-                        loading="lazy"
-                        decoding="async"
-                        onError={(e) => {
-                          e.currentTarget.onerror = null
-                          e.currentTarget.src = sparklersImg
-                        }}
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          transition: 'transform 0.4s ease',
-                          '&:hover': {
-                            transform: 'scale(1.06)',
-                          },
-                        }}
-                      />
+                      {getCategoryIcon(section.category.icon, true)}
                     </Box>
-
-                    {/* Card Body */}
-                    <CardContent sx={{ p: { xs: 1.2, sm: 1.8 }, pb: { xs: '10px !important', sm: '14px !important' }, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                      <Typography
-                        variant="subtitle1"
-                        sx={{
-                          fontWeight: 800,
-                          color: '#0F172A',
-                          fontSize: { xs: '0.84rem', sm: '1.05rem' },
-                          lineHeight: 1.25,
-                          height: { xs: 34, sm: 38 },
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {product.name}
-                      </Typography>
-
-                      {/* Tamil Name */}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#B45309',
-                          fontWeight: 700,
-                          fontSize: { xs: '0.7rem', sm: '0.82rem' },
-                          display: 'block',
-                          mb: { xs: 0.5, sm: 1 },
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {product.nameTamil || product.tamilName || ''}
-                      </Typography>
-
-                      {/* Packing & Price Row */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'baseline',
-                          mb: { xs: 1, sm: 1.5 },
-                        }}
-                      >
-                        <Chip
-                          size="small"
-                          label={product.pieces || '1 Box'}
+                    <Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                        <Typography
+                          variant="h6"
                           sx={{
-                            height: { xs: 18, sm: 22 },
-                            fontSize: { xs: '0.64rem', sm: '0.72rem' },
-                            fontWeight: 700,
-                            backgroundColor: '#F1F5F9',
-                            color: '#475569',
+                            fontWeight: 900,
+                            color: '#FFFFFF',
+                            fontSize: { xs: '0.98rem', sm: '1.25rem' },
+                            lineHeight: 1.2,
                           }}
-                        />
-
-                        <Box sx={{ textAlign: 'right' }}>
+                        >
+                          {section.category.name}
+                        </Typography>
+                        {section.category.nameTamil && (
                           <Typography
-                            variant="h6"
+                            component="span"
                             sx={{
-                              fontWeight: 900,
-                              color: '#16A34A',
-                              fontSize: { xs: '1.05rem', sm: '1.35rem' },
-                              lineHeight: 1,
+                              color: '#FFA000',
+                              fontWeight: 800,
+                              fontSize: { xs: '0.85rem', sm: '1.05rem' },
                             }}
                           >
-                            ₹{product.discountPrice}
+                            ({section.category.nameTamil})
                           </Typography>
-                        </Box>
-                      </Box>
-
-                      <Box sx={{ mt: 'auto' }}>
-                        {inCartQty > 0 ? (
-                          /* Interactive In-Cart State */
-                          <Box>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                backgroundColor: '#FFFBEB',
-                                border: '1.5px solid #FDE68A',
-                                borderRadius: 2,
-                                mb: 0.8,
-                                px: { xs: 0.5, sm: 1 },
-                                py: { xs: 0.2, sm: 0.4 },
-                              }}
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, -1)}
-                                sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
-                              >
-                                <RemoveIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
-                              </IconButton>
-                              <Typography variant="body2" sx={{ fontWeight: 900, color: '#92400E', fontSize: { xs: '0.78rem', sm: '0.92rem' } }}>
-                                {inCartQty} in Cart
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => onUpdateQuantity && onUpdateQuantity(product.id, 1)}
-                                sx={{ p: { xs: 0.2, sm: 0.4 }, color: '#B45309' }}
-                              >
-                                <AddIcon sx={{ fontSize: { xs: 13, sm: 16 } }} />
-                              </IconButton>
-                            </Box>
-
-                            <Button
-                              variant="contained"
-                              fullWidth
-                              startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '13px !important', sm: '16px !important' } }} />}
-                              onClick={() => (onOpenCart ? onOpenCart() : handleAdd(product))}
-                              sx={{
-                                backgroundColor: '#0B132B',
-                                color: '#FFA000',
-                                fontWeight: 800,
-                                fontSize: { xs: '0.74rem', sm: '0.85rem' },
-                                py: { xs: 0.5, sm: 0.7 },
-                                borderRadius: 2,
-                                textTransform: 'none',
-                                '&:hover': {
-                                  backgroundColor: '#1E293B',
-                                },
-                              }}
-                            >
-                              View Cart →
-                            </Button>
-                          </Box>
-                        ) : (
-                          /* Initial Add to Cart State */
-                          <Box>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#F8FAFC',
-                                border: '1px solid #E2E8F0',
-                                borderRadius: 2,
-                                mb: 0.8,
-                                py: { xs: 0.2, sm: 0.3 },
-                              }}
-                            >
-                              <IconButton
-                                size="small"
-                                onClick={() => handleQuantityChange(product.id, -1)}
-                                disabled={currentQty <= 1}
-                                sx={{ p: { xs: 0.3, sm: 0.5 } }}
-                              >
-                                <RemoveIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
-                              </IconButton>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  px: { xs: 1, sm: 2 },
-                                  fontWeight: 800,
-                                  fontSize: { xs: '0.82rem', sm: '0.96rem' },
-                                  minWidth: 20,
-                                  textAlign: 'center',
-                                }}
-                              >
-                                {currentQty}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={() => handleQuantityChange(product.id, 1)}
-                                sx={{ p: { xs: 0.3, sm: 0.5 } }}
-                              >
-                                <AddIcon sx={{ fontSize: { xs: 14, sm: 18 } }} />
-                              </IconButton>
-                            </Box>
-
-                            <Button
-                              variant="contained"
-                              fullWidth
-                              startIcon={<ShoppingCartIcon sx={{ fontSize: { xs: '14px !important', sm: '18px !important' } }} />}
-                              onClick={() => handleAdd(product)}
-                              sx={{
-                                backgroundColor: '#FFA000',
-                                color: '#0B132B',
-                                fontWeight: 900,
-                                fontSize: { xs: '0.76rem', sm: '0.92rem' },
-                                py: { xs: 0.65, sm: 0.9 },
-                                borderRadius: 2,
-                                boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
-                                textTransform: 'none',
-                                '&:hover': {
-                                  backgroundColor: '#FF8F00',
-                                  boxShadow: '0 4px 12px rgba(255, 160, 0, 0.45)',
-                                },
-                              }}
-                            >
-                              Add to Cart
-                            </Button>
-                          </Box>
                         )}
                       </Box>
-                    </CardContent>
-                  </Card>
-                )
-              })}
-            </Box>
+                      <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: '0.7rem', display: 'block' }}>
+                        Direct Sivakasi Factory Sale • 100% Quality Crackers
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Chip
+                    label={`${section.products.length} Items`}
+                    size="small"
+                    sx={{
+                      backgroundColor: '#FFA000',
+                      color: '#0B132B',
+                      fontWeight: 900,
+                      fontSize: { xs: '0.7rem', sm: '0.78rem' },
+                      height: 26,
+                    }}
+                  />
+                </Box>
+
+                {/* Responsive Product Cards Grid for this category */}
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: {
+                      xs: 'repeat(2, 1fr)',
+                      sm: 'repeat(2, 1fr)',
+                      md: 'repeat(3, 1fr)',
+                      lg: 'repeat(4, 1fr)',
+                      xl: 'repeat(5, 1fr)',
+                    },
+                    gap: { xs: 1.25, sm: 2 },
+                  }}
+                >
+                  {section.products.map((product) => renderProductCard(product))}
+                </Box>
+              </Box>
+            ))}
           </Box>
         </Box>
       </Container>

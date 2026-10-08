@@ -136,6 +136,7 @@ export default function CheckoutPage({
   const [paymentMethod, setPaymentMethod] = useState('upi') // 'upi' or 'whatsapp'
   const [utrNumber, setUtrNumber] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
+  const [copiedPhone, setCopiedPhone] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
   // Instagram Promo Coupon Code State (TRUSTSKYFIRECRACKERS)
@@ -185,8 +186,8 @@ export default function CheckoutPage({
   const deliveryCharges = 0
   const totalAmount = subtotal
 
-  // UPI Payment Link with Unified Order ID in transaction note
-  const dynamicUpiUri = `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(`SkyCrackers_${checkoutOrderId}`)}`
+  // UPI Payment Link - Cleaned up to avoid commercial intent flags on personal savings account
+  const dynamicUpiUri = `upi://pay?pa=${UPI_CONFIG.upiId}&pn=${encodeURIComponent(UPI_CONFIG.payeeName)}&am=${totalAmount}&cu=INR&tn=Crackers`
   const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(dynamicUpiUri)}`
 
   // Strict 12-Digit NPCI UPI Reference Number (UTR) Validator
@@ -230,6 +231,14 @@ export default function CheckoutPage({
     }
     setCopiedUpi(true)
     setTimeout(() => setCopiedUpi(false), 2500)
+  }
+
+  const handleCopyPhone = () => {
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText('8056704353')
+    }
+    setCopiedPhone(true)
+    setTimeout(() => setCopiedPhone(false), 2500)
   }
 
   const handleInputChange = (field) => (e) => {
@@ -1156,100 +1165,374 @@ export default function CheckoutPage({
                     </Button>
                   </Box>
 
-                  {/* Mobile 1-Tap Pay Buttons */}
-                  <Typography variant="caption" sx={{ color: '#334155', fontWeight: 700, display: 'block', mb: 0.8 }}>
-                    Mobile-ல் இருந்தால் ஆப்பை கிளிக் செய்யவும்:
+                  {/* Mobile 1-Tap Pay Buttons - Stacked Line-by-Line with High Visibility */}
+                  <Typography variant="subtitle2" sx={{ color: '#0F172A', fontWeight: 800, display: 'block', mb: 1.2, textAlign: 'left', fontSize: '0.88rem' }}>
+                    📲 Mobile-ல் செலுத்த ஆப்பைத் தேர்ந்தெடுக்கவும் (1-Tap Pay):
                   </Typography>
-                  <Grid container spacing={0.8} sx={{ mb: 1.5 }}>
-                    <Grid item xs={6}>
-                      <Button
-                        fullWidth
-                        size="small"
-                        variant="outlined"
-                        component="a"
-                        href={dynamicUpiUri}
-                        sx={{
-                          borderColor: '#4285F4',
-                          color: '#1E40AF',
+
+                  <Stack spacing={1.2} sx={{ mb: 2 }}>
+                    {/* Line 1: Google Pay */}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      component="a"
+                      href={dynamicUpiUri}
+                      sx={{
+                        backgroundColor: '#FFFFFF',
+                        color: '#1E3A8A',
+                        border: '2px solid #3B82F6',
+                        py: 1.2,
+                        px: 2,
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        '&:hover': {
                           backgroundColor: '#EFF6FF',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          textTransform: 'none',
-                          py: 0.7,
-                          borderRadius: 2,
-                          '&:hover': { backgroundColor: '#DBEAFE', borderColor: '#2563EB' },
-                        }}
-                      >
-                        Google Pay
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Button
-                        fullWidth
+                          borderColor: '#1D4ED8',
+                          boxShadow: '0 4px 14px rgba(59, 130, 246, 0.25)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            backgroundColor: '#EFF6FF',
+                            border: '1.5px solid #3B82F6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.05rem',
+                            fontWeight: 900,
+                            color: '#2563EB',
+                          }}
+                        >
+                          G
+                        </Box>
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
+                            Google Pay (GPay)
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
+                            Tap to open & pay in Google Pay
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
                         size="small"
-                        variant="outlined"
-                        component="a"
-                        href={dynamicUpiUri}
                         sx={{
-                          borderColor: '#5F259F',
-                          color: '#5F259F',
+                          backgroundColor: '#DBEAFE',
+                          color: '#1E40AF',
+                          fontWeight: 900,
+                          fontSize: '0.8rem',
+                          height: 26,
+                        }}
+                      />
+                    </Button>
+
+                    {/* Line 2: PhonePe */}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      component="a"
+                      href={dynamicUpiUri}
+                      sx={{
+                        backgroundColor: '#FFFFFF',
+                        color: '#581C87',
+                        border: '2px solid #7E22CE',
+                        py: 1.2,
+                        px: 2,
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(126, 34, 206, 0.15)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        '&:hover': {
                           backgroundColor: '#FAF5FF',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          textTransform: 'none',
-                          py: 0.7,
-                          borderRadius: 2,
-                          '&:hover': { backgroundColor: '#F3E8FF', borderColor: '#5F259F' },
-                        }}
-                      >
-                        PhonePe
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Button
-                        fullWidth
+                          borderColor: '#6B21A8',
+                          boxShadow: '0 4px 14px rgba(126, 34, 206, 0.25)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            backgroundColor: '#FAF5FF',
+                            border: '1.5px solid #7E22CE',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.05rem',
+                            fontWeight: 900,
+                            color: '#7E22CE',
+                          }}
+                        >
+                          पे
+                        </Box>
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
+                            PhonePe
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
+                            Tap to open & pay in PhonePe
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
                         size="small"
-                        variant="outlined"
-                        component="a"
-                        href={dynamicUpiUri}
                         sx={{
-                          borderColor: '#00BAF2',
-                          color: '#0369A1',
+                          backgroundColor: '#F3E8FF',
+                          color: '#6B21A8',
+                          fontWeight: 900,
+                          fontSize: '0.8rem',
+                          height: 26,
+                        }}
+                      />
+                    </Button>
+
+                    {/* Line 3: Paytm */}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      component="a"
+                      href={dynamicUpiUri}
+                      sx={{
+                        backgroundColor: '#FFFFFF',
+                        color: '#0369A1',
+                        border: '2px solid #0284C7',
+                        py: 1.2,
+                        px: 2,
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(2, 132, 199, 0.15)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        '&:hover': {
                           backgroundColor: '#F0F9FF',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          textTransform: 'none',
-                          py: 0.7,
-                          borderRadius: 2,
-                          '&:hover': { backgroundColor: '#E0F2FE', borderColor: '#00BAF2' },
-                        }}
-                      >
-                        Paytm
-                      </Button>
-                    </Grid>
-                    <Grid item xs={6}>
-                      <Button
-                        fullWidth
+                          borderColor: '#0369A1',
+                          boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            backgroundColor: '#F0F9FF',
+                            border: '1.5px solid #0284C7',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.8rem',
+                            fontWeight: 900,
+                            color: '#0284C7',
+                          }}
+                        >
+                          pay
+                        </Box>
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
+                            Paytm UPI
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
+                            Tap to open & pay in Paytm
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
                         size="small"
-                        variant="outlined"
-                        component="a"
-                        href={dynamicUpiUri}
                         sx={{
-                          borderColor: '#059669',
-                          color: '#065F46',
+                          backgroundColor: '#E0F2FE',
+                          color: '#0369A1',
+                          fontWeight: 900,
+                          fontSize: '0.8rem',
+                          height: 26,
+                        }}
+                      />
+                    </Button>
+
+                    {/* Line 4: Any Other UPI App */}
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      component="a"
+                      href={dynamicUpiUri}
+                      sx={{
+                        backgroundColor: '#FFFFFF',
+                        color: '#065F46',
+                        border: '2px solid #059669',
+                        py: 1.2,
+                        px: 2,
+                        borderRadius: 2.5,
+                        textTransform: 'none',
+                        boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        '&:hover': {
                           backgroundColor: '#ECFDF5',
-                          fontWeight: 800,
-                          fontSize: '0.74rem',
-                          textTransform: 'none',
-                          py: 0.7,
+                          borderColor: '#047857',
+                          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+                        <Box
+                          sx={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: '50%',
+                            backgroundColor: '#ECFDF5',
+                            border: '1.5px solid #059669',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.85rem',
+                            fontWeight: 900,
+                            color: '#059669',
+                          }}
+                        >
+                          UPI
+                        </Box>
+                        <Box sx={{ textAlign: 'left' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
+                            BHIM / Any Other UPI App
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
+                            CRED • Amazon Pay • Navi • iMobile
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#D1FAE5',
+                          color: '#065F46',
+                          fontWeight: 900,
+                          fontSize: '0.8rem',
+                          height: 26,
+                        }}
+                      />
+                    </Button>
+                  </Stack>
+
+                  {/* Guaranteed 100% Success Direct Number & UPI Box */}
+                  <Box
+                    sx={{
+                      p: 2,
+                      mb: 2,
+                      borderRadius: 2.5,
+                      backgroundColor: '#FFFBEB',
+                      border: '1.5px solid #FCD34D',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#92400E', mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.6 }}>
+                      💡 ஆப்பில் Payment Failed ஆனால்? (வங்கி பாலிசி பிளாக்):
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#78350F', display: 'block', mb: 1.2, lineHeight: 1.4 }}>
+                      பிரவுசர் லிங்க் மூலம் சில வங்கிகள் (ICICI, HDFC, SBI) பாதுகாப்புக்காக பணம் செலுத்துவதை பிளாக் செய்யலாம்.
+                      <strong> நேரடி GPay/PhonePe மூலம் 100% தடையின்றி செலுத்த:</strong>
+                    </Typography>
+                    <Stack spacing={1}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: '#FFFFFF',
+                          p: 1,
+                          px: 1.4,
                           borderRadius: 2,
-                          '&:hover': { backgroundColor: '#D1FAE5', borderColor: '#059669' },
+                          border: '1px solid #FDE68A',
                         }}
                       >
-                        BHIM / Any UPI
-                      </Button>
-                    </Grid>
-                  </Grid>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                            நேரடி GPAY / PHONEPE எண் (Sri Venkateshwaran)
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B' }}>
+                            80567 04353
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={handleCopyPhone}
+                          startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                          sx={{
+                            backgroundColor: copiedPhone ? '#15803D' : '#0B132B',
+                            color: '#FFA000',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                            textTransform: 'none',
+                            borderRadius: 1.5,
+                            py: 0.4,
+                          }}
+                        >
+                          {copiedPhone ? 'Copied!' : 'Copy Number'}
+                        </Button>
+                      </Box>
+
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: '#FFFFFF',
+                          p: 1,
+                          px: 1.4,
+                          borderRadius: 2,
+                          border: '1px solid #FDE68A',
+                        }}
+                      >
+                        <Box>
+                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                            நேரடி UPI ID ({UPI_CONFIG.bankName})
+                          </Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '0.82rem' }}>
+                            {UPI_CONFIG.upiId}
+                          </Typography>
+                        </Box>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={handleCopyUpi}
+                          startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                          sx={{
+                            backgroundColor: copiedUpi ? '#15803D' : '#0B132B',
+                            color: '#FFA000',
+                            fontWeight: 800,
+                            fontSize: '0.72rem',
+                            textTransform: 'none',
+                            borderRadius: 1.5,
+                            py: 0.4,
+                          }}
+                        >
+                          {copiedUpi ? 'Copied!' : 'Copy UPI ID'}
+                        </Button>
+                      </Box>
+                    </Stack>
+                    <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 700, display: 'block', mt: 1, fontSize: '0.72rem' }}>
+                      ✓ பணம் செலுத்தியவுடன் கிடைக்கும் 12-Digit UPI Ref / UTR எண்ணை கீழே பதிவிட்டு Confirm Order அழுத்தவும்!
+                    </Typography>
+                  </Box>
 
                   {/* 12-Digit UTR Input Box */}
                   <Box sx={{ mt: 1.5, textAlign: 'left' }}>
