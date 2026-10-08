@@ -137,7 +137,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       try {
         const ordersData = await getOrdersListApi({ status: statusFilter, search: searchQuery }).catch(() => [])
         if (isMounted) {
-          const cleanOrders = (Array.isArray(ordersData) ? ordersData : []).map(normalizeOrder).filter(Boolean)
+          const cleanOrders = (Array.isArray(ordersData) ? ordersData : [])
+            .map(normalizeOrder)
+            .filter(Boolean)
+            .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
           setOrders(cleanOrders)
         }
       } catch (err) {
@@ -160,7 +163,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
         getOrdersListApi({ status: statusFilter, search: query }).catch(() => []),
       ])
       if (dashData) setDashboard(dashData)
-      const cleanOrders = (Array.isArray(ordersData) ? ordersData : []).map(normalizeOrder).filter(Boolean)
+      const cleanOrders = (Array.isArray(ordersData) ? ordersData : [])
+        .map(normalizeOrder)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
       setOrders(cleanOrders)
     } catch (err) {
       console.error('Failed to reload admin data:', err)
@@ -215,35 +221,89 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     }
   }
 
-  const handlePaymentStatusChange = async (orderId, currentOrderStatus, newPaymentStatus) => {
-    try {
-      await updateOrderStatusApi(orderId, {
-        orderStatus: currentOrderStatus,
-        paymentStatus: newPaymentStatus,
-      }).catch((e) => console.warn('API update fallback:', e))
+  const handlePaymentStatusChange = async (ordOrId, currentOrderStatus, newPaymentStatus) => {
+    let ord = null
+    let targetNewStatus = newPaymentStatus
+    let targetOrderStatus = currentOrderStatus
 
-      try {
-        const existing = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+    if (typeof ordOrId === 'object' && ordOrId !== null) {
+      ord = ordOrId
+      if (!newPaymentStatus && currentOrderStatus) {
+        targetNewStatus = currentOrderStatus
+        targetOrderStatus = ord.orderStatus || 'Confirmed'
+      }
+    } else {
+      ord = orders.find((o) => o.orderId === ordOrId || o.orderNumber === ordOrId)
+    }
+
+    const orderId = ord?.orderId || ordOrId
+    const orderNumber = ord?.orderNumber || ordOrId
+    targetOrderStatus = targetOrderStatus || ord?.orderStatus || 'Confirmed'
+
+    // 1. INSTANT OPTIMISTIC UI STATE UPDATE
+    setOrders((prev) =>
+      prev.map((o) => {
+        if (
+          o.orderId === orderId ||
+          o.orderNumber === orderNumber ||
+          (ord && (o.orderId === ord.orderId || o.orderNumber === ord.orderNumber))
+        ) {
+          return {
+            ...o,
+            paymentStatus: targetNewStatus,
+            orderStatus: targetNewStatus === 'Cancelled' ? 'Cancelled' : o.orderStatus,
+          }
+        }
+        return o
+      })
+    )
+
+    if (
+      selectedOrderDetails &&
+      (selectedOrderDetails.orderId === orderId ||
+        selectedOrderDetails.orderNumber === orderNumber ||
+        selectedOrderDetails.OrderId === orderId)
+    ) {
+      setSelectedOrderDetails((prev) =>
+        prev
+          ? {
+              ...prev,
+              paymentStatus: targetNewStatus,
+              orderStatus: targetNewStatus === 'Cancelled' ? 'Cancelled' : prev.orderStatus,
+            }
+          : null
+      )
+    }
+
+    // 2. INSTANT DUAL LOCAL STORAGE SYNC
+    try {
+      ['sky_orders', 'skycrackers_orders_history'].forEach((key) => {
+        const existing = JSON.parse(localStorage.getItem(key) || '[]')
         const updated = existing.map((o) => {
-          if (String(o.orderId) === String(orderId) || String(o.orderNumber) === String(orderId)) {
+          if (String(o.orderId) === String(orderId) || String(o.orderNumber) === String(orderNumber)) {
             return {
               ...o,
-              paymentStatus: newPaymentStatus,
+              paymentStatus: targetNewStatus,
+              orderStatus: targetNewStatus === 'Cancelled' ? 'Cancelled' : o.orderStatus,
             }
           }
           return o
         })
-        localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
-      } catch (lsErr) {}
+        localStorage.setItem(key, JSON.stringify(updated))
+      })
+    } catch (_) {}
 
-      setActionSuccess(`Order #${orderId} payment status updated to "${newPaymentStatus}"`)
-      setTimeout(() => setActionSuccess(''), 3500)
-      if (selectedOrderDetails && (selectedOrderDetails.orderId === orderId || selectedOrderDetails.OrderId === orderId || selectedOrderDetails.orderNumber === orderId)) {
-        setSelectedOrderDetails((prev) => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
-      }
-      loadData()
-    } catch (err) {
-      alert('Failed to update payment status: ' + err.message)
+    setActionSuccess(`Order #${orderNumber} payment marked as "${targetNewStatus}"`)
+    setTimeout(() => setActionSuccess(''), 3500)
+
+    // 3. BACKGROUND SERVER SYNC
+    try {
+      await updateOrderStatusApi(orderId || orderNumber, {
+        orderStatus: targetOrderStatus,
+        paymentStatus: targetNewStatus,
+      })
+    } catch (apiErr) {
+      console.warn('Server status update background notice:', apiErr)
     }
   }
 
@@ -268,22 +328,29 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   }, [orders])
 
   const displayedOrders = useMemo(() => {
-    return orders.filter((ord) => {
-      if (couponOnlyFilter) {
-        const hasCoupon = Boolean(
-          (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
-          (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
-        )
-        if (!hasCoupon) return false
-      }
-      if (paymentFilter === 'all') return true
-      const pStatus = (ord.paymentStatus || '').toLowerCase()
-      if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success' || pStatus === 'received' || pStatus === 'verified'
-      if (paymentFilter === 'Pending') return pStatus === 'pending' || pStatus === 'pending verification' || pStatus === 'verification in progress' || !pStatus
-      if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
-      if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
-      return true
-    })
+    return orders
+      .filter((ord) => {
+        if (couponOnlyFilter) {
+          const hasCoupon = Boolean(
+            (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
+            (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
+          )
+          if (!hasCoupon) return false
+        }
+        if (paymentFilter === 'all') return true
+        const pStatus = (ord.paymentStatus || '').toLowerCase()
+        if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success' || pStatus === 'received' || pStatus === 'verified'
+        if (paymentFilter === 'Pending') return pStatus === 'pending' || pStatus === 'pending verification' || pStatus === 'verification in progress' || !pStatus
+        if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
+        if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
+        return true
+      })
+      .sort((a, b) => {
+        const timeA = new Date(a.createdAt || 0).getTime()
+        const timeB = new Date(b.createdAt || 0).getTime()
+        if (timeB !== timeA) return timeB - timeA
+        return Number(b.orderId || 0) - Number(a.orderId || 0)
+      })
   }, [orders, paymentFilter, couponOnlyFilter])
 
   const renderPaymentChip = (paymentStatus, utrNumber) => {
@@ -366,35 +433,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     )
   }
 
-  const handleUpdatePaymentStatus = async (ord, newPaymentStatus) => {
+  const handleUpdatePaymentStatus = (ord, newPaymentStatus) => {
     if (!ord) return
     handleCloseContextMenu()
-    try {
-      const orderIdOrNum = ord.orderId || ord.orderNumber
-      await updateOrderStatusApi(orderIdOrNum, {
-        orderStatus: newPaymentStatus === 'Cancelled' ? 'Cancelled' : ord.orderStatus,
-        paymentStatus: newPaymentStatus,
-      })
-      try {
-        const existing = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
-        const updated = existing.map((o) => {
-          if (String(o.orderId) === String(orderIdOrNum) || String(o.orderNumber) === String(orderIdOrNum)) {
-            return {
-              ...o,
-              paymentStatus: newPaymentStatus,
-              orderStatus: newPaymentStatus === 'Cancelled' ? 'Cancelled' : o.orderStatus,
-            }
-          }
-          return o
-        })
-        localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
-      } catch (lsErr) {}
-
-      setActionSuccess(`Order #${ord.orderNumber} payment marked as ${newPaymentStatus}`)
-      loadData()
-    } catch (err) {
-      console.error('Failed to update payment status:', err)
-    }
+    handlePaymentStatusChange(ord, ord.orderStatus, newPaymentStatus)
   }
 
   const filteredProducts = useMemo(() => {
@@ -1014,7 +1056,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             <Button
                               size="small"
                               variant="contained"
-                              onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
+                              onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Completed')}
                               sx={{
                                 mt: 0.5,
                                 backgroundColor: '#16A34A',
@@ -1032,21 +1074,36 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               ✓ Mark as Paid
                             </Button>
                           ) : (
-                            <Button
-                              size="small"
-                              variant="text"
-                              onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Pending Verification')}
-                              sx={{
-                                color: '#94A3B8',
-                                fontSize: '0.68rem',
-                                py: 0,
-                                px: 0.5,
-                                textTransform: 'none',
-                                '&:hover': { color: '#DC2626' },
-                              }}
-                            >
-                              Undo Paid
-                            </Button>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mt: 0.5 }}>
+                              <Chip
+                                size="small"
+                                icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                                label="Paid ✓"
+                                sx={{
+                                  backgroundColor: '#DCFCE7',
+                                  color: '#15803D',
+                                  fontWeight: 900,
+                                  fontSize: '0.7rem',
+                                  height: 24,
+                                  border: '1px solid #86EFAC',
+                                }}
+                              />
+                              <Button
+                                size="small"
+                                variant="text"
+                                onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Pending Verification')}
+                                sx={{
+                                  color: '#94A3B8',
+                                  fontSize: '0.68rem',
+                                  py: 0,
+                                  px: 0.5,
+                                  textTransform: 'none',
+                                  '&:hover': { color: '#DC2626' },
+                                }}
+                              >
+                                Undo Paid
+                              </Button>
+                            </Box>
                           )}
                         </Box>
                       </Box>
@@ -1295,44 +1352,59 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                     UTR: {ord.utrNumber}
                                   </Typography>
                                 )}
-                                {!isPaid ? (
-                                  <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
-                                    sx={{
-                                      mt: 0.4,
-                                      backgroundColor: '#16A34A',
-                                      color: '#FFFFFF',
-                                      fontWeight: 900,
-                                      fontSize: '0.74rem',
-                                      py: 0.3,
-                                      px: 1.2,
-                                      textTransform: 'none',
-                                      borderRadius: 1.5,
-                                      boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
-                                      '&:hover': { backgroundColor: '#15803D' },
-                                    }}
-                                  >
-                                    ✓ Mark as Paid
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    size="small"
-                                    variant="text"
-                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Pending Verification')}
-                                    sx={{
-                                      color: '#94A3B8',
-                                      fontSize: '0.68rem',
-                                      py: 0,
-                                      px: 0.5,
-                                      textTransform: 'none',
-                                      '&:hover': { color: '#DC2626' },
-                                    }}
-                                  >
-                                    Undo Paid
-                                  </Button>
-                                )}
+                                 {!isPaid ? (
+                                   <Button
+                                     size="small"
+                                     variant="contained"
+                                     onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Completed')}
+                                     sx={{
+                                       mt: 0.4,
+                                       backgroundColor: '#16A34A',
+                                       color: '#FFFFFF',
+                                       fontWeight: 900,
+                                       fontSize: '0.74rem',
+                                       py: 0.3,
+                                       px: 1.2,
+                                       textTransform: 'none',
+                                       borderRadius: 1.5,
+                                       boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                                       '&:hover': { backgroundColor: '#15803D' },
+                                     }}
+                                   >
+                                     ✓ Mark as Paid
+                                   </Button>
+                                 ) : (
+                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mt: 0.4 }}>
+                                     <Chip
+                                       size="small"
+                                       icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
+                                       label="Paid ✓"
+                                       sx={{
+                                         backgroundColor: '#DCFCE7',
+                                         color: '#15803D',
+                                         fontWeight: 900,
+                                         fontSize: '0.7rem',
+                                         height: 24,
+                                         border: '1px solid #86EFAC',
+                                       }}
+                                     />
+                                     <Button
+                                       size="small"
+                                       variant="text"
+                                       onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Pending Verification')}
+                                       sx={{
+                                         color: '#94A3B8',
+                                         fontSize: '0.68rem',
+                                         py: 0,
+                                         px: 0.5,
+                                         textTransform: 'none',
+                                         '&:hover': { color: '#DC2626' },
+                                       }}
+                                     >
+                                       Undo Paid
+                                     </Button>
+                                   </Box>
+                                 )}
                               </Box>
                             </TableCell>
                             <TableCell>

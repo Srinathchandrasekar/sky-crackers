@@ -365,10 +365,9 @@ export default function CheckoutPage({
         window.open(`https://wa.me/${UPI_CONFIG.whatsappPhone}?text=${encodeURIComponent(waText)}`, '_blank')
       }
 
-      // Persist locally for instant lookup retrieval with accurate totals
+      // Persist locally for instant lookup retrieval with accurate totals across both storage keys
       try {
-        const existingOrders = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
-        existingOrders.unshift({
+        const orderRecord = {
           orderNumber: orderNum,
           customerId: Number(custId),
           customerName: formData.fullName.trim(),
@@ -389,8 +388,14 @@ export default function CheckoutPage({
             unitPrice: Number(i.product.discountPrice) || Number(i.product.price) || 0,
             totalPrice: (Number(i.product.discountPrice) || Number(i.product.price) || 0) * i.quantity,
           })),
+        }
+
+        ;['skycrackers_orders_history', 'sky_orders'].forEach((key) => {
+          const existingOrders = JSON.parse(localStorage.getItem(key) || '[]')
+          const filtered = existingOrders.filter((o) => o.orderNumber !== orderNum)
+          filtered.unshift(orderRecord)
+          localStorage.setItem(key, JSON.stringify(filtered.slice(0, 50)))
         })
-        localStorage.setItem('skycrackers_orders_history', JSON.stringify(existingOrders.slice(0, 30)))
       } catch (locErr) {
         console.warn('Local save warning:', locErr)
       }

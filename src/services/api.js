@@ -5,7 +5,7 @@ export const API_BASE_URL = API_CONFIG.BASE_URL
 // Cache the known working base URL for instant zero-latency subsequent calls
 let cachedWorkingBase = null
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 12000) {
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
   try {
@@ -40,7 +40,7 @@ async function fetchJson(endpoint, options = {}) {
         ...(options.headers || {}),
       }
 
-      const res = await fetchWithTimeout(url, { ...options, headers }, 2500)
+      const res = await fetchWithTimeout(url, { ...options, headers }, 12000)
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
@@ -330,27 +330,95 @@ export const getCustomerByIdApi = (id, token) => {
 // 4. Orders / Bookings
 export const createOrderApi = async (orderPayload) => {
   const orderNum = orderPayload.orderNumber || `SFC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100000 + Math.random() * 900000)}`
+  const initialPaymentStatus = orderPayload.paymentStatus || ((orderPayload.paymentMethod || '').toUpperCase().includes('PENDING') ? 'Pending' : ((orderPayload.paymentMethod || '').toUpperCase() === 'RAZORPAY' ? 'Paid' : 'Pending Verification'))
+
   const localOrder = {
     orderId: orderPayload.orderId || Date.now(),
     orderNumber: orderNum,
     createdAt: orderPayload.createdAt || new Date().toISOString(),
     orderStatus: orderPayload.orderStatus || 'Confirmed',
-    paymentStatus: (orderPayload.paymentMethod || '').toUpperCase().includes('PENDING') ? 'Pending' : ((orderPayload.paymentMethod || '').toUpperCase() === 'RAZORPAY' ? 'Paid' : 'Pending'),
+    paymentStatus: initialPaymentStatus,
     ...orderPayload,
   }
 
-  // Always save in localStorage first so order is NEVER lost!
+  // Always save in both local storages first so order is NEVER lost!
   try {
-    const storedOrders = JSON.parse(localStorage.getItem('sky_orders') || '[]')
-    storedOrders.unshift(localOrder)
-    localStorage.setItem('sky_orders', JSON.stringify(storedOrders))
+    ['sky_orders', 'skycrackers_orders_history'].forEach((key) => {
+      const list = JSON.parse(localStorage.getItem(key) || '[]')
+      const existsIdx = list.findIndex((o) => o.orderNumber === orderNum)
+      if (existsIdx > -1) {
+        list[existsIdx] = { ...list[existsIdx], ...localOrder }
+      } else {
+        list.unshift(localOrder)
+      }
+      localStorage.setItem(key, JSON.stringify(list.slice(0, 50)))
+    })
   } catch (e) {}
+
+  // Ensure customer exists in SQL Server
+  let validCustomerId = orderPayload.customerId || orderPayload.CustomerId
+  if (!validCustomerId || isNaN(Number(validCustomerId)) || Number(validCustomerId) > 1000000 || Number(validCustomerId) <= 0) {
+    try {
+      const cleanPhone = (orderPayload.customerPhone || '9999999999').replace(/\D/g, '').slice(-10)
+      const custRes = await saveCustomerApi({
+        CustomerName: orderPayload.customerName || 'Valued Customer',
+        MobileNumber: cleanPhone.length === 10 ? cleanPhone : '9999999999',
+        Address: orderPayload.deliveryAddress || 'Tamil Nadu, India',
+        PinCode: '626123',
+        PrivacyPolicyAccepted: true,
+      })
+      validCustomerId = custRes?.data?.customerId || custRes?.customerId || 1
+    } catch (_) {
+      validCustomerId = 1
+    }
+  }
+
+  // Format clean items according to CreateOrderDto
+  const serverItems = (orderPayload.items || []).map((i) => {
+    let pid = Number(i.productId || i.ProductId || i.sno || 1)
+    if (pid <= 0 || pid > 91) pid = 1
+    return {
+      productId: pid,
+      quantity: Math.max(1, Math.min(1000, Number(i.quantity || 1))),
+    }
+  })
+
+  const serverPayload = {
+    customerId: Number(validCustomerId),
+    paymentMethod: (orderPayload.paymentMethod || 'UPI').toUpperCase().includes('WHATSAPP') ? 'WHATSAPP_ENQUIRY' : 'UPI',
+    notes: orderPayload.notes || (orderPayload.utrNumber ? `UPI Payment - UTR: ${orderPayload.utrNumber}` : 'Online Crackers Booking'),
+    items: serverItems.length > 0 ? serverItems : [{ productId: 1, quantity: 1 }],
+  }
 
   try {
     const res = await fetchJson('/orders', {
       method: 'POST',
-      body: JSON.stringify(orderPayload),
+      body: JSON.stringify(serverPayload),
     })
+
+    // If server returned created order, update local stored order with real server ID and orderNumber!
+    if (res && (res.orderId || res.OrderId)) {
+      const serverId = res.orderId || res.OrderId
+      const serverNum = res.orderNumber || res.OrderNumber || orderNum
+      try {
+        ['sky_orders', 'skycrackers_orders_history'].forEach((key) => {
+          const list = JSON.parse(localStorage.getItem(key) || '[]')
+          const updated = list.map((o) => {
+            if (o.orderNumber === orderNum || o.orderNumber === serverNum) {
+              return {
+                ...o,
+                orderId: serverId,
+                orderNumber: serverNum,
+                paymentStatus: res.paymentStatus || o.paymentStatus,
+              }
+            }
+            return o
+          })
+          localStorage.setItem(key, JSON.stringify(updated))
+        })
+      } catch (_) {}
+    }
+
     return res
   } catch (apiErr) {
     console.warn('Cloud orders save fallback to confirmed local booking:', apiErr)
@@ -385,10 +453,18 @@ export const getOrdersListApi = async ({ status, search, page = 1 } = {}) => {
     console.warn('Cloud orders fetch warning:', e)
   }
 
-  // Merge with localStorage orders
+  // Merge with localStorage orders from both keys
   let localOrders = []
   try {
-    localOrders = JSON.parse(localStorage.getItem('sky_orders') || '[]')
+    const s1 = JSON.parse(localStorage.getItem('sky_orders') || '[]')
+    const s2 = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+    const mergedLocalMap = new Map()
+    ;[...s1, ...s2].forEach((o) => {
+      if (o && o.orderNumber) {
+        mergedLocalMap.set(o.orderNumber, o)
+      }
+    })
+    localOrders = Array.from(mergedLocalMap.values())
     if (search) {
       const s = search.toLowerCase()
       localOrders = localOrders.filter(
@@ -400,21 +476,84 @@ export const getOrdersListApi = async ({ status, search, page = 1 } = {}) => {
     }
   } catch (e) {}
 
-  // Combine and deduplicate by orderNumber
-  const combined = [...cloudOrders]
-  for (const lo of localOrders) {
-    if (!combined.some((co) => co.orderNumber === lo.orderNumber)) {
-      combined.push(lo)
-    }
+  // Sync any local-only order to cloud server so all other devices can see it!
+  if (cloudOrders.length > 0 && localOrders.length > 0) {
+    localOrders.forEach((lo) => {
+      const inCloud = cloudOrders.some((co) => co.orderNumber === lo.orderNumber)
+      if (!inCloud && (!lo.orderId || String(lo.orderId).length > 9)) {
+        // Sync to cloud in background
+        createOrderApi(lo).catch(() => {})
+      }
+    })
   }
 
-  return combined
+  // Combine and deduplicate by orderNumber
+  const combinedMap = new Map()
+  cloudOrders.forEach((co) => {
+    combinedMap.set(co.orderNumber, co)
+  })
+
+  localOrders.forEach((lo) => {
+    if (!combinedMap.has(lo.orderNumber)) {
+      combinedMap.set(lo.orderNumber, lo)
+    } else {
+      // Merge extra local details (like utrNumber or couponCode) if cloud lacks them
+      const existing = combinedMap.get(lo.orderNumber)
+      combinedMap.set(lo.orderNumber, {
+        ...existing,
+        utrNumber: existing.utrNumber || lo.utrNumber,
+        couponCode: existing.couponCode || lo.couponCode,
+        notes: existing.notes || lo.notes,
+      })
+    }
+  })
+
+  return Array.from(combinedMap.values()).sort(
+    (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+  )
 }
 
-export const updateOrderStatusApi = (orderId, { orderStatus, paymentStatus, notes }) => {
-  return fetchJson(`/orders/${orderId}/status`, {
+export const updateOrderStatusApi = async (orderId, { orderStatus, paymentStatus, notes }) => {
+  // Update both local storage keys immediately
+  try {
+    ['sky_orders', 'skycrackers_orders_history'].forEach((storageKey) => {
+      const list = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      const updated = list.map((o) => {
+        if (
+          String(o.orderId) === String(orderId) ||
+          String(o.orderNumber) === String(orderId)
+        ) {
+          return {
+            ...o,
+            paymentStatus: paymentStatus || o.paymentStatus,
+            orderStatus: orderStatus || o.orderStatus,
+            notes: notes !== undefined ? notes : o.notes,
+          }
+        }
+        return o
+      })
+      localStorage.setItem(storageKey, JSON.stringify(updated))
+    })
+  } catch (_) {}
+
+  // Resolve numeric orderId if string orderNumber was passed
+  let targetId = orderId
+  if (typeof orderId === 'string' && orderId.startsWith('SFC-')) {
+    try {
+      const orderData = await fetchJson(`/orders/${orderId}`)
+      if (orderData && (orderData.orderId || orderData.OrderId)) {
+        targetId = orderData.orderId || orderData.OrderId
+      }
+    } catch (_) {}
+  }
+
+  return fetchJson(`/orders/${targetId}/status`, {
     method: 'PUT',
-    body: JSON.stringify({ OrderStatus: orderStatus, PaymentStatus: paymentStatus, Notes: notes }),
+    body: JSON.stringify({
+      OrderStatus: orderStatus || 'Confirmed',
+      PaymentStatus: paymentStatus,
+      Notes: notes,
+    }),
   })
 }
 

@@ -125,10 +125,11 @@ export default function PersonOrdersPage({
         })
       }
 
-      // Check local storage fallback
+      // Check local storage fallback from both storage keys
       try {
-        const localSaved = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
-        localSaved.forEach((lo) => {
+        const s1 = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        const s2 = JSON.parse(localStorage.getItem('sky_orders') || '[]')
+        ;[...s1, ...s2].forEach((lo) => {
           const loPhone = (lo.customerPhone || '').replace(/\D/g, '')
           if (loPhone.includes(cleanPhone) && lo.orderNumber && !ordersMap.has(lo.orderNumber)) {
             ordersMap.set(lo.orderNumber, lo)
@@ -139,7 +140,7 @@ export default function PersonOrdersPage({
       }
 
       const combined = Array.from(ordersMap.values()).sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
       )
 
       setSavedOrders(combined)
@@ -218,12 +219,21 @@ export default function PersonOrdersPage({
 
   // Structured Invoice generator
   const handleDownloadInvoice = (order) => {
+    const p = (order.paymentStatus || '').toLowerCase()
+    const isOrderPaid =
+      p === 'completed' ||
+      p === 'paid' ||
+      p === 'received' ||
+      p === 'verified' ||
+      p === 'success'
+
     downloadStructuredInvoice({
       ...order,
+      isPaid: isOrderPaid,
+      paymentStatus: isOrderPaid ? 'Paid' : (order.paymentStatus || 'Pending Verification'),
       customerName: order.customerName || customer?.customerName,
       customerPhone: order.customerPhone || customer?.mobileNumber,
       deliveryAddress: cleanAddressDisplay(order.deliveryAddress || customer?.address),
-      paymentStatus: order.paymentStatus || 'Pending',
       paymentMethod: order.paymentMethod || 'Online Payment (Pending / Pay Later)',
     })
   }
@@ -660,11 +670,13 @@ export default function PersonOrdersPage({
                       p === 'success'
 
                     const utr = ord.utrNumber || (typeof ord.notes === 'string' ? ord.notes.match(/UTR:\s*([0-9]{12})/i)?.[1] : null)
+                    const isUpiOrder = (ord.paymentMethod || '').toLowerCase().includes('upi') || Boolean(utr)
                     const isPendingVerification =
                       !isPaid &&
                       (p === 'pending verification' ||
                         p === 'verification in progress' ||
-                        Boolean(utr))
+                        p === 'verifying' ||
+                        isUpiOrder)
 
                     const isPaying = payingOrderId === (ord.orderId || ord.orderNumber)
 
