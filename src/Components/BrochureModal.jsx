@@ -42,6 +42,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pdfError, setPdfError] = useState(false)
   const [filterText, setFilterText] = useState('')
+  const [totalPages, setTotalPages] = useState(5)
   const canvasRefs = useRef([])
 
   // Download PDF flyer handler
@@ -87,7 +88,8 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
         const loadingTask = window.pdfjsLib.getDocument('/SkyFire_Crackers_Price_List_2026.pdf')
         const pdf = await loadingTask.promise
 
-        const numPages = pdf.numPages // 3 pages
+        const numPages = pdf.numPages || 5
+        if (isMounted) setTotalPages(numPages)
 
         for (let pageNum = 1; pageNum <= numPages; pageNum++) {
           if (!isMounted) break
@@ -174,7 +176,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
               '&:hover': { backgroundColor: '#FF8F00' },
             }}
           >
-            ← Back to Shop
+            Back to Shop
           </Button>
 
           <Box sx={{ display: { xs: 'none', md: 'block' } }}>
@@ -207,7 +209,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                 },
               }}
             >
-              3-Page Visual Flyer
+              {totalPages}-Page Visual Flyer
             </Button>
             <Button
               onClick={() => setViewMode('table')}
@@ -325,8 +327,8 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
               </Box>
             )}
 
-            {/* 3 Pages rendered cleanly as large high-res canvases */}
-            {[1, 2, 3].map((pageNum) => (
+            {/* All Pages rendered cleanly as large high-res canvases */}
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
               <Box
                 key={pageNum}
                 sx={{
@@ -357,7 +359,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                     backdropFilter: 'blur(4px)',
                   }}
                 >
-                  Page {pageNum} of 3
+                  Page {pageNum} of {totalPages}
                 </Box>
                 <canvas
                   ref={(el) => (canvasRefs.current[pageNum - 1] = el)}
@@ -406,7 +408,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                   '&:hover': { backgroundColor: '#FF8F00' },
                 }}
               >
-                ← Return to Crackers Shop
+                Return to Crackers Shop
               </Button>
             </Box>
           </Box>
