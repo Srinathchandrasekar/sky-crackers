@@ -89,7 +89,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/classic%20bomb.png',
+    image: '/products/Gundu%20Horlicks.png',
     pieces: '1 Box',
     description: "Gundu / Horlick (குண்டு / ஹார்லிக்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -197,7 +197,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Flower%20Pot%20Ashoka.png',
+    image: '/products/Flower%20Pots%20Deluxe.png',
     pieces: '1 Box',
     description: "Ashoka Flower Pot (Deluxe) (பூச்சட்டி அசோகா (டீலக்ஸ்)) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -269,7 +269,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Chackra%20Asoka.png',
+    image: '/products/Ground%20chakkara%20deluxe.png',
     pieces: '1 Box',
     description: "Ground Chakkara Deluxe (தரை சக்கரம் டீலக்ஸ்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -341,7 +341,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/1%20Sattai.png',
+    image: '/products/half%20feet%20saatai(shot).png',
     pieces: '1 Box',
     description: "1 1/2 Shot (1 1/2 சாட்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -449,7 +449,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/12cm%20wire%20sparkler%20colour.png',
+    image: '/products/10cm%20wire%20sparkler%20colour.png',
     pieces: '1 Box',
     description: "10 cm Wire Sparkler Colour (10 செ.மீ. கம்பி கலர்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -521,7 +521,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/12cm%20wire%20sparkler%20colour.png',
+    image: '/products/15cm%20wire%20sparkler%20colour.png',
     pieces: '1 Box',
     description: "15 cm Wire Sparkler Colour (15 செ.மீ. கம்பி கலர்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -539,7 +539,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/50cm%20sparkle%20plain.png',
+    image: '/products/30cm%20wire%20sparkler%20plain.png',
     pieces: '5 Pcs',
     description: "30 cm Wire Sparkler Plain (5 pcs) (30 செ.மீ. கம்பி சாதா 5 பீஸ்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -557,7 +557,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/50cm%20%20saprkler%20colour.png',
+    image: '/products/30cm%20wire%20sparkler%20colour.png',
     pieces: '5 Pcs',
     description: "30 cm Wire Sparkler Colour (5 pcs) (30 செ.மீ. கம்பி கலர் 5 பீஸ்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -647,7 +647,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/vari%20bijili.png',
+    image: '/products/vari%20bijili%2050pcs.png',
     pieces: '50 Pcs',
     description: "Vari Bijili (50 pcs) (வரி பிஜிலி (50 பீஸ்)) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -773,7 +773,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/1000%20wala.png',
+    image: '/products/1000%20wala%20aerial%20bomb.png',
     pieces: '1 Garland',
     description: "1000 Wala (Aerial Bomb) (1000 வாலா (ஆப்ஷன்ட்)) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -935,7 +935,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Paper%20bomb.png',
+    image: '/products/Paper%20Bomb%20half%20kg.png',
     pieces: '1/2 Kg',
     description: "Paper Bomb 1/2 kg (பேப்பர் பாம் 1/2 கிலோ) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -989,7 +989,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/rocket%20bomb.png',
+    image: '/products/mystic%20rocket.png',
     pieces: '1 Box',
     description: "Mystic / Suyint Rocket (மிஸ்டிக் / சுயிண்ட் ராகெட்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1025,7 +1025,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/roll%20cap.png',
+    image: '/products/ring%20roll.png',
     pieces: '1 Box',
     description: "Ring Roll (ரிங் ரோல்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1043,7 +1043,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Torch%20Light.png',
+    image: '/products/Match%20box%20crackers.png',
     pieces: '1 Box',
     description: "Matchbox Crackers (மத்தாப்பு (துப்பெட்டி)) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1061,7 +1061,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Torch%20Light.png',
+    image: '/products/Wonder%20deepa.png',
     pieces: '1 Box',
     description: "Wonder Deepa (ஒண்டர்தீபா) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1115,7 +1115,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Flower%20pot%20Small.png',
+    image: '/products/shower%20fountain.png',
     pieces: '1 Box',
     description: "Buruttal (புருட்டல்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1133,7 +1133,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/Flower%20Pot%20Ashoka.png',
+    image: '/products/chota%20fancy.png',
     pieces: '1 Box',
     description: "Chotta Fancy (சோட்டா பேன்சி) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1169,7 +1169,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/12%20Shots%20multicolour.png',
+    image: '/products/7%20shots.png',
     pieces: '1 Box',
     description: "7 Shot (7 சாட்) - Direct Sivakasi Factory Quality Crackers."
   },
@@ -1259,7 +1259,7 @@ export const CRACKERS_DATA = [
     discountPercent: 0,
     rating: 4.8,
     reviews: 120,
-    image: '/products/2.5%20%20feet%20multicolour.png',
+    image: '/products/3%20feet%20waii.png',
     pieces: '1 Box',
     description: "3 1/2 Multi Colour (Wai) (3 1/2 மல்டி கலர் (வை)) - Direct Sivakasi Factory Quality Crackers."
   },

@@ -643,6 +643,8 @@ export default function CrackersListPage({
                         component="img"
                         src={product.image}
                         alt={product.name}
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => {
                           e.currentTarget.onerror = null
                           e.currentTarget.src = sparklersImg
