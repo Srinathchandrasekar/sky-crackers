@@ -1435,39 +1435,98 @@ export default function CheckoutPage({
                   {/* Guaranteed 100% Success Direct Number & UPI Box */}
                   <Box
                     sx={{
-                      p: 2,
+                      p: { xs: 2, sm: 2.5 },
                       mb: 2,
-                      borderRadius: 2.5,
-                      backgroundColor: '#FFFBEB',
-                      border: '1.5px solid #FCD34D',
+                      borderRadius: 3,
+                      backgroundColor: '#FEF2F2',
+                      border: '2px solid #EF4444',
+                      boxShadow: '0 4px 14px rgba(239, 68, 68, 0.12)',
                       textAlign: 'left',
                     }}
                   >
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#92400E', mb: 0.5, display: 'flex', alignItems: 'center', gap: 0.6 }}>
-                      💡 ஆப்பில் Payment Failed ஆனால்? (வங்கி பாலிசி பிளாக்):
+                    {/* Big Eye-Catching "FAILED?" Banner */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1.5,
+                        pb: 1.2,
+                        borderBottom: '2px dashed #FCA5A5',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Box
+                          sx={{
+                            backgroundColor: '#DC2626',
+                            color: '#FFFFFF',
+                            px: 1.5,
+                            py: 0.4,
+                            borderRadius: 2,
+                            fontWeight: 900,
+                            fontSize: { xs: '1.25rem', sm: '1.45rem' },
+                            letterSpacing: '0.04em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.6,
+                            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.35)',
+                          }}
+                        >
+                          ⚠️ FAILED?
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: 900,
+                              color: '#991B1B',
+                              fontSize: { xs: '1.05rem', sm: '1.2rem' },
+                              lineHeight: 1.15,
+                            }}
+                          >
+                            Payment Failed? (பணம் செலுத்த முடியவில்லையா?)
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#B91C1C', fontWeight: 700, fontSize: '0.74rem' }}>
+                            கவலை வேண்டாம்! நேரடி GPay / PhonePe மூலம் 100% செலுத்தலாம்:
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Chip
+                        label="100% SUCCESS"
+                        size="small"
+                        sx={{
+                          backgroundColor: '#16A34A',
+                          color: '#FFFFFF',
+                          fontWeight: 900,
+                          fontSize: '0.72rem',
+                          height: 24,
+                        }}
+                      />
+                    </Box>
+
+                    <Typography variant="body2" sx={{ color: '#450A0A', fontSize: '0.84rem', mb: 1.2, fontWeight: 600 }}>
+                      உங்கள் GPay அல்லது PhonePe ஆப்பைத் திறந்து, கீழே உள்ள <strong>மொபைல் எண்</strong> அல்லது <strong>UPI ID</strong>-க்கு நேரடியாக <strong>₹{totalAmount.toLocaleString('en-IN')}</strong> அனுப்பிவிடலாம்:
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#78350F', display: 'block', mb: 1.2, lineHeight: 1.4 }}>
-                      பிரவுசர் லிங்க் மூலம் சில வங்கிகள் (ICICI, HDFC, SBI) பாதுகாப்புக்காக பணம் செலுத்துவதை பிளாக் செய்யலாம்.
-                      <strong> நேரடி GPay/PhonePe மூலம் 100% தடையின்றி செலுத்த:</strong>
-                    </Typography>
-                    <Stack spacing={1}>
+                    <Stack spacing={1.2}>
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           backgroundColor: '#FFFFFF',
-                          p: 1,
-                          px: 1.4,
+                          p: 1.2,
+                          px: 1.5,
                           borderRadius: 2,
-                          border: '1px solid #FDE68A',
+                          border: '1.5px solid #FECACA',
                         }}
                       >
                         <Box>
-                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.7rem', fontWeight: 800 }}>
                             நேரடி GPAY / PHONEPE எண் (Sri Venkateshwaran)
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B' }}>
+                          <Typography variant="body1" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '1.1rem' }}>
                             80567 04353
                           </Typography>
                         </Box>
@@ -1475,18 +1534,22 @@ export default function CheckoutPage({
                           size="small"
                           variant="contained"
                           onClick={handleCopyPhone}
-                          startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                          startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
                           sx={{
-                            backgroundColor: copiedPhone ? '#15803D' : '#0B132B',
-                            color: '#FFA000',
+                            backgroundColor: copiedPhone ? '#15803D' : '#DC2626',
+                            color: '#FFFFFF',
                             fontWeight: 800,
-                            fontSize: '0.72rem',
+                            fontSize: '0.75rem',
                             textTransform: 'none',
                             borderRadius: 1.5,
-                            py: 0.4,
+                            py: 0.5,
+                            px: 1.5,
+                            '&:hover': {
+                              backgroundColor: copiedPhone ? '#166534' : '#B91C1C',
+                            },
                           }}
                         >
-                          {copiedPhone ? 'Copied!' : 'Copy Number'}
+                          {copiedPhone ? '✓ Copied!' : 'Copy Number'}
                         </Button>
                       </Box>
 
@@ -1496,17 +1559,17 @@ export default function CheckoutPage({
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           backgroundColor: '#FFFFFF',
-                          p: 1,
-                          px: 1.4,
+                          p: 1.2,
+                          px: 1.5,
                           borderRadius: 2,
-                          border: '1px solid #FDE68A',
+                          border: '1.5px solid #FECACA',
                         }}
                       >
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
+                        <Box sx={{ minWidth: 0, mr: 1 }}>
+                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.7rem', fontWeight: 800 }}>
                             நேரடி UPI ID ({UPI_CONFIG.bankName})
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '0.82rem' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '0.86rem', wordBreak: 'break-all' }}>
                             {UPI_CONFIG.upiId}
                           </Typography>
                         </Box>
@@ -1514,24 +1577,39 @@ export default function CheckoutPage({
                           size="small"
                           variant="contained"
                           onClick={handleCopyUpi}
-                          startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                          startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
                           sx={{
                             backgroundColor: copiedUpi ? '#15803D' : '#0B132B',
                             color: '#FFA000',
                             fontWeight: 800,
-                            fontSize: '0.72rem',
+                            fontSize: '0.75rem',
                             textTransform: 'none',
                             borderRadius: 1.5,
-                            py: 0.4,
+                            py: 0.5,
+                            px: 1.5,
+                            flexShrink: 0,
+                            '&:hover': {
+                              backgroundColor: '#1E293B',
+                            },
                           }}
                         >
-                          {copiedUpi ? 'Copied!' : 'Copy UPI ID'}
+                          {copiedUpi ? '✓ Copied!' : 'Copy UPI ID'}
                         </Button>
                       </Box>
                     </Stack>
-                    <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 700, display: 'block', mt: 1, fontSize: '0.72rem' }}>
-                      ✓ பணம் செலுத்தியவுடன் கிடைக்கும் 12-Digit UPI Ref / UTR எண்ணை கீழே பதிவிட்டு Confirm Order அழுத்தவும்!
-                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 1.5,
+                        p: 1,
+                        borderRadius: 1.5,
+                        backgroundColor: '#FEF3C7',
+                        border: '1px solid #FCD34D',
+                      }}
+                    >
+                      <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 800, display: 'block', fontSize: '0.74rem', lineHeight: 1.4 }}>
+                        👉 பணம் செலுத்தியவுடன் GPay / PhonePe-ல் கிடைக்கும் <strong>12-Digit UPI Ref / UTR</strong> எண்ணை கீழே பதிவிட்டு <strong>"Confirm Order"</strong> அழுத்தவும்!
+                      </Typography>
+                    </Box>
                   </Box>
 
                   {/* 12-Digit UTR Input Box */}
