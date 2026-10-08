@@ -220,10 +220,25 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       await updateOrderStatusApi(orderId, {
         orderStatus: currentOrderStatus,
         paymentStatus: newPaymentStatus,
-      })
+      }).catch((e) => console.warn('API update fallback:', e))
+
+      try {
+        const existing = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
+        const updated = existing.map((o) => {
+          if (String(o.orderId) === String(orderId) || String(o.orderNumber) === String(orderId)) {
+            return {
+              ...o,
+              paymentStatus: newPaymentStatus,
+            }
+          }
+          return o
+        })
+        localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
+      } catch (lsErr) {}
+
       setActionSuccess(`Order #${orderId} payment status updated to "${newPaymentStatus}"`)
       setTimeout(() => setActionSuccess(''), 3500)
-      if (selectedOrderDetails && (selectedOrderDetails.orderId === orderId || selectedOrderDetails.OrderId === orderId)) {
+      if (selectedOrderDetails && (selectedOrderDetails.orderId === orderId || selectedOrderDetails.OrderId === orderId || selectedOrderDetails.orderNumber === orderId)) {
         setSelectedOrderDetails((prev) => prev ? { ...prev, paymentStatus: newPaymentStatus } : null)
       }
       loadData()
@@ -975,7 +990,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             ₹{ord.totalAmount}
                           </Typography>
                         </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.6 }}>
                           {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
                           {ord.utrNumber && (
                             <Typography
@@ -994,6 +1009,44 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             >
                               UTR: {ord.utrNumber}
                             </Typography>
+                          )}
+                          {!isPaid ? (
+                            <Button
+                              size="small"
+                              variant="contained"
+                              onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
+                              sx={{
+                                mt: 0.5,
+                                backgroundColor: '#16A34A',
+                                color: '#FFFFFF',
+                                fontWeight: 900,
+                                fontSize: '0.75rem',
+                                py: 0.4,
+                                px: 1.5,
+                                textTransform: 'none',
+                                borderRadius: 1.5,
+                                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
+                                '&:hover': { backgroundColor: '#15803D' },
+                              }}
+                            >
+                              ✓ Mark as Paid
+                            </Button>
+                          ) : (
+                            <Button
+                              size="small"
+                              variant="text"
+                              onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Pending Verification')}
+                              sx={{
+                                color: '#94A3B8',
+                                fontSize: '0.68rem',
+                                py: 0,
+                                px: 0.5,
+                                textTransform: 'none',
+                                '&:hover': { color: '#DC2626' },
+                              }}
+                            >
+                              Undo Paid
+                            </Button>
                           )}
                         </Box>
                       </Box>
@@ -1220,29 +1273,67 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               ₹{ord.totalAmount}
                             </TableCell>
                             <TableCell>
-                              {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
-                              {ord.utrNumber && (
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    display: 'block',
-                                    mt: 0.5,
-                                    fontFamily: 'monospace',
-                                    fontWeight: 800,
-                                    color: '#0369A1',
-                                    backgroundColor: '#E0F2FE',
-                                    px: 0.8,
-                                    py: 0.2,
-                                    borderRadius: 1,
-                                    border: '1px solid #BAE6FD',
-                                    fontSize: '0.72rem',
-                                    width: 'fit-content',
-                                  }}
-                                  title="UPI Ref / UTR Number"
-                                >
-                                  UTR: {ord.utrNumber}
-                                </Typography>
-                              )}
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.6, alignItems: 'flex-start' }}>
+                                {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
+                                {ord.utrNumber && (
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      fontFamily: 'monospace',
+                                      fontWeight: 800,
+                                      color: '#0369A1',
+                                      backgroundColor: '#E0F2FE',
+                                      px: 0.8,
+                                      py: 0.2,
+                                      borderRadius: 1,
+                                      border: '1px solid #BAE6FD',
+                                      fontSize: '0.72rem',
+                                      width: 'fit-content',
+                                    }}
+                                    title="UPI Ref / UTR Number"
+                                  >
+                                    UTR: {ord.utrNumber}
+                                  </Typography>
+                                )}
+                                {!isPaid ? (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
+                                    sx={{
+                                      mt: 0.4,
+                                      backgroundColor: '#16A34A',
+                                      color: '#FFFFFF',
+                                      fontWeight: 900,
+                                      fontSize: '0.74rem',
+                                      py: 0.3,
+                                      px: 1.2,
+                                      textTransform: 'none',
+                                      borderRadius: 1.5,
+                                      boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
+                                      '&:hover': { backgroundColor: '#15803D' },
+                                    }}
+                                  >
+                                    ✓ Mark as Paid
+                                  </Button>
+                                ) : (
+                                  <Button
+                                    size="small"
+                                    variant="text"
+                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Pending Verification')}
+                                    sx={{
+                                      color: '#94A3B8',
+                                      fontSize: '0.68rem',
+                                      py: 0,
+                                      px: 0.5,
+                                      textTransform: 'none',
+                                      '&:hover': { color: '#DC2626' },
+                                    }}
+                                  >
+                                    Undo Paid
+                                  </Button>
+                                )}
+                              </Box>
                             </TableCell>
                             <TableCell>
                               <Chip
