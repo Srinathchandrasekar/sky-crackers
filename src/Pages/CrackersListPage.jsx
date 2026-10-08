@@ -98,7 +98,7 @@ export default function CrackersListPage({
     if (setSearchQuery) setSearchQuery(val)
   }
 
-  // Authoritative Master Catalog of 81 Sivakasi Factory Crackers
+  // Authoritative Master Catalog of 90 Sivakasi Factory Crackers
   const [productsList] = useState(CRACKERS_DATA)
   const [categoriesList] = useState(CATEGORIES)
   const isLiveConnected = true

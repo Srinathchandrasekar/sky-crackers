@@ -36,7 +36,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart'
 import { CRACKERS_DATA, STORE_INFO } from '../data/crackersData'
 
 export default function BrochureModal({ open, onClose, onShopNow }) {
-  // View Mode: 'flyer' = Fullscreen Visual 3 Pages, 'table' = 84-item Searchable Table
+  // View Mode: 'flyer' = Fullscreen Visual 5 Pages, 'table' = 90-item Searchable Table
   const [viewMode, setViewMode] = useState('flyer')
   const [scale, setScale] = useState(1.4)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -223,7 +223,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                 },
               }}
             >
-              84-Item Price Table
+              90-Item Price Table
             </Button>
           </ButtonGroup>
 
@@ -378,7 +378,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
                 </Typography>
                 <Stack direction="row" spacing={2} justifyContent="center">
                   <Button variant="contained" onClick={() => setViewMode('table')} sx={{ backgroundColor: '#FFA000', color: '#0B132B' }}>
-                    View 81-Item Price Table
+                    View 90-Item Price Table
                   </Button>
                   <Button variant="outlined" onClick={handleDownloadPdf} sx={{ color: '#FFFFFF', borderColor: '#FFFFFF' }}>
                     Download Official PDF
@@ -411,7 +411,7 @@ export default function BrochureModal({ open, onClose, onShopNow }) {
             </Box>
           </Box>
         ) : (
-          /* TABLE MODE: Fullscreen Interactive Searchable 81-Item Catalog Table */
+          /* TABLE MODE: Fullscreen Interactive Searchable 90-Item Catalog Table */
           <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%', backgroundColor: '#F8FAFC' }}>
             {/* Search Bar Bar */}
             <Box
