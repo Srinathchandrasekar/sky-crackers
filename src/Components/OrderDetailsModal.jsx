@@ -56,6 +56,77 @@ const loadRazorpayScript = () => {
   })
 }
 
+export function normalizeOrderItem(item) {
+  if (!item) return null
+  const pId = Number(
+    item.productId ?? item.ProductId ?? item.id ?? item.sno ?? item.Sno ?? 1
+  )
+
+  const matched = CRACKERS_DATA.find(
+    (c) =>
+      c.productId === pId ||
+      c.sno === pId ||
+      c.id === `p-${pId}` ||
+      (item.productName && c.name?.toLowerCase() === item.productName?.toLowerCase()) ||
+      (item.ProductName && c.name?.toLowerCase() === item.ProductName?.toLowerCase())
+  )
+
+  const rawQty = item.quantity ?? item.Quantity ?? item.qty ?? item.boxes ?? 1
+  const quantity = isNaN(Number(rawQty)) || Number(rawQty) <= 0 ? 1 : Number(rawQty)
+
+  const rawPrice = item.unitPrice ?? item.UnitPrice ?? item.price ?? item.Price ?? matched?.discountPrice ?? matched?.actualRate ?? 50
+  const unitPrice = isNaN(Number(rawPrice)) ? 50 : Number(rawPrice)
+
+  const rawTotal = item.totalPrice ?? item.TotalPrice
+  const totalPrice = (!isNaN(Number(rawTotal)) && Number(rawTotal) > 0)
+    ? Number(rawTotal)
+    : unitPrice * quantity
+
+  const productName = item.productName || item.ProductName || matched?.name || `Cracker Item #${pId}`
+  const tamilName = item.tamilName || item.TamilName || item.nameTamil || matched?.tamilName || ''
+  const image = item.image || item.Image || matched?.image || ''
+
+  return {
+    productId: pId,
+    productName,
+    tamilName,
+    image,
+    quantity,
+    unitPrice,
+    totalPrice,
+  }
+}
+
+export function normalizeOrder(ord) {
+  if (!ord) return null
+  const rawItems = Array.isArray(ord.items)
+    ? ord.items
+    : (Array.isArray(ord.Items) ? ord.Items : [])
+
+  const items = rawItems.map(normalizeOrderItem).filter(Boolean)
+  const itemsSum = items.reduce((sum, it) => sum + (Number(it.totalPrice) || 0), 0)
+
+  const rawTotal = ord.totalAmount ?? ord.TotalAmount ?? ord.subTotal ?? ord.SubTotal ?? ord.total ?? ord.Total
+  const totalAmount = (rawTotal !== undefined && rawTotal !== null && !isNaN(Number(rawTotal)) && Number(rawTotal) > 0)
+    ? Number(rawTotal)
+    : itemsSum
+
+  return {
+    ...ord,
+    orderId: ord.orderId ?? ord.OrderId ?? ord.orderNumber ?? ord.OrderNumber,
+    orderNumber: ord.orderNumber ?? ord.OrderNumber ?? `SFC-${Date.now().toString().slice(-6)}`,
+    customerName: ord.customerName ?? ord.CustomerName ?? 'Valued Customer',
+    customerPhone: ord.customerPhone ?? ord.CustomerPhone ?? '',
+    deliveryAddress: ord.deliveryAddress ?? ord.DeliveryAddress ?? 'Tamil Nadu, India',
+    orderStatus: ord.orderStatus ?? ord.OrderStatus ?? 'Confirmed',
+    paymentStatus: ord.paymentStatus ?? ord.PaymentStatus ?? 'Pending',
+    paymentMethod: ord.paymentMethod ?? ord.PaymentMethod ?? 'Online',
+    createdAt: ord.createdAt ?? ord.CreatedAt ?? new Date().toISOString(),
+    totalAmount,
+    items,
+  }
+}
+
 export default function OrderDetailsModal({
   open,
   onClose,
@@ -147,22 +218,25 @@ export default function OrderDetailsModal({
         })
       }
 
-      // Check locally saved orders as instant fallback
+      // Check locally saved orders from both history keys as instant fallback
       try {
         const localSaved = JSON.parse(localStorage.getItem('skycrackers_orders_history') || '[]')
-        localSaved.forEach((lo) => {
-          const loPhone = (lo.customerPhone || '').replace(/\D/g, '')
-          if (loPhone.includes(cleanPhone) && lo.orderNumber && !ordersMap.has(lo.orderNumber)) {
-            ordersMap.set(lo.orderNumber, lo)
+        const skyOrders = JSON.parse(localStorage.getItem('sky_orders') || '[]')
+        ;[...localSaved, ...skyOrders].forEach((lo) => {
+          const loPhone = (lo.customerPhone || lo.CustomerPhone || '').replace(/\D/g, '')
+          const ordNum = lo.orderNumber || lo.OrderNumber
+          if (loPhone.includes(cleanPhone) && ordNum && !ordersMap.has(ordNum)) {
+            ordersMap.set(ordNum, lo)
           }
         })
       } catch (locErr) {
         console.warn('Local orders load warning:', locErr)
       }
 
-      const combinedOrders = Array.from(ordersMap.values()).sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-      )
+      const combinedOrders = Array.from(ordersMap.values())
+        .map(normalizeOrder)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 
       if (!custData && combinedOrders.length > 0) {
         // Synthesize customer info from the latest order
@@ -318,10 +392,12 @@ export default function OrderDetailsModal({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: { xs: 2.5, sm: 3 },
           overflow: 'hidden',
           backgroundColor: '#F8FAFC',
-          maxHeight: '90vh',
+          maxHeight: '92vh',
+          m: { xs: 1, sm: 2 },
+          width: { xs: 'calc(100% - 16px)', sm: 'auto' },
         },
       }}
     >
@@ -330,8 +406,8 @@ export default function OrderDetailsModal({
         sx={{
           backgroundColor: '#0B132B',
           color: '#FFFFFF',
-          px: { xs: 2.5, sm: 3.5 },
-          py: 2.2,
+          px: { xs: 2, sm: 3.5 },
+          py: { xs: 1.8, sm: 2.2 },
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -341,8 +417,8 @@ export default function OrderDetailsModal({
         <Stack direction="row" spacing={1.5} alignItems="center">
           <Box
             sx={{
-              width: 40,
-              height: 40,
+              width: { xs: 34, sm: 40 },
+              height: { xs: 34, sm: 40 },
               borderRadius: '50%',
               backgroundColor: 'rgba(255, 160, 0, 0.2)',
               display: 'flex',
@@ -350,13 +426,13 @@ export default function OrderDetailsModal({
               justifyContent: 'center',
             }}
           >
-            <ReceiptLongIcon sx={{ color: '#FFA000', fontSize: 24 }} />
+            <ReceiptLongIcon sx={{ color: '#FFA000', fontSize: { xs: 20, sm: 24 } }} />
           </Box>
           <Box>
-            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '1rem', sm: '1.2rem' } }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: { xs: '0.92rem', sm: '1.2rem' } }}>
               My Orders & Saved Bookings (என் ஆர்டர்கள்)
             </Typography>
-            <Typography variant="caption" sx={{ color: '#94A3B8' }}>
+            <Typography variant="caption" sx={{ color: '#94A3B8', fontSize: { xs: '0.68rem', sm: '0.75rem' } }}>
               Retrieve your crackers, live payment status & transport dispatch details
             </Typography>
           </Box>
@@ -367,7 +443,7 @@ export default function OrderDetailsModal({
         </IconButton>
       </Box>
 
-      <DialogContent sx={{ p: { xs: 2.5, sm: 3.5 } }}>
+      <DialogContent sx={{ p: { xs: 1.5, sm: 3 } }}>
         {/* Phone Search Box */}
         <Paper
           elevation={0}
@@ -481,7 +557,7 @@ export default function OrderDetailsModal({
 
             {/* Direct Action Buttons for this customer */}
             <Divider sx={{ my: 1.5 }} />
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="stretch" justifyContent="flex-end" flexWrap="wrap">
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} alignItems="stretch" justifyContent="flex-end" flexWrap="wrap">
               <Button
                 variant="contained"
                 size="small"
@@ -489,17 +565,17 @@ export default function OrderDetailsModal({
                   if (onOpenPersonPage) onOpenPersonPage(customer)
                 }}
                 sx={{
-                  backgroundColor: '#0B132B',
-                  color: '#FFA000',
-                  fontWeight: 900,
+                  backgroundColor: '#0284C7',
+                  color: '#FFFFFF',
+                  fontWeight: 800,
                   fontSize: '0.84rem',
                   textTransform: 'none',
                   borderRadius: '20px',
                   py: 0.8,
                   px: 2.2,
-                  border: '1.5px solid #FFA000',
-                  boxShadow: '0 2px 8px rgba(11, 19, 43, 0.25)',
-                  '&:hover': { backgroundColor: '#1A2A56', borderColor: '#FFB300' },
+                  width: { xs: '100%', sm: 'auto' },
+                  boxShadow: '0 2px 8px rgba(2, 132, 199, 0.25)',
+                  '&:hover': { backgroundColor: '#0369A1' },
                 }}
               >
                 👤 Customer Hub (Saved Bookings & Status) →
@@ -512,16 +588,17 @@ export default function OrderDetailsModal({
                   if (onOpenShop) onOpenShop(customer)
                 }}
                 sx={{
-                  color: '#0B132B',
+                  color: '#0F172A',
                   borderColor: '#CBD5E1',
-                  backgroundColor: '#F8FAFC',
+                  backgroundColor: '#FFFFFF',
                   fontWeight: 800,
                   fontSize: '0.84rem',
                   textTransform: 'none',
                   borderRadius: '20px',
                   py: 0.8,
                   px: 2,
-                  '&:hover': { backgroundColor: '#F1F5F9', borderColor: '#94A3B8' },
+                  width: { xs: '100%', sm: 'auto' },
+                  '&:hover': { backgroundColor: '#F8FAFC', borderColor: '#94A3B8' },
                 }}
               >
                 🛒 Select Crackers →
@@ -543,6 +620,7 @@ export default function OrderDetailsModal({
                     borderRadius: '20px',
                     py: 0.8,
                     px: 2.2,
+                    width: { xs: '100%', sm: 'auto' },
                     boxShadow: '0 3px 10px rgba(22, 163, 74, 0.35)',
                     '&:hover': {
                       background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
@@ -658,8 +736,49 @@ export default function OrderDetailsModal({
 
                   {/* Order Content */}
                   <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
-                    <TableContainer sx={{ overflowX: 'auto' }}>
-                      <Table size="small" sx={{ minWidth: 460 }}>
+                    {/* MOBILE VIEW (< sm): Clean Compact Item Cards (Zero Horizontal Scroll) */}
+                    <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                      {(ord.items || []).map((item, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            p: 1.4,
+                            mb: 1,
+                            borderRadius: 2,
+                            backgroundColor: '#F8FAFC',
+                            border: '1px solid #E2E8F0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Box sx={{ pr: 1, flex: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 800, color: '#0F172A', fontSize: '0.88rem', lineHeight: 1.25 }}>
+                              {item.productName}
+                            </Typography>
+                            {item.tamilName && (
+                              <Typography variant="caption" sx={{ color: '#B45309', fontWeight: 700, display: 'block', fontSize: '0.74rem' }}>
+                                {item.tamilName}
+                              </Typography>
+                            )}
+                            <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mt: 0.3 }}>
+                              ₹{item.unitPrice} × {item.quantity} box(es)
+                            </Typography>
+                          </Box>
+
+                          <Box sx={{ textAlign: 'right', minWidth: 70 }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#16A34A', fontSize: '0.98rem' }}>
+                              ₹{item.totalPrice}
+                            </Typography>
+                            <Chip size="small" label={`${item.quantity} box`} sx={{ height: 20, fontSize: '0.68rem', fontWeight: 700, mt: 0.3 }} />
+                          </Box>
+                        </Box>
+                      ))}
+                    </Box>
+
+                    {/* DESKTOP VIEW (>= sm): Full Table */}
+                    <TableContainer sx={{ display: { xs: 'none', sm: 'block' }, overflowX: 'auto' }}>
+                      <Table size="small">
                         <TableHead>
                           <TableRow>
                             <TableCell sx={{ fontWeight: 700, color: '#64748B' }}>Cracker Item</TableCell>
@@ -670,18 +789,23 @@ export default function OrderDetailsModal({
                         </TableHead>
                         <TableBody>
                           {(ord.items || []).map((item, idx) => (
-                            <TableRow key={idx}>
-                              <TableCell sx={{ fontWeight: 600, color: '#0B132B' }}>
+                            <TableRow key={idx} hover>
+                              <TableCell sx={{ fontWeight: 700, color: '#0F172A' }}>
                                 {item.productName}
+                                {item.tamilName && (
+                                  <Typography variant="caption" sx={{ color: '#B45309', display: 'block', fontWeight: 600 }}>
+                                    {item.tamilName}
+                                  </Typography>
+                                )}
                               </TableCell>
                               <TableCell align="center">
                                 <Chip size="small" label={`${item.quantity} boxes`} sx={{ fontWeight: 700 }} />
                               </TableCell>
-                              <TableCell align="right" sx={{ color: '#64748B' }}>
+                              <TableCell align="right" sx={{ color: '#64748B', fontWeight: 600 }}>
                                 ₹{item.unitPrice}
                               </TableCell>
-                              <TableCell align="right" sx={{ fontWeight: 700, color: '#16A34A' }}>
-                                ₹{item.totalPrice || item.unitPrice * item.quantity}
+                              <TableCell align="right" sx={{ fontWeight: 800, color: '#16A34A' }}>
+                                ₹{item.totalPrice}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -695,23 +819,23 @@ export default function OrderDetailsModal({
                     <Box
                       sx={{
                         display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
                         justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
+                        alignItems: { xs: 'stretch', sm: 'center' },
                         gap: 2,
                       }}
                     >
-                      <Box>
+                      <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
                         <Typography variant="caption" sx={{ color: '#64748B', display: 'block' }}>
                           Total Booking Amount (Zero Delivery Fee):
                         </Typography>
-                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#0B132B' }}>
+                        <Typography variant="h5" sx={{ fontWeight: 900, color: '#0F172A' }}>
                           ₹{ord.totalAmount}
                         </Typography>
                       </Box>
 
-                      {/* Action buttons */}
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center">
+                      {/* Action buttons (Clean vibrant theme, full width on mobile) */}
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems="stretch">
                         <Button
                           size="small"
                           variant="outlined"
@@ -723,6 +847,7 @@ export default function OrderDetailsModal({
                             fontWeight: 800,
                             textTransform: 'none',
                             borderRadius: 2,
+                            width: { xs: '100%', sm: 'auto' },
                             '&:hover': { backgroundColor: '#F0F9FF' },
                           }}
                         >
@@ -748,6 +873,7 @@ export default function OrderDetailsModal({
                               fontWeight: 900,
                               textTransform: 'none',
                               borderRadius: 2,
+                              width: { xs: '100%', sm: 'auto' },
                               '&:hover': { backgroundColor: '#FF8F00' },
                             }}
                           >
@@ -757,7 +883,7 @@ export default function OrderDetailsModal({
 
                         <Button
                           size="small"
-                          variant="contained"
+                          variant="outlined"
                           startIcon={<PersonIcon />}
                           onClick={() => {
                             if (onOpenPersonPage) {
@@ -771,13 +897,14 @@ export default function OrderDetailsModal({
                             }
                           }}
                           sx={{
-                            backgroundColor: '#0B132B',
-                            color: '#FFA000',
+                            borderColor: '#0284C7',
+                            color: '#0284C7',
+                            backgroundColor: '#F0F9FF',
                             fontWeight: 800,
                             textTransform: 'none',
                             borderRadius: 2,
-                            border: '1px solid #FFA000',
-                            '&:hover': { backgroundColor: '#1A2A56' },
+                            width: { xs: '100%', sm: 'auto' },
+                            '&:hover': { backgroundColor: '#E0F2FE', borderColor: '#0369A1' },
                           }}
                         >
                           👤 Person Page
@@ -794,6 +921,8 @@ export default function OrderDetailsModal({
                             fontWeight: 700,
                             textTransform: 'none',
                             borderRadius: 2,
+                            width: { xs: '100%', sm: 'auto' },
+                            '&:hover': { backgroundColor: '#F8FAFC' },
                           }}
                         >
                           Invoice

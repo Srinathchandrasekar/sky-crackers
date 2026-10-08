@@ -2,14 +2,33 @@ import { API_CONFIG } from '../config/api.config.js'
 
 export const API_BASE_URL = API_CONFIG.BASE_URL
 
+// Cache the known working base URL for instant zero-latency subsequent calls
+let cachedWorkingBase = null
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 2500) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, {
+      ...options,
+      signal: options.signal || controller.signal,
+    })
+    return res
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 // Helper for fetch requests with dual fallback (/api proxy and direct localhost:5066)
 async function fetchJson(endpoint, options = {}) {
-  const baseUrls = [
+  const allBases = [
+    cachedWorkingBase,
     API_CONFIG.BASE_URL,
     ...(API_CONFIG.FALLBACK_URLS || []),
-  ]
-  // Deduplicate
-  const uniqueBases = Array.from(new Set(baseUrls.filter(Boolean)))
+  ].filter(Boolean)
+
+  // Deduplicate preserving order
+  const uniqueBases = Array.from(new Set(allBases))
 
   let lastError = null
 
@@ -21,7 +40,7 @@ async function fetchJson(endpoint, options = {}) {
         ...(options.headers || {}),
       }
 
-      const res = await fetch(url, { ...options, headers })
+      const res = await fetchWithTimeout(url, { ...options, headers }, 2500)
       const data = await res.json().catch(() => ({}))
 
       if (!res.ok) {
@@ -31,12 +50,19 @@ async function fetchJson(endpoint, options = {}) {
         throw error
       }
 
+      // Memorize working base for subsequent requests
+      cachedWorkingBase = base
       return data
     } catch (err) {
       lastError = err
-      // If it's an HTTP error with response (e.g. 400 validation error), don't retry on other URL
+      // If it's a real HTTP status response (e.g. 400 validation error), backend is alive, don't retry
       if (err.status) {
+        cachedWorkingBase = base
         throw err
+      }
+      // If connection timed out or refused, clear cached base and try next
+      if (cachedWorkingBase === base) {
+        cachedWorkingBase = null
       }
     }
   }
@@ -303,12 +329,12 @@ export const getCustomerByIdApi = (id, token) => {
 
 // 4. Orders / Bookings
 export const createOrderApi = async (orderPayload) => {
-  const orderNum = `SFC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100000 + Math.random() * 900000)}`
+  const orderNum = orderPayload.orderNumber || `SFC-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(100000 + Math.random() * 900000)}`
   const localOrder = {
-    orderId: Date.now(),
+    orderId: orderPayload.orderId || Date.now(),
     orderNumber: orderNum,
-    createdAt: new Date().toISOString(),
-    orderStatus: 'Confirmed',
+    createdAt: orderPayload.createdAt || new Date().toISOString(),
+    orderStatus: orderPayload.orderStatus || 'Confirmed',
     paymentStatus: (orderPayload.paymentMethod || '').toUpperCase().includes('PENDING') ? 'Pending' : ((orderPayload.paymentMethod || '').toUpperCase() === 'RAZORPAY' ? 'Paid' : 'Pending'),
     ...orderPayload,
   }

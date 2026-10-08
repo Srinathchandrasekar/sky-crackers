@@ -264,9 +264,14 @@ export default function CheckoutPage({
           parseInt(String(item.product.id || '').replace(/\D/g, ''), 10) ||
           1
         )
+        const unitPrice = Number(item.product.discountPrice) || Number(item.product.price) || 0
         return {
           productId: pId,
+          productName: item.product.name,
+          tamilName: item.product.tamilName || '',
           quantity: item.quantity,
+          unitPrice: unitPrice,
+          totalPrice: unitPrice * item.quantity,
         }
       })
 

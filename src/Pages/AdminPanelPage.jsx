@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import {
   Box,
   Container,
@@ -62,6 +62,7 @@ import {
   getProductsApi,
 } from '../services/api'
 import { CRACKERS_DATA } from '../data/crackersData'
+import { normalizeOrder } from '../Components/OrderDetailsModal'
 
 export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [token, setToken] = useState(sessionStorage.getItem('adminToken') || '')
@@ -100,29 +101,66 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [packedChecklist, setPackedChecklist] = useState({})
   const [expandedOrderId, setExpandedOrderId] = useState(null)
 
-  // Load dashboard and orders when token exists or filters change (with 350ms debounce on search)
+  // Load dashboard metrics and products once on login or refresh
   useEffect(() => {
     if (!token) return
-    const timer = setTimeout(() => {
-      loadData(searchQuery)
-    }, 350)
-    return () => clearTimeout(timer)
+    let isMounted = true
+    const loadStatsAndProducts = async () => {
+      try {
+        const [dashData, prodsData] = await Promise.all([
+          getAdminDashboardApi(token).catch(() => null),
+          getProductsApi().catch(() => []),
+        ])
+        if (isMounted) {
+          if (dashData) setDashboard(dashData)
+          if (prodsData && prodsData.length === 81) setProducts(prodsData)
+        }
+      } catch (e) {
+        console.warn('Initial admin data load warning:', e)
+      }
+    }
+    loadStatsAndProducts()
+    return () => {
+      isMounted = false
+    }
+  }, [token])
+
+  // Load orders only with 300ms debounce when filters or search change
+  useEffect(() => {
+    if (!token) return
+    let isMounted = true
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const ordersData = await getOrdersListApi({ status: statusFilter, search: searchQuery }).catch(() => [])
+        if (isMounted) {
+          const cleanOrders = (Array.isArray(ordersData) ? ordersData : []).map(normalizeOrder).filter(Boolean)
+          setOrders(cleanOrders)
+        }
+      } catch (err) {
+        console.error('Failed to load orders:', err)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }, 300)
+    return () => {
+      isMounted = false
+      clearTimeout(timer)
+    }
   }, [token, statusFilter, searchQuery])
 
   const loadData = async (query = searchQuery) => {
     setLoading(true)
     try {
-      const [dashData, ordersData, prodsData] = await Promise.all([
+      const [dashData, ordersData] = await Promise.all([
         getAdminDashboardApi(token).catch(() => null),
         getOrdersListApi({ status: statusFilter, search: query }).catch(() => []),
-        getProductsApi().catch(() => []),
       ])
-
-      setDashboard(dashData)
-      setOrders(ordersData)
-      setProducts(prodsData && prodsData.length === 81 ? prodsData : CRACKERS_DATA)
+      if (dashData) setDashboard(dashData)
+      const cleanOrders = (Array.isArray(ordersData) ? ordersData : []).map(normalizeOrder).filter(Boolean)
+      setOrders(cleanOrders)
     } catch (err) {
-      console.error('Failed to load admin data:', err)
+      console.error('Failed to reload admin data:', err)
     } finally {
       setLoading(false)
     }
@@ -202,15 +240,17 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     window.print()
   }
 
-  const displayedOrders = orders.filter((ord) => {
-    if (paymentFilter === 'all') return true
-    const pStatus = (ord.paymentStatus || '').toLowerCase()
-    if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success'
-    if (paymentFilter === 'Pending') return pStatus === 'pending' || !pStatus
-    if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
-    if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
-    return true
-  })
+  const displayedOrders = useMemo(() => {
+    return orders.filter((ord) => {
+      if (paymentFilter === 'all') return true
+      const pStatus = (ord.paymentStatus || '').toLowerCase()
+      if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success'
+      if (paymentFilter === 'Pending') return pStatus === 'pending' || !pStatus
+      if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
+      if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
+      return true
+    })
+  }, [orders, paymentFilter])
 
   const renderPaymentChip = (paymentStatus) => {
     const p = (paymentStatus || '').toLowerCase()
@@ -307,16 +347,19 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     }
   }
 
-  const filteredProducts = products.filter((p) => {
-    if (!catalogSearch.trim()) return true
+  const filteredProducts = useMemo(() => {
+    if (!catalogSearch.trim()) return products
     const q = catalogSearch.toLowerCase()
-    return (
-      (p.englishName && p.englishName.toLowerCase().includes(q)) ||
-      (p.tamilName && p.tamilName.toLowerCase().includes(q)) ||
-      (p.categoryName && p.categoryName.toLowerCase().includes(q)) ||
-      (p.sku && p.sku.toLowerCase().includes(q))
-    )
-  })
+    return products.filter((p) => {
+      return (
+        (p.englishName && p.englishName.toLowerCase().includes(q)) ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.tamilName && p.tamilName.toLowerCase().includes(q)) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(q)) ||
+        (p.sku && p.sku.toLowerCase().includes(q))
+      )
+    })
+  }, [products, catalogSearch])
 
   // --- 1. LOGIN SCREEN ---
   if (!token) {
@@ -901,10 +944,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             fontSize: '0.75rem',
                             py: 0.6,
                             textTransform: 'none',
-                            backgroundColor: '#0B132B',
-                            color: '#FFA000',
+                            backgroundColor: '#FFA000',
+                            color: '#0B132B',
                             fontWeight: 800,
-                            '&:hover': { backgroundColor: '#1A2A56' },
+                            '&:hover': { backgroundColor: '#FF8F00' },
                           }}
                         >
                           Packing Sheet
@@ -1097,10 +1140,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                     py: 0.3,
                                     px: 1.2,
                                     textTransform: 'none',
-                                    backgroundColor: '#0B132B',
-                                    color: '#FFA000',
+                                    backgroundColor: '#FFA000',
+                                    color: '#0B132B',
                                     fontWeight: 800,
-                                    '&:hover': { backgroundColor: '#1A2A56' },
+                                    '&:hover': { backgroundColor: '#FF8F00' },
                                   }}
                                 >
                                   Packing Sheet
