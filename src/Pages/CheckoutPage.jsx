@@ -138,7 +138,7 @@ export default function CheckoutPage({
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  // Instagram Promo Coupon Code State (TRUSTSKYCRACKERS)
+  // Instagram Promo Coupon Code State (TRUSTSKYFIRECRACKERS)
   const [couponInput, setCouponInput] = useState('')
   const [appliedCouponCode, setAppliedCouponCode] = useState('')
   const [isCouponApplied, setIsCouponApplied] = useState(false)
@@ -151,9 +151,9 @@ export default function CheckoutPage({
       setCouponError('Please enter a coupon code.')
       return
     }
-    if (clean === 'TRUSTSKYCRACKERS') {
+    if (clean === 'TRUSTSKYFIRECRACKERS') {
       setIsCouponApplied(true)
-      setAppliedCouponCode('TRUSTSKYCRACKERS')
+      setAppliedCouponCode('TRUSTSKYFIRECRACKERS')
       setCouponError('')
     } else {
       setCouponError('Invalid coupon code! Please enter the correct promo code.')
@@ -747,7 +747,7 @@ export default function CheckoutPage({
                               handleApplyCoupon()
                             }
                           }}
-                          placeholder="Enter coupon code (e.g. TRUSTSKYCRACKERS)"
+                          placeholder="COUPONCODE"
                           disabled={isCouponApplied}
                           InputProps={{
                             sx: { textTransform: 'uppercase', fontWeight: 700, backgroundColor: '#FFFFFF', borderRadius: 2 },

@@ -245,8 +245,8 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const couponOrdersCount = useMemo(() => {
     return orders.filter((ord) =>
       Boolean(
-        (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
-        (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+        (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
+        (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
       )
     ).length
   }, [orders])
@@ -255,8 +255,8 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     return orders.filter((ord) => {
       if (couponOnlyFilter) {
         const hasCoupon = Boolean(
-          (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
-          (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+          (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
+          (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
         )
         if (!hasCoupon) return false
       }
@@ -768,10 +768,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
 
                 <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center', display: { xs: 'none', sm: 'block' } }} />
 
-                {/* TRUSTSKYCRACKERS Cashback Orders Toggle Filter */}
+                {/* TRUSTSKYFIRECRACKERS Cashback Orders Toggle Filter */}
                 <Chip
                   icon={<LocalOfferIcon sx={{ fontSize: '13px !important', color: couponOnlyFilter ? '#FFFFFF !important' : '#B45309 !important' }} />}
-                  label={`🎟️ TRUSTSKYCRACKERS (${couponOrdersCount})`}
+                  label={`🎟️ TRUSTSKYFIRECRACKERS (${couponOrdersCount})`}
                   size="small"
                   onClick={() => setCouponOnlyFilter((prev) => !prev)}
                   variant={couponOnlyFilter ? 'filled' : 'outlined'}
@@ -787,7 +787,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                       backgroundColor: couponOnlyFilter ? '#B45309' : '#FDE68A',
                     },
                   }}
-                  title="Filter orders with TRUSTSKYCRACKERS coupon (Cashback eligible)"
+                  title="Filter orders with TRUSTSKYFIRECRACKERS coupon (Cashback eligible)"
                 />
               </Box>
             </Box>
@@ -803,8 +803,8 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                   const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                   const hasCoupon = Boolean(
-                    (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
-                    (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+                    (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
+                    (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
                   )
                   return (
                     <Paper
@@ -822,7 +822,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         position: 'relative',
                       }}
                     >
-                      {/* Coupon Banner if TRUSTSKYCRACKERS was applied */}
+                      {/* Coupon Banner if TRUSTSKYFIRECRACKERS was applied */}
                       {hasCoupon && (
                         <Box
                           sx={{
@@ -841,7 +841,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             <LocalOfferIcon sx={{ fontSize: 16, color: '#B45309' }} />
                             <Box>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: '#92400E', display: 'block', lineHeight: 1.2 }}>
-                                PROMO: TRUSTSKYCRACKERS
+                                PROMO: {ord.couponCode || 'TRUSTSKYFIRECRACKERS'}
                               </Typography>
                               <Typography variant="caption" sx={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 600 }}>
                                 Cashback Eligible • Call to disburse
@@ -1095,8 +1095,8 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                       const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                       const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                       const hasCoupon = Boolean(
-                        (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
-                        (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+                        (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
+                        (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
                       )
                       return (
                         <React.Fragment key={ord.orderId || ord.orderNumber}>
@@ -1127,7 +1127,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                   <Chip
                                     size="small"
                                     icon={<LocalOfferIcon sx={{ fontSize: '11px !important', color: '#92400E !important' }} />}
-                                    label="TRUSTSKYCRACKERS"
+                                    label={ord.couponCode || 'TRUSTSKYFIRECRACKERS'}
                                     sx={{
                                       backgroundColor: '#FEF3C7',
                                       color: '#92400E',
@@ -1338,7 +1338,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                           }}
                                         >
                                           <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#92400E', fontSize: '0.8rem' }}>
-                                            🎟️ Instagram Coupon: TRUSTSKYCRACKERS Applied
+                                            🎟️ Instagram Coupon: {ord.couponCode || 'TRUSTSKYFIRECRACKERS'} Applied
                                           </Typography>
                                           <Typography variant="caption" sx={{ color: '#B45309', fontWeight: 600, display: 'block' }}>
                                             Customer is eligible for manual cashback! Call customer at <strong>{ord.customerPhone}</strong> to disburse cashback.
@@ -1611,10 +1611,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                       <strong>Payment / UTR Ref:</strong> {selectedOrderDetails.notes}
                     </Typography>
                   )}
-                  {(selectedOrderDetails.couponCode || (selectedOrderDetails.notes && selectedOrderDetails.notes.includes('TRUSTSKYCRACKERS'))) && (
+                  {(selectedOrderDetails.couponCode || (selectedOrderDetails.notes && (selectedOrderDetails.notes.includes('TRUSTSKYFIRECRACKERS') || selectedOrderDetails.notes.includes('TRUSTSKYCRACKERS')))) && (
                     <Box sx={{ mt: 1, p: 1, backgroundColor: '#FEF3C7', borderRadius: 1.5, border: '1px solid #F59E0B' }}>
                       <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <LocalOfferIcon sx={{ fontSize: 13 }} /> Promo Applied: TRUSTSKYCRACKERS
+                        <LocalOfferIcon sx={{ fontSize: 13 }} /> Promo Applied: {selectedOrderDetails.couponCode || 'TRUSTSKYFIRECRACKERS'}
                       </Typography>
                       <Typography variant="caption" sx={{ color: '#B45309', display: 'block', fontSize: '0.7rem' }}>
                         Customer is eligible for manual cashback

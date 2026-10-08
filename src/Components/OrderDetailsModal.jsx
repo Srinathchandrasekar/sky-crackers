@@ -112,7 +112,7 @@ export function normalizeOrder(ord) {
     : itemsSum
 
   const notes = ord.notes ?? ord.Notes ?? ''
-  const couponCode = ord.couponCode ?? ord.CouponCode ?? (notes.toUpperCase().includes('TRUSTSKYCRACKERS') ? 'TRUSTSKYCRACKERS' : null)
+  const couponCode = ord.couponCode ?? ord.CouponCode ?? (notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') ? 'TRUSTSKYFIRECRACKERS' : (notes.toUpperCase().includes('TRUSTSKYCRACKERS') ? 'TRUSTSKYCRACKERS' : null))
 
   return {
     ...ord,
