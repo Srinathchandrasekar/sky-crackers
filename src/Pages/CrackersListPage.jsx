@@ -284,7 +284,7 @@ export default function CrackersListPage({
     return sections
   }, [filteredCrackers, selectedCategory, categoriesList, currentCategoryObj])
 
-  const renderProductCard = (product) => {
+  const renderProductCard = (product, idx = 0) => {
     const inCartItem = cart.find(
       (ci) =>
         ci.product.id === product.id ||
@@ -366,11 +366,16 @@ export default function CrackersListPage({
             component="img"
             src={product.image}
             alt={product.name}
-            loading="lazy"
+            loading={idx < 8 ? 'eager' : 'lazy'}
             decoding="async"
+            fetchPriority={idx < 8 ? 'high' : 'auto'}
             onError={(e) => {
-              e.currentTarget.onerror = null
-              e.currentTarget.src = sparklersImg
+              if (product.image && product.image.endsWith('.jpg')) {
+                e.currentTarget.src = product.image.replace('.jpg', '.png')
+              } else {
+                e.currentTarget.onerror = null
+                e.currentTarget.src = sparklersImg
+              }
             }}
             sx={{
               position: 'absolute',
@@ -1014,7 +1019,7 @@ export default function CrackersListPage({
                     gap: { xs: 1.25, sm: 2 },
                   }}
                 >
-                  {section.products.map((product) => renderProductCard(product))}
+                  {section.products.map((product, idx) => renderProductCard(product, idx))}
                 </Box>
               </Box>
             ))}
