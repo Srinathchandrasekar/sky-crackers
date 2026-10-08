@@ -48,6 +48,7 @@ import Inventory2Icon from '@mui/icons-material/Inventory2'
 import CloseIcon from '@mui/icons-material/Close'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp'
+import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 import PaymentIcon from '@mui/icons-material/Payment'
 import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
@@ -92,6 +93,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [loading, setLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
   const [paymentFilter, setPaymentFilter] = useState('all')
+  const [couponOnlyFilter, setCouponOnlyFilter] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [catalogSearch, setCatalogSearch] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
@@ -240,8 +242,24 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     window.print()
   }
 
+  const couponOrdersCount = useMemo(() => {
+    return orders.filter((ord) =>
+      Boolean(
+        (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
+        (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+      )
+    ).length
+  }, [orders])
+
   const displayedOrders = useMemo(() => {
     return orders.filter((ord) => {
+      if (couponOnlyFilter) {
+        const hasCoupon = Boolean(
+          (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
+          (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+        )
+        if (!hasCoupon) return false
+      }
       if (paymentFilter === 'all') return true
       const pStatus = (ord.paymentStatus || '').toLowerCase()
       if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success'
@@ -250,7 +268,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
       return true
     })
-  }, [orders, paymentFilter])
+  }, [orders, paymentFilter, couponOnlyFilter])
 
   const renderPaymentChip = (paymentStatus) => {
     const p = (paymentStatus || '').toLowerCase()
@@ -719,7 +737,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                 ))}
               </Stack>
 
-              {/* Payment Status Filter Chips */}
+              {/* Payment Status & Coupon Filter Chips */}
               <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748B', mr: 0.5 }}>
                   Payment Filter:
@@ -747,6 +765,30 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                     }}
                   />
                 ))}
+
+                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center', display: { xs: 'none', sm: 'block' } }} />
+
+                {/* TRUSTSKYCRACKERS Cashback Orders Toggle Filter */}
+                <Chip
+                  icon={<LocalOfferIcon sx={{ fontSize: '13px !important', color: couponOnlyFilter ? '#FFFFFF !important' : '#B45309 !important' }} />}
+                  label={`🎟️ TRUSTSKYCRACKERS (${couponOrdersCount})`}
+                  size="small"
+                  onClick={() => setCouponOnlyFilter((prev) => !prev)}
+                  variant={couponOnlyFilter ? 'filled' : 'outlined'}
+                  sx={{
+                    cursor: 'pointer',
+                    fontWeight: 800,
+                    fontSize: '0.75rem',
+                    backgroundColor: couponOnlyFilter ? '#D97706' : '#FEF3C7',
+                    color: couponOnlyFilter ? '#FFFFFF' : '#92400E',
+                    borderColor: '#F59E0B',
+                    boxShadow: couponOnlyFilter ? '0 2px 6px rgba(217,119,6,0.3)' : 'none',
+                    '&:hover': {
+                      backgroundColor: couponOnlyFilter ? '#B45309' : '#FDE68A',
+                    },
+                  }}
+                  title="Filter orders with TRUSTSKYCRACKERS coupon (Cashback eligible)"
+                />
               </Box>
             </Box>
 
@@ -760,6 +802,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                 displayedOrders.map((ord) => {
                   const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
                   const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
+                  const hasCoupon = Boolean(
+                    (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
+                    (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+                  )
                   return (
                     <Paper
                       key={ord.orderId || ord.orderNumber}
@@ -769,11 +815,53 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         p: 2,
                         mb: 2,
                         borderRadius: 2.5,
-                        border: '1.5px solid #E2E8F0',
-                        backgroundColor: '#FFFFFF',
+                        border: hasCoupon ? '2px solid #F59E0B' : '1.5px solid #E2E8F0',
+                        backgroundColor: hasCoupon ? '#FFFDF5' : '#FFFFFF',
+                        boxShadow: hasCoupon ? '0 4px 14px rgba(245, 158, 11, 0.12)' : 'none',
                         cursor: 'context-menu',
+                        position: 'relative',
                       }}
                     >
+                      {/* Coupon Banner if TRUSTSKYCRACKERS was applied */}
+                      {hasCoupon && (
+                        <Box
+                          sx={{
+                            mb: 1.5,
+                            p: 1,
+                            borderRadius: 1.5,
+                            backgroundColor: '#FEF3C7',
+                            border: '1px solid #F59E0B',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 1,
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                            <LocalOfferIcon sx={{ fontSize: 16, color: '#B45309' }} />
+                            <Box>
+                              <Typography variant="caption" sx={{ fontWeight: 800, color: '#92400E', display: 'block', lineHeight: 1.2 }}>
+                                PROMO: TRUSTSKYCRACKERS
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 600 }}>
+                                Cashback Eligible • Call to disburse
+                              </Typography>
+                            </Box>
+                          </Box>
+                          <Chip
+                            size="small"
+                            label="CASHBACK"
+                            sx={{
+                              backgroundColor: '#D97706',
+                              color: '#FFFFFF',
+                              fontWeight: 900,
+                              fontSize: '0.62rem',
+                              height: 20,
+                            }}
+                          />
+                        </Box>
+                      )}
+
                       {/* Card Top: Order Number & Status */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0B132B', fontFamily: 'monospace' }}>
@@ -1006,6 +1094,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                     displayedOrders.map((ord) => {
                       const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                       const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
+                      const hasCoupon = Boolean(
+                        (ord.couponCode && ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS')) ||
+                        (ord.notes && ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS'))
+                      )
                       return (
                         <React.Fragment key={ord.orderId || ord.orderNumber}>
                           <TableRow
@@ -1013,6 +1105,8 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             onContextMenu={(e) => handleContextMenu(e, ord)}
                             sx={{
                               cursor: 'context-menu',
+                              backgroundColor: hasCoupon ? '#FFFDF5' : undefined,
+                              borderLeft: hasCoupon ? '4px solid #F59E0B' : undefined,
                               '& > *': { borderBottom: isExpanded ? 'unset' : undefined },
                             }}
                           >
@@ -1026,7 +1120,28 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                 {isExpanded ? <KeyboardArrowUpIcon fontSize="small" /> : <KeyboardArrowDownIcon fontSize="small" />}
                               </IconButton>
                             </TableCell>
-                            <TableCell sx={{ fontWeight: 800, color: '#0B132B' }}>{ord.orderNumber}</TableCell>
+                            <TableCell sx={{ fontWeight: 800, color: '#0B132B' }}>
+                              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                                <span>#{ord.orderNumber}</span>
+                                {hasCoupon && (
+                                  <Chip
+                                    size="small"
+                                    icon={<LocalOfferIcon sx={{ fontSize: '11px !important', color: '#92400E !important' }} />}
+                                    label="TRUSTSKYCRACKERS"
+                                    sx={{
+                                      backgroundColor: '#FEF3C7',
+                                      color: '#92400E',
+                                      fontWeight: 800,
+                                      fontSize: '0.65rem',
+                                      border: '1px solid #F59E0B',
+                                      height: 22,
+                                      width: 'fit-content',
+                                    }}
+                                    title="Promo applied: Customer eligible for cashback via direct call"
+                                  />
+                                )}
+                              </Box>
+                            </TableCell>
                             <TableCell>
                               <Typography
                                 variant="body2"
@@ -1207,6 +1322,28 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                         <Typography variant="caption" sx={{ color: '#64748B', display: 'block', mt: 0.5 }}>
                                           <strong>Order Notes / Ref:</strong> {ord.notes}
                                         </Typography>
+                                      )}
+                                      {hasCoupon && (
+                                        <Alert
+                                          severity="warning"
+                                          icon={<LocalOfferIcon fontSize="small" sx={{ color: '#D97706' }} />}
+                                          sx={{
+                                            mt: 1.5,
+                                            mb: 1,
+                                            backgroundColor: '#FEF3C7',
+                                            border: '1px solid #F59E0B',
+                                            color: '#92400E',
+                                            borderRadius: 2,
+                                            py: 0.6,
+                                          }}
+                                        >
+                                          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#92400E', fontSize: '0.8rem' }}>
+                                            🎟️ Instagram Coupon: TRUSTSKYCRACKERS Applied
+                                          </Typography>
+                                          <Typography variant="caption" sx={{ color: '#B45309', fontWeight: 600, display: 'block' }}>
+                                            Customer is eligible for manual cashback! Call customer at <strong>{ord.customerPhone}</strong> to disburse cashback.
+                                          </Typography>
+                                        </Alert>
                                       )}
                                       <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mt: 0.5 }}>
                                         Placed At: {new Date(ord.createdAt).toLocaleString()}
@@ -1473,6 +1610,16 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                     <Typography variant="caption" sx={{ color: '#0369A1', display: 'block', mt: 0.5, fontWeight: 700 }}>
                       <strong>Payment / UTR Ref:</strong> {selectedOrderDetails.notes}
                     </Typography>
+                  )}
+                  {(selectedOrderDetails.couponCode || (selectedOrderDetails.notes && selectedOrderDetails.notes.includes('TRUSTSKYCRACKERS'))) && (
+                    <Box sx={{ mt: 1, p: 1, backgroundColor: '#FEF3C7', borderRadius: 1.5, border: '1px solid #F59E0B' }}>
+                      <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 800, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <LocalOfferIcon sx={{ fontSize: 13 }} /> Promo Applied: TRUSTSKYCRACKERS
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#B45309', display: 'block', fontSize: '0.7rem' }}>
+                        Customer is eligible for manual cashback
+                      </Typography>
+                    </Box>
                   )}
                   <Divider sx={{ my: 1 }} />
                   <Typography variant="body2">

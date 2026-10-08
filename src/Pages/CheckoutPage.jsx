@@ -34,6 +34,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import WhatsAppIcon from '@mui/icons-material/WhatsApp'
 import SendIcon from '@mui/icons-material/Send'
 import DownloadIcon from '@mui/icons-material/Download'
+import LocalOfferIcon from '@mui/icons-material/LocalOffer'
 import { downloadStructuredInvoice } from '../utils/invoiceGenerator'
 import { cleanAddressDisplay, formatStructuredAddress } from '../utils/addressUtils'
 
@@ -136,6 +137,36 @@ export default function CheckoutPage({
   const [utrNumber, setUtrNumber] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+
+  // Instagram Promo Coupon Code State (TRUSTSKYCRACKERS)
+  const [couponInput, setCouponInput] = useState('')
+  const [appliedCouponCode, setAppliedCouponCode] = useState('')
+  const [isCouponApplied, setIsCouponApplied] = useState(false)
+  const [couponError, setCouponError] = useState('')
+
+  const handleApplyCoupon = () => {
+    setCouponError('')
+    const clean = (couponInput || '').trim().toUpperCase()
+    if (!clean) {
+      setCouponError('Please enter a coupon code.')
+      return
+    }
+    if (clean === 'TRUSTSKYCRACKERS') {
+      setIsCouponApplied(true)
+      setAppliedCouponCode('TRUSTSKYCRACKERS')
+      setCouponError('')
+    } else {
+      setCouponError('Invalid coupon code! Please enter the correct promo code.')
+      setIsCouponApplied(false)
+    }
+  }
+
+  const handleRemoveCoupon = () => {
+    setIsCouponApplied(false)
+    setAppliedCouponCode('')
+    setCouponInput('')
+    setCouponError('')
+  }
 
   // Persistent Unified Booking Order Reference (Synced across GPay, SMS, and Invoice)
   const [checkoutOrderId] = useState(() => {
@@ -287,9 +318,13 @@ export default function CheckoutPage({
       const isUpi = paymentMethod === 'upi'
       const paymentMethodLabel = isUpi ? 'UPI' : 'WHATSAPP_ENQUIRY'
       const paymentStatus = isUpi ? 'Completed' : 'Pending'
-      const orderNotes = isUpi
-        ? `UPI Payment - UTR: ${cleanUtr} (Account: ${UPI_CONFIG.upiId})`
-        : `WhatsApp Booking Enquiry - Contact: +91 ${formData.mobileNumber.trim()}`
+      const couponTag = isCouponApplied ? `[Promo Coupon: ${appliedCouponCode} - Cashback Eligible]` : ''
+      const orderNotes = [
+        couponTag,
+        isUpi
+          ? `UPI Payment - UTR: ${cleanUtr} (Account: ${UPI_CONFIG.upiId})`
+          : `WhatsApp Booking Enquiry - Contact: +91 ${formData.mobileNumber.trim()}`,
+      ].filter(Boolean).join(' | ')
 
       // Order number stays strictly unified across GPay note, SMS, and Invoice Bill
       const orderNum = checkoutOrderId
@@ -304,6 +339,7 @@ export default function CheckoutPage({
         paymentMethod: paymentMethodLabel,
         totalAmount: totalAmount,
         subTotal: totalAmount,
+        couponCode: isCouponApplied ? appliedCouponCode : null,
         notes: orderNotes,
         items: itemsPayload,
       }).catch((err) => {
@@ -315,7 +351,8 @@ export default function CheckoutPage({
         const itemsListStr = cart
           .map((i, idx) => `${idx + 1}. ${i.product.name} (Qty: ${i.quantity} box) - ₹${i.product.discountPrice * i.quantity}`)
           .join('\n')
-        const waText = `💥 *SKY FIRE CRACKERS - NEW BOOKING* 💥\n--------------------------------\n*Booking No:* #${orderNum}\n*Customer:* ${formData.fullName.trim()}\n*Phone:* +91 ${formData.mobileNumber.trim()}\n*Delivery Address:* ${fullAddress}\n--------------------------------\n*Crackers Ordered (${totalItemsCount} Boxes):*\n${itemsListStr}\n--------------------------------\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Parcel Delivery:* Pay at transport collection\n--------------------------------\nVanakkam! Please confirm my booking and share parcel dispatch details.`
+        const couponWaLine = isCouponApplied ? `*Coupon Code:* ${appliedCouponCode} (Cashback Eligible)\n` : ''
+        const waText = `💥 *SKY FIRE CRACKERS - NEW BOOKING* 💥\n--------------------------------\n*Booking No:* #${orderNum}\n*Customer:* ${formData.fullName.trim()}\n*Phone:* +91 ${formData.mobileNumber.trim()}\n*Delivery Address:* ${fullAddress}\n${couponWaLine}--------------------------------\n*Crackers Ordered (${totalItemsCount} Boxes):*\n${itemsListStr}\n--------------------------------\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Parcel Delivery:* Pay at transport collection\n--------------------------------\nVanakkam! Please confirm my booking and share parcel dispatch details.`
         window.open(`https://wa.me/${UPI_CONFIG.whatsappPhone}?text=${encodeURIComponent(waText)}`, '_blank')
       }
 
@@ -333,6 +370,7 @@ export default function CheckoutPage({
           paymentMethod: isUpi ? `Direct UPI (UTR: ${cleanUtr})` : 'WhatsApp Enquiry',
           paymentStatus: paymentStatus,
           orderStatus: 'Confirmed',
+          couponCode: isCouponApplied ? appliedCouponCode : null,
           notes: orderNotes,
           utrNumber: isUpi ? cleanUtr : null,
           createdAt: new Date().toISOString(),
@@ -353,6 +391,7 @@ export default function CheckoutPage({
         orderNumber: orderNum,
         isPaid: isUpi,
         paymentStatus: paymentStatus,
+        couponCode: isCouponApplied ? appliedCouponCode : null,
         customer: {
           name: formData.fullName.trim(),
           phone: formData.mobileNumber.trim(),
@@ -372,6 +411,7 @@ export default function CheckoutPage({
         downloadStructuredInvoice({
           ...orderSummary,
           orderNumber: orderNum,
+          couponCode: isCouponApplied ? appliedCouponCode : null,
           customerName: formData.fullName,
           customerPhone: formData.mobileNumber,
           deliveryAddress: fullAddress,
@@ -663,6 +703,104 @@ export default function CheckoutPage({
                       inputProps={{ maxLength: 6, inputMode: 'numeric' }}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                     />
+                  </Grid>
+
+                  {/* Do you have a coupon code? Section */}
+                  <Grid item xs={12}>
+                    <Divider sx={{ my: 1.5, borderStyle: 'dashed' }} />
+                    <Box
+                      sx={{
+                        p: { xs: 2, sm: 2.2 },
+                        borderRadius: 2.5,
+                        backgroundColor: isCouponApplied ? '#F0FDF4' : '#F8FAFC',
+                        border: isCouponApplied ? '1.5px solid #86EFAC' : '1.5px dashed #CBD5E1',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1, flexWrap: 'wrap', gap: 1 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                          <LocalOfferIcon sx={{ fontSize: 18, color: '#D97706' }} />
+                          Do you have a coupon code? (கூப்பன் குறியீடு உள்ளதா?)
+                        </Typography>
+                        {isCouponApplied && (
+                          <Chip
+                            size="small"
+                            label="Coupon Applied"
+                            color="success"
+                            sx={{ fontWeight: 800, fontSize: '0.72rem' }}
+                          />
+                        )}
+                      </Box>
+
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems="center">
+                        <TextField
+                          fullWidth
+                          size="small"
+                          value={couponInput}
+                          onChange={(e) => {
+                            setCouponInput(e.target.value)
+                            setCouponError('')
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleApplyCoupon()
+                            }
+                          }}
+                          placeholder="Enter coupon code (e.g. TRUSTSKYCRACKERS)"
+                          disabled={isCouponApplied}
+                          InputProps={{
+                            sx: { textTransform: 'uppercase', fontWeight: 700, backgroundColor: '#FFFFFF', borderRadius: 2 },
+                          }}
+                        />
+                        {!isCouponApplied ? (
+                          <Button
+                            variant="contained"
+                            onClick={handleApplyCoupon}
+                            sx={{
+                              minWidth: { xs: '100%', sm: 140 },
+                              py: 1,
+                              fontWeight: 900,
+                              textTransform: 'none',
+                              borderRadius: 2,
+                              backgroundColor: '#FFA000',
+                              color: '#0B132B',
+                              boxShadow: '0 2px 8px rgba(255, 160, 0, 0.3)',
+                              '&:hover': { backgroundColor: '#FF8F00' },
+                            }}
+                          >
+                            Apply Coupon
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            onClick={handleRemoveCoupon}
+                            sx={{
+                              minWidth: { xs: '100%', sm: 110 },
+                              py: 0.9,
+                              fontWeight: 800,
+                              textTransform: 'none',
+                              borderRadius: 2,
+                            }}
+                          >
+                            Remove
+                          </Button>
+                        )}
+                      </Stack>
+
+                      {/* Coupon validation messages */}
+                      {isCouponApplied && (
+                        <Alert severity="success" sx={{ mt: 1.5, py: 0.5, borderRadius: 2, fontWeight: 700, backgroundColor: '#DCFCE7', color: '#15803D' }}>
+                          🎉 Coupon applied successfully! ({appliedCouponCode})
+                        </Alert>
+                      )}
+                      {couponError && (
+                        <Alert severity="error" sx={{ mt: 1.5, py: 0.5, borderRadius: 2, fontWeight: 600 }}>
+                          {couponError}
+                        </Alert>
+                      )}
+                    </Box>
                   </Grid>
                 </Grid>
               </Paper>

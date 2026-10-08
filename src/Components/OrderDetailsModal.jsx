@@ -111,6 +111,9 @@ export function normalizeOrder(ord) {
     ? Number(rawTotal)
     : itemsSum
 
+  const notes = ord.notes ?? ord.Notes ?? ''
+  const couponCode = ord.couponCode ?? ord.CouponCode ?? (notes.toUpperCase().includes('TRUSTSKYCRACKERS') ? 'TRUSTSKYCRACKERS' : null)
+
   return {
     ...ord,
     orderId: ord.orderId ?? ord.OrderId ?? ord.orderNumber ?? ord.OrderNumber,
@@ -121,6 +124,8 @@ export function normalizeOrder(ord) {
     orderStatus: ord.orderStatus ?? ord.OrderStatus ?? 'Confirmed',
     paymentStatus: ord.paymentStatus ?? ord.PaymentStatus ?? 'Pending',
     paymentMethod: ord.paymentMethod ?? ord.PaymentMethod ?? 'Online',
+    notes,
+    couponCode,
     createdAt: ord.createdAt ?? ord.CreatedAt ?? new Date().toISOString(),
     totalAmount,
     items,
@@ -698,6 +703,19 @@ export default function OrderDetailsModal({
                             fontSize: '0.72rem',
                           }}
                         />
+                        {ord.couponCode && (
+                          <Chip
+                            size="small"
+                            label={`🎟️ ${ord.couponCode}`}
+                            sx={{
+                              backgroundColor: '#FEF3C7',
+                              color: '#92400E',
+                              fontWeight: 800,
+                              fontSize: '0.72rem',
+                              border: '1px solid #F59E0B',
+                            }}
+                          />
+                        )}
                       </Stack>
                       <Typography variant="caption" sx={{ color: '#64748B' }}>
                         Booked on {new Date(ord.createdAt).toLocaleString()}
