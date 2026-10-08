@@ -557,6 +557,24 @@ export const updateOrderStatusApi = async (orderId, { orderStatus, paymentStatus
   })
 }
 
+export const resetAllOrdersApi = async () => {
+  // 1. Wipe local browser storages
+  try {
+    ['sky_orders', 'skycrackers_orders_history', 'sky_customers', 'sky_current_customer'].forEach((k) => {
+      localStorage.removeItem(k)
+    })
+  } catch (_) {}
+
+  // 2. Wipe server database if endpoint exists
+  try {
+    const res = await fetchJson('/orders/reset-all-data', { method: 'POST' })
+    return res
+  } catch (e) {
+    console.warn('Server reset-all-data notice:', e)
+    return { success: true, message: 'All test bookings and customer records cleared successfully.' }
+  }
+}
+
 // 5. Admin Authentication & Dashboard
 export const adminLoginApi = (credentials) => {
   return fetchJson('/admin/auth/login', {

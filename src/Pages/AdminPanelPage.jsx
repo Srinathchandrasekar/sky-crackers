@@ -56,8 +56,10 @@ import PersonIcon from '@mui/icons-material/Person'
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout'
 import DownloadIcon from '@mui/icons-material/Download'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import {
   adminLoginApi,
+  resetAllOrdersApi,
   getAdminDashboardApi,
   getOrdersListApi,
   updateOrderStatusApi,
@@ -199,6 +201,26 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       }
     } finally {
       setLoginLoading(false)
+    }
+  }
+
+  const handleResetAllData = async () => {
+    const confirmed = window.confirm(
+      '⚠️ ALERT: Are you sure you want to remove ALL customer lists, orders, and payment records to start fresh?\n\n(இது அனைத்து பழைய டெஸ்ட் ஆர்டர்களையும் நிரந்தரமாக நீக்கிவிடும். உறுதிப்படுத்த "OK" கிளிக் செய்யவும்)'
+    )
+    if (!confirmed) return
+
+    setLoading(true)
+    try {
+      await resetAllOrdersApi()
+      setOrders([])
+      setDashboard((prev) => prev ? { ...prev, totalOrders: 0, pendingOrders: 0, completedOrders: 0, totalRevenue: 0 } : null)
+      setActionSuccess('✓ All test customer orders & payment lists have been wiped clean! You can now place fresh new orders.')
+      setTimeout(() => setActionSuccess(''), 5000)
+    } catch (err) {
+      alert('Error clearing data: ' + err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -518,6 +540,24 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   required
                 />
                 <Button
+              startIcon={<DeleteSweepIcon />}
+              onClick={handleResetAllData}
+              variant="outlined"
+              size="small"
+              sx={{
+                borderRadius: 2,
+                textTransform: 'none',
+                borderColor: '#FCA5A5',
+                color: '#DC2626',
+                backgroundColor: '#FEF2F2',
+                fontWeight: 700,
+                fontSize: { xs: '0.72rem', sm: '0.8rem' },
+                '&:hover': { backgroundColor: '#FEE2E2', borderColor: '#EF4444' },
+              }}
+            >
+              Clear All Test Data
+            </Button>
+            <Button
                   type="submit"
                   variant="contained"
                   fullWidth
