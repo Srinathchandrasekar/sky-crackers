@@ -113,6 +113,8 @@ export function normalizeOrder(ord) {
 
   const notes = ord.notes ?? ord.Notes ?? ''
   const couponCode = ord.couponCode ?? ord.CouponCode ?? (notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') ? 'TRUSTSKYFIRECRACKERS' : (notes.toUpperCase().includes('TRUSTSKYCRACKERS') ? 'TRUSTSKYCRACKERS' : null))
+  const utrMatch = typeof notes === 'string' ? notes.match(/UTR:\s*([0-9]{12})/i) : null
+  const utrNumber = ord.utrNumber ?? ord.UtrNumber ?? (utrMatch ? utrMatch[1] : null)
 
   return {
     ...ord,
@@ -126,6 +128,7 @@ export function normalizeOrder(ord) {
     paymentMethod: ord.paymentMethod ?? ord.PaymentMethod ?? 'Online',
     notes,
     couponCode,
+    utrNumber,
     createdAt: ord.createdAt ?? ord.CreatedAt ?? new Date().toISOString(),
     totalAmount,
     items,

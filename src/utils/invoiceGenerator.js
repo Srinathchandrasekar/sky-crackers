@@ -1,10 +1,22 @@
 // Professional Structured Invoice Bill Generator for Sky Fire Crackers Sivakasi
 
 export function generateStructuredInvoiceHtml(order) {
+  const pStatus = (order.paymentStatus || '').toLowerCase()
   const isPaid =
-    order.paymentStatus?.toLowerCase() === 'completed' ||
-    order.paymentStatus?.toLowerCase() === 'paid' ||
-    order.paymentStatus?.toLowerCase() === 'success'
+    pStatus === 'completed' ||
+    pStatus === 'paid' ||
+    pStatus === 'received' ||
+    pStatus === 'verified' ||
+    pStatus === 'success'
+
+  const utr = order.utrNumber || (typeof order.notes === 'string' ? order.notes.match(/UTR:\s*([0-9]{12})/i)?.[1] : null)
+  const isVerifying =
+    !isPaid &&
+    (pStatus === 'pending verification' ||
+      pStatus === 'verification in progress' ||
+      pStatus === 'verifying' ||
+      Boolean(utr) ||
+      (order.paymentMethod && order.paymentMethod.toLowerCase().includes('upi')))
 
   const items = order.items || order.Items || order.orderItems || order.OrderItems || []
   
@@ -56,9 +68,11 @@ export function generateStructuredInvoiceHtml(order) {
     
     .status-banner { padding: 13px 30px; font-weight: 800; font-size: 13.5px; display: flex; justify-content: space-between; align-items: center; }
     .status-pending { background-color: #fef3c7; color: #92400e; border-bottom: 2px solid #fcd34d; }
+    .status-verifying { background-color: #e0f2fe; color: #0369a1; border-bottom: 2px solid #38bdf8; }
     .status-completed { background-color: #dcfce7; color: #166534; border-bottom: 2px solid #86efac; }
     .status-tag { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 900; text-transform: uppercase; }
     .tag-pending { background-color: #b45309; color: #ffffff; }
+    .tag-verifying { background-color: #0284c7; color: #ffffff; }
     .tag-completed { background-color: #15803d; color: #ffffff; }
 
     .content-body { padding: 28px 30px; }
@@ -158,14 +172,16 @@ export function generateStructuredInvoiceHtml(order) {
     </div>
 
     <!-- PAYMENT STATUS BANNER -->
-    <div class="status-banner ${isPaid ? 'status-completed' : 'status-pending'}">
+    <div class="status-banner ${isPaid ? 'status-completed' : (isVerifying ? 'status-verifying' : 'status-pending')}">
       <div>
         ${isPaid 
-          ? '✔ PAYMENT STATUS: COMPLETED (DIRECT UPI PAYMENT VERIFIED)' 
-          : '⚠️ PAYMENT STATUS: PENDING (ONLINE PAYMENT DUE / PAY LATER)'}
+          ? '✔ PAYMENT STATUS: COMPLETED & VERIFIED (பணம் பெறப்பட்டது)' 
+          : (isVerifying
+              ? '⏳ PAYMENT STATUS: VERIFICATION IN PROGRESS (பரிசீலனையில் உள்ளது - UTR சரிபார்க்கப்படுகிறது)'
+              : '⚠️ PAYMENT STATUS: PENDING (ONLINE PAYMENT DUE / PAY LATER)')}
       </div>
-      <div class="status-tag ${isPaid ? 'tag-completed' : 'tag-pending'}">
-        ${isPaid ? 'PAID' : 'PAYMENT PENDING'}
+      <div class="status-tag ${isPaid ? 'tag-completed' : (isVerifying ? 'tag-verifying' : 'tag-pending')}">
+        ${isPaid ? 'PAID' : (isVerifying ? 'VERIFICATION IN PROGRESS' : 'PAYMENT PENDING')}
       </div>
     </div>
 
@@ -182,8 +198,9 @@ export function generateStructuredInvoiceHtml(order) {
         <div class="meta-box">
           <h4>Booking Information:</h4>
           <p><strong>Booking Ref:</strong> #${orderNumber}</p>
-          ${order.utrNumber ? `<p><strong>UPI Ref / UTR:</strong> <span style="background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 800; font-size: 13px;">${order.utrNumber}</span></p>` : ''}
-          <p><strong>Payment Option:</strong> ${order.paymentMethod || (isPaid ? 'Direct UPI (GPay / PhonePe)' : 'WhatsApp Enquiry')}</p>
+          ${utr ? `<p><strong>UPI Ref / UTR:</strong> <span style="background: ${isPaid ? '#dcfce7' : '#e0f2fe'}; color: ${isPaid ? '#15803d' : '#0369a1'}; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 800; font-size: 13px;">${utr}</span></p>` : ''}
+          <p><strong>Payment Option:</strong> ${order.paymentMethod || (isPaid ? 'Direct UPI (Verified)' : (isVerifying ? 'Direct UPI (Verification in Progress)' : 'WhatsApp Enquiry'))}</p>
+          <p><strong>Payment Verification:</strong> <span style="font-weight: 800; color: ${isPaid ? '#15803d' : (isVerifying ? '#0284c7' : '#b45309')};">${isPaid ? '✔ Payment Received & Verified' : (isVerifying ? '⏳ Verification in Progress (அட்மின் சரிபார்க்க வேண்டும்)' : '⚠️ Payment Due')}</span></p>
           <p><strong>Order Status:</strong> ${order.orderStatus || 'Confirmed & Packing'}</p>
         </div>
       </div>

@@ -326,7 +326,7 @@ export default function CheckoutPage({
 
       const isUpi = paymentMethod === 'upi'
       const paymentMethodLabel = isUpi ? 'UPI' : 'WHATSAPP_ENQUIRY'
-      const paymentStatus = isUpi ? 'Completed' : 'Pending'
+      const paymentStatus = isUpi ? 'Pending Verification' : 'Pending'
       const couponTag = isCouponApplied ? `[Promo Coupon: ${appliedCouponCode} - Cashback Eligible]` : ''
       const orderNotes = [
         couponTag,
@@ -398,7 +398,7 @@ export default function CheckoutPage({
       const orderSummary = {
         orderId: orderNum,
         orderNumber: orderNum,
-        isPaid: isUpi,
+        isPaid: false, // Never mark as Paid until verified by admin!
         paymentStatus: paymentStatus,
         couponCode: isCouponApplied ? appliedCouponCode : null,
         customer: {
@@ -406,7 +406,7 @@ export default function CheckoutPage({
           phone: formData.mobileNumber.trim(),
           address: cleanAddressDisplay(fullAddress),
         },
-        paymentMethod: isUpi ? `Direct UPI (GPay/PhonePe - UTR: ${cleanUtr})` : 'WhatsApp Enquiry (Pay Later)',
+        paymentMethod: isUpi ? `Direct UPI (UTR: ${cleanUtr})` : 'WhatsApp Enquiry (Pay Later)',
         items: cart,
         subtotal: totalAmount,
         discount: 0,

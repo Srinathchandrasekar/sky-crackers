@@ -55,6 +55,7 @@ import HourglassBottomIcon from '@mui/icons-material/HourglassBottom'
 import PersonIcon from '@mui/icons-material/Person'
 import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout'
 import DownloadIcon from '@mui/icons-material/Download'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import {
   adminLoginApi,
   getAdminDashboardApi,
@@ -262,28 +263,44 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       }
       if (paymentFilter === 'all') return true
       const pStatus = (ord.paymentStatus || '').toLowerCase()
-      if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success'
-      if (paymentFilter === 'Pending') return pStatus === 'pending' || !pStatus
+      if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success' || pStatus === 'received' || pStatus === 'verified'
+      if (paymentFilter === 'Pending') return pStatus === 'pending' || pStatus === 'pending verification' || pStatus === 'verification in progress' || !pStatus
       if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
       if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
       return true
     })
   }, [orders, paymentFilter, couponOnlyFilter])
 
-  const renderPaymentChip = (paymentStatus) => {
+  const renderPaymentChip = (paymentStatus, utrNumber) => {
     const p = (paymentStatus || '').toLowerCase()
-    if (p === 'completed' || p === 'paid' || p === 'success') {
+    if (p === 'completed' || p === 'paid' || p === 'success' || p === 'received' || p === 'verified') {
       return (
         <Chip
           size="small"
           icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
-          label="Payment Completed"
+          label="Payment Received (Paid)"
           sx={{
             backgroundColor: '#ECFDF5',
             color: '#065F46',
             fontWeight: 800,
             fontSize: '0.72rem',
             border: '1px solid #A7F3D0',
+          }}
+        />
+      )
+    }
+    if (p === 'pending verification' || p === 'verification in progress' || (utrNumber && p !== 'failed' && p !== 'cancelled')) {
+      return (
+        <Chip
+          size="small"
+          icon={<HourglassBottomIcon sx={{ fontSize: '13px !important', color: '#0369A1 !important' }} />}
+          label="Verify UTR (சரிபார்க்கவும்)"
+          sx={{
+            backgroundColor: '#E0F2FE',
+            color: '#0369A1',
+            fontWeight: 800,
+            fontSize: '0.72rem',
+            border: '1.5px solid #38BDF8',
           }}
         />
       )
@@ -800,7 +817,11 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                 </Box>
               ) : (
                 displayedOrders.map((ord) => {
-                  const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
+                  const isPaid =
+                    ord.paymentStatus === 'Completed' ||
+                    ord.paymentStatus === 'Paid' ||
+                    ord.paymentStatus === 'Received' ||
+                    ord.paymentStatus === 'success'
                   const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
                   const hasCoupon = Boolean(
                     (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
@@ -944,7 +965,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         📍 {ord.deliveryAddress}
                       </Typography>
 
-                      {/* Crackers count & Total Amount */}
+                      {/* Crackers count & Total Amount & Payment UTR Status */}
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5, pb: 1, borderBottom: '1px dashed #E2E8F0' }}>
                         <Box>
                           <Typography variant="caption" sx={{ color: '#64748B', display: 'block' }}>
@@ -954,18 +975,27 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             ₹{ord.totalAmount}
                           </Typography>
                         </Box>
-                        <Chip
-                          size="small"
-                          icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : <HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
-                          label={isPaid ? 'Paid' : 'Pay Later'}
-                          sx={{
-                            backgroundColor: isPaid ? '#ECFDF5' : '#FFF7ED',
-                            color: isPaid ? '#065F46' : '#C2410C',
-                            fontWeight: 800,
-                            fontSize: '0.72rem',
-                            border: isPaid ? '1px solid #A7F3D0' : '1px solid #FED7AA',
-                          }}
-                        />
+                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                          {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
+                          {ord.utrNumber && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontWeight: 800,
+                                color: '#0369A1',
+                                backgroundColor: '#E0F2FE',
+                                px: 0.8,
+                                py: 0.2,
+                                borderRadius: 1,
+                                border: '1px solid #BAE6FD',
+                                fontSize: '0.7rem',
+                              }}
+                            >
+                              UTR: {ord.utrNumber}
+                            </Typography>
+                          )}
+                        </Box>
                       </Box>
 
                       {/* Items Expand / Collapse */}
@@ -1093,7 +1123,11 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   ) : (
                     displayedOrders.map((ord) => {
                       const isExpanded = expandedOrderId === (ord.orderId || ord.orderNumber)
-                      const isPaid = ord.paymentStatus === 'Completed' || ord.paymentStatus === 'Paid'
+                      const isPaid =
+                        ord.paymentStatus === 'Completed' ||
+                        ord.paymentStatus === 'Paid' ||
+                        ord.paymentStatus === 'Received' ||
+                        ord.paymentStatus === 'success'
                       const hasCoupon = Boolean(
                         (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
                         (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
@@ -1186,7 +1220,29 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               ₹{ord.totalAmount}
                             </TableCell>
                             <TableCell>
-                              {renderPaymentChip(ord.paymentStatus)}
+                              {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
+                              {ord.utrNumber && (
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    display: 'block',
+                                    mt: 0.5,
+                                    fontFamily: 'monospace',
+                                    fontWeight: 800,
+                                    color: '#0369A1',
+                                    backgroundColor: '#E0F2FE',
+                                    px: 0.8,
+                                    py: 0.2,
+                                    borderRadius: 1,
+                                    border: '1px solid #BAE6FD',
+                                    fontSize: '0.72rem',
+                                    width: 'fit-content',
+                                  }}
+                                  title="UPI Ref / UTR Number"
+                                >
+                                  UTR: {ord.utrNumber}
+                                </Typography>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Chip
@@ -1214,7 +1270,27 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               />
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>
-                              <Stack direction="row" spacing={0.8} justifyContent="center">
+                              <Stack direction="row" spacing={0.8} justifyContent="center" flexWrap="wrap" useFlexGap>
+                                {!isPaid && (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
+                                    sx={{
+                                      fontSize: '0.72rem',
+                                      py: 0.3,
+                                      px: 1,
+                                      textTransform: 'none',
+                                      backgroundColor: '#16A34A',
+                                      color: '#FFFFFF',
+                                      fontWeight: 800,
+                                      '&:hover': { backgroundColor: '#15803D' },
+                                    }}
+                                    title="Verify UTR and mark payment as received"
+                                  >
+                                    ✓ Mark Paid
+                                  </Button>
+                                )}
                                 <Button
                                   size="small"
                                   variant="contained"
@@ -1366,13 +1442,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                             <PaymentIcon fontSize="small" sx={{ color: isPaid ? '#16A34A' : '#D97706' }} />
                                             Payment Information
                                           </Typography>
-                                          <Chip
-                                            size="small"
-                                            icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : <HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
-                                            label={isPaid ? 'Payment Completed' : 'Payment Pending'}
-                                            color={isPaid ? 'success' : 'warning'}
-                                            sx={{ fontWeight: 800, fontSize: '0.74rem' }}
-                                          />
+                                          {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
                                         </Box>
                                         <Typography variant="body2" sx={{ color: '#475569' }}>
                                           Payment Method: <strong>{ord.paymentMethod || 'Online'}</strong>
@@ -1380,6 +1450,31 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                         <Typography variant="body2" sx={{ color: '#475569', mt: 0.3 }}>
                                           Total Order Amount: <strong style={{ color: '#16A34A' }}>₹{ord.totalAmount}</strong>
                                         </Typography>
+                                        {ord.utrNumber && (
+                                          <Box sx={{ mt: 1.2, p: 1.2, backgroundColor: '#FFFFFF', borderRadius: 1.5, border: '1.5px solid #BAE6FD', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                            <Box>
+                                              <Typography variant="caption" sx={{ color: '#0369A1', fontWeight: 800, display: 'block', fontSize: '0.7rem' }}>
+                                                💳 CUSTOMER ENTERED UPI REF / UTR:
+                                              </Typography>
+                                              <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 900, color: '#0B132B', fontSize: '1rem', letterSpacing: '0.04em' }}>
+                                                {ord.utrNumber}
+                                              </Typography>
+                                            </Box>
+                                            <Button
+                                              size="small"
+                                              variant="outlined"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(ord.utrNumber)
+                                                setActionSuccess(`Copied UTR: ${ord.utrNumber}`)
+                                                setTimeout(() => setActionSuccess(''), 2500)
+                                              }}
+                                              startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
+                                              sx={{ fontSize: '0.72rem', py: 0.3, px: 1, textTransform: 'none', fontWeight: 800 }}
+                                            >
+                                              Copy UTR
+                                            </Button>
+                                          </Box>
+                                        )}
                                         <Divider sx={{ my: 1.5 }} />
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                                           <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
@@ -1393,7 +1488,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                               onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Pending')}
                                               sx={{ fontSize: '0.74rem', textTransform: 'none', fontWeight: 700 }}
                                             >
-                                              Mark as Payment Pending
+                                              Revert to Pending Verification
                                             </Button>
                                           ) : (
                                             <Button
@@ -1403,7 +1498,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                               onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
                                               sx={{ fontSize: '0.74rem', textTransform: 'none', fontWeight: 700 }}
                                             >
-                                              ✓ Mark Payment as Completed
+                                              ✓ Mark Payment as Received (பணம் வந்துவிட்டது)
                                             </Button>
                                           )}
                                         </Box>
@@ -1603,9 +1698,32 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                   <Typography variant="body2">
                     <strong>Payment Mode:</strong> {selectedOrderDetails.paymentMethod}
                   </Typography>
-                  <Typography variant="body2">
-                    <strong>Payment Status:</strong> {selectedOrderDetails.paymentStatus || 'Paid'}
-                  </Typography>
+                  <Box sx={{ my: 0.5, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" component="span" sx={{ fontWeight: 700 }}>
+                      Payment Status:
+                    </Typography>
+                    {renderPaymentChip(selectedOrderDetails.paymentStatus, selectedOrderDetails.utrNumber)}
+                  </Box>
+                  {selectedOrderDetails.utrNumber && (
+                    <Box sx={{ my: 1, p: 1, backgroundColor: '#E0F2FE', borderRadius: 1.5, border: '1px solid #BAE6FD' }}>
+                      <Typography variant="caption" sx={{ color: '#0369A1', fontWeight: 800, display: 'block' }}>
+                        💳 Customer UPI Ref / UTR No:
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontFamily: 'monospace', fontWeight: 900, color: '#0B132B', fontSize: '1.05rem' }}>
+                        {selectedOrderDetails.utrNumber}
+                      </Typography>
+                    </Box>
+                  )}
+                  {selectedOrderDetails.paymentStatus !== 'Completed' && selectedOrderDetails.paymentStatus !== 'Paid' && selectedOrderDetails.paymentStatus !== 'Received' && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => handlePaymentStatusChange(selectedOrderDetails.orderId, selectedOrderDetails.orderStatus, 'Completed')}
+                      sx={{ mt: 1, mb: 1, backgroundColor: '#16A34A', color: '#FFFFFF', fontWeight: 800, fontSize: '0.75rem', textTransform: 'none', '&:hover': { backgroundColor: '#15803D' } }}
+                    >
+                      ✓ Mark Payment as Received (பணம் வந்துவிட்டது)
+                    </Button>
+                  )}
                   {selectedOrderDetails.notes && (
                     <Typography variant="caption" sx={{ color: '#0369A1', display: 'block', mt: 0.5, fontWeight: 700 }}>
                       <strong>Payment / UTR Ref:</strong> {selectedOrderDetails.notes}

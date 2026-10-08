@@ -33,15 +33,25 @@ export default function OrderSuccessModal({
 }) {
   if (!orderDetails) return null
 
+  const pStatus = (orderDetails.paymentStatus || '').toLowerCase()
   const isPaid =
     orderDetails.isPaid ||
-    orderDetails.paymentStatus?.toLowerCase() === 'completed' ||
-    orderDetails.paymentStatus?.toLowerCase() === 'paid'
+    pStatus === 'completed' ||
+    pStatus === 'paid' ||
+    pStatus === 'received' ||
+    pStatus === 'verified'
 
   const isWhatsApp =
     orderDetails.paymentMethod?.toLowerCase().includes('whatsapp')
 
-  const isSavedBooking = !isPaid && !isWhatsApp
+  const isPendingVerification =
+    !isPaid &&
+    !isWhatsApp &&
+    (pStatus === 'pending verification' ||
+      pStatus === 'verification in progress' ||
+      Boolean(orderDetails.utrNumber))
+
+  const isSavedBooking = !isPaid && !isWhatsApp && !isPendingVerification
 
   // Accurately compute real items total so modal never shows wrong database defaults
   const computedTotal = (orderDetails.items || []).reduce((sum, item) => {
@@ -56,8 +66,8 @@ export default function OrderSuccessModal({
       ...orderDetails,
       total: displayTotal,
       subtotal: displayTotal,
-      paymentStatus: isPaid ? 'Completed' : 'Pending',
-      paymentMethod: orderDetails.paymentMethod || (isPaid ? 'Direct UPI' : 'Pending'),
+      paymentStatus: isPaid ? 'Completed' : (isPendingVerification ? 'Pending Verification' : 'Pending'),
+      paymentMethod: orderDetails.paymentMethod || (isPaid ? 'Direct UPI' : (isPendingVerification ? 'Direct UPI (Pending Verification)' : 'Pending')),
     })
   }
 
@@ -76,31 +86,44 @@ export default function OrderSuccessModal({
       }}
     >
       <DialogContent sx={{ p: { xs: 2.5, sm: 3.5 }, textAlign: 'center' }}>
-        {/* Animated Celebration Icon */}
+        {/* Animated Celebration / Verification Icon */}
         <Box
           sx={{
             width: 72,
             height: 72,
             borderRadius: '50%',
-            backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
+            backgroundColor: isPaid ? '#DCFCE7' : isPendingVerification ? '#E0F2FE' : '#FEF3C7',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             margin: '0 auto 12px auto',
-            boxShadow: isPaid ? '0 0 20px rgba(34, 197, 94, 0.3)' : '0 0 20px rgba(245, 158, 11, 0.3)',
+            boxShadow: isPaid
+              ? '0 0 20px rgba(34, 197, 94, 0.3)'
+              : isPendingVerification
+              ? '0 0 20px rgba(2, 132, 199, 0.3)'
+              : '0 0 20px rgba(245, 158, 11, 0.3)',
           }}
         >
-          <CheckCircleIcon sx={{ fontSize: 46, color: isPaid ? '#16A34A' : '#D97706' }} />
+          <CheckCircleIcon sx={{ fontSize: 46, color: isPaid ? '#16A34A' : isPendingVerification ? '#0284C7' : '#D97706' }} />
         </Box>
 
         <Chip
-          icon={<AutoAwesomeIcon sx={{ color: isPaid ? '#15803D !important' : '#B45309 !important', fontSize: 16 }} />}
-          label={isPaid ? 'PAYMENT CONFIRMED (PAID)' : isWhatsApp ? 'WHATSAPP BOOKING CONFIRMED' : 'BOOKING SAVED IN DATABASE'}
+          icon={<AutoAwesomeIcon sx={{ color: isPaid ? '#15803D !important' : isPendingVerification ? '#0369A1 !important' : '#B45309 !important', fontSize: 16 }} />}
+          label={
+            isPaid
+              ? 'PAYMENT CONFIRMED (PAID)'
+              : isPendingVerification
+              ? 'PAYMENT VERIFICATION IN PROGRESS'
+              : isWhatsApp
+              ? 'WHATSAPP BOOKING CONFIRMED'
+              : 'BOOKING SAVED IN DATABASE'
+          }
           sx={{
-            backgroundColor: isPaid ? '#DCFCE7' : '#FEF3C7',
-            color: isPaid ? '#15803D' : '#B45309',
+            backgroundColor: isPaid ? '#DCFCE7' : isPendingVerification ? '#E0F2FE' : '#FEF3C7',
+            color: isPaid ? '#15803D' : isPendingVerification ? '#0369A1' : '#B45309',
             fontWeight: 800,
             fontSize: '0.72rem',
+            border: isPendingVerification ? '1px solid #BAE6FD' : 'none',
             mb: 1.2,
           }}
         />
@@ -108,6 +131,8 @@ export default function OrderSuccessModal({
         <Typography variant="h5" sx={{ fontWeight: 900, color: '#0F172A', mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
           {isPaid
             ? 'Payment Received & Order Placed! 🎉'
+            : isPendingVerification
+            ? 'Order Placed! Payment Verification in Progress ⏳'
             : isWhatsApp
             ? 'Booking Confirmed via WhatsApp! 💥'
             : 'Booking Saved Successfully! 🎉'}
@@ -115,6 +140,8 @@ export default function OrderSuccessModal({
         <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
           {isPaid
             ? `Your payment of ₹${displayTotal.toLocaleString('en-IN')} has been confirmed. Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.`
+            : isPendingVerification
+            ? `உங்களின் 12-Digit UTR எண் (${orderDetails.utrNumber || 'பதிவு செய்யப்பட்டது'}) பெறப்பட்டது. நிர்வாகி உங்கள் கட்டணத்தை சரிபார்த்தவுடன் ரசீது 'PAID' என மாற்றப்பட்டு பேக்கிங் தொடங்கும்!`
             : isWhatsApp
             ? 'Your crackers booking has been sent directly to our Sivakasi WhatsApp team (+91 80567 04353). We will verify dispatch and transport collection with you!'
             : 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'}
@@ -149,12 +176,13 @@ export default function OrderSuccessModal({
               <Chip
                 size="small"
                 icon={isPaid ? <CheckCircleIcon sx={{ fontSize: '13px !important' }} /> : undefined}
-                label={isPaid ? 'Payment Completed (Paid)' : isWhatsApp ? 'WhatsApp Enquiry (Pending)' : 'Online Payment (Pending / Pay Later)'}
+                label={isPaid ? 'Payment Received (Paid)' : isPendingVerification ? '⏳ Verification in Progress' : isWhatsApp ? 'WhatsApp Enquiry (Pending)' : 'Online Payment (Pending / Pay Later)'}
                 sx={{
-                  backgroundColor: isPaid ? '#DCFCE7' : isWhatsApp ? '#E0F2FE' : '#FEF3C7',
-                  color: isPaid ? '#15803D' : isWhatsApp ? '#0369A1' : '#B45309',
+                  backgroundColor: isPaid ? '#DCFCE7' : isPendingVerification ? '#E0F2FE' : isWhatsApp ? '#E0F2FE' : '#FEF3C7',
+                  color: isPaid ? '#15803D' : isPendingVerification ? '#0369A1' : isWhatsApp ? '#0369A1' : '#B45309',
                   fontWeight: 900,
                   fontSize: '0.72rem',
+                  border: isPendingVerification ? '1px solid #BAE6FD' : 'none',
                 }}
               />
             </Box>

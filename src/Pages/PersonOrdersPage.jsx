@@ -184,7 +184,7 @@ export default function PersonOrdersPage({
       const orderIdOrNum = upiModalOrder.orderId || upiModalOrder.orderNumber
       await updateOrderStatusApi(orderIdOrNum, {
         orderStatus: 'Confirmed',
-        paymentStatus: 'Completed',
+        paymentStatus: 'Pending Verification',
         paymentMethod: 'UPI (GPay / PhonePe)',
         notes: `Paid via UPI - UTR: ${cleanUtr} (Account: ${UPI_CONFIG.upiId})`,
       })
@@ -194,9 +194,10 @@ export default function PersonOrdersPage({
           if (String(o.orderId) === String(orderIdOrNum) || String(o.orderNumber) === String(orderIdOrNum)) {
             return {
               ...o,
-              paymentStatus: 'Completed',
+              paymentStatus: 'Pending Verification',
               paymentMethod: 'UPI (GPay / PhonePe)',
               notes: `UPI UTR: ${cleanUtr}`,
+              utrNumber: cleanUtr,
             }
           }
           return o
@@ -204,7 +205,7 @@ export default function PersonOrdersPage({
         localStorage.setItem('skycrackers_orders_history', JSON.stringify(updated))
       } catch (lsErr) {}
 
-      setSuccessMsg(`Payment Confirmed for #${upiModalOrder.orderNumber}! (UTR: ${cleanUtr})`)
+      setSuccessMsg(`UTR Submitted for #${upiModalOrder.orderNumber}! (UTR: ${cleanUtr}) - Payment Verification in Progress.`)
       setUpiModalOrder(null)
       loadPersonData()
     } catch (err) {
@@ -650,10 +651,20 @@ export default function PersonOrdersPage({
               ) : (
                 <Stack spacing={2.5}>
                   {savedOrders.map((ord) => {
+                    const p = (ord.paymentStatus || '').toLowerCase()
                     const isPaid =
-                      ord.paymentStatus?.toLowerCase() === 'completed' ||
-                      ord.paymentStatus?.toLowerCase() === 'paid' ||
-                      ord.paymentStatus?.toLowerCase() === 'success'
+                      p === 'completed' ||
+                      p === 'paid' ||
+                      p === 'received' ||
+                      p === 'verified' ||
+                      p === 'success'
+
+                    const utr = ord.utrNumber || (typeof ord.notes === 'string' ? ord.notes.match(/UTR:\s*([0-9]{12})/i)?.[1] : null)
+                    const isPendingVerification =
+                      !isPaid &&
+                      (p === 'pending verification' ||
+                        p === 'verification in progress' ||
+                        Boolean(utr))
 
                     const isPaying = payingOrderId === (ord.orderId || ord.orderNumber)
 
@@ -708,13 +719,25 @@ export default function PersonOrdersPage({
                             {isPaid ? (
                               <Chip
                                 icon={<CheckCircleIcon sx={{ fontSize: 16, color: '#16A34A !important' }} />}
-                                label="Payment Status: COMPLETED"
+                                label="Payment Status: PAID & VERIFIED (பணம் பெறப்பட்டது)"
                                 sx={{
                                   backgroundColor: '#DCFCE7',
                                   color: '#15803D',
                                   fontWeight: 900,
                                   fontSize: '0.8rem',
                                   border: '1px solid #86EFAC',
+                                }}
+                              />
+                            ) : isPendingVerification ? (
+                              <Chip
+                                icon={<PendingActionsIcon sx={{ fontSize: 16, color: '#0369A1 !important' }} />}
+                                label={`Verification in Progress (UTR: ${utr || 'சரிபார்க்கப்படுகிறது'})`}
+                                sx={{
+                                  backgroundColor: '#E0F2FE',
+                                  color: '#0369A1',
+                                  fontWeight: 900,
+                                  fontSize: '0.8rem',
+                                  border: '1.5px solid #38BDF8',
                                 }}
                               />
                             ) : (
@@ -791,7 +814,7 @@ export default function PersonOrdersPage({
                             </Box>
 
                             <Stack direction="row" spacing={1} alignItems="center">
-                              {!isPaid && (
+                              {!isPaid && !isPendingVerification && (
                                 <Button
                                   variant="contained"
                                   size="small"
@@ -812,6 +835,21 @@ export default function PersonOrdersPage({
                                 >
                                   Pay via UPI / QR →
                                 </Button>
+                              )}
+                              {!isPaid && isPendingVerification && (
+                                <Chip
+                                  size="small"
+                                  icon={<PendingActionsIcon sx={{ fontSize: '13px !important', color: '#0369A1 !important' }} />}
+                                  label="Awaiting Merchant Verification"
+                                  sx={{
+                                    backgroundColor: '#EFF6FF',
+                                    color: '#1E40AF',
+                                    fontWeight: 800,
+                                    fontSize: '0.72rem',
+                                    border: '1px solid #BFDBFE',
+                                    height: 28,
+                                  }}
+                                />
                               )}
 
                               <Button
