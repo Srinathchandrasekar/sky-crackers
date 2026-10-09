@@ -355,7 +355,7 @@ export default function PersonOrdersPage({
                     />
                   </Box>
                   <Typography variant="caption" sx={{ color: '#94A3B8' }}>
-                    Live Customer Overview • Selected Cart Items • Saved Database Bookings • Payment Status
+                    Customer Profile & Order History
                   </Typography>
                 </Box>
               </Stack>
@@ -434,7 +434,7 @@ export default function PersonOrdersPage({
                 <Stack direction="row" spacing={1} alignItems="center">
                   <ShoppingCartIcon sx={{ color: '#0284C7' }} />
                   <Typography variant="h6" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '1.1rem' }}>
-                    1. Selected Products ({cartItemCount} Boxes)
+                    Current Cart Items ({cartItemCount} Boxes)
                   </Typography>
                 </Stack>
                 <Chip
@@ -631,7 +631,7 @@ export default function PersonOrdersPage({
                 <Stack direction="row" spacing={1} alignItems="center">
                   <Inventory2Icon sx={{ color: '#16A34A' }} />
                   <Typography variant="h6" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '1.1rem' }}>
-                    2. Saved Products & 3. Payment Status ({savedOrders.length} Bookings)
+                    Order History & Payment Status ({savedOrders.length})
                   </Typography>
                 </Stack>
                 <Chip
@@ -731,7 +731,7 @@ export default function PersonOrdersPage({
                             {isPaid ? (
                               <Chip
                                 icon={<CheckCircleIcon sx={{ fontSize: 16, color: '#16A34A !important' }} />}
-                                label="Payment Status: PAID & VERIFIED (பணம் பெறப்பட்டது)"
+                                label="PAID ✓"
                                 sx={{
                                   backgroundColor: '#DCFCE7',
                                   color: '#15803D',
@@ -743,7 +743,7 @@ export default function PersonOrdersPage({
                             ) : isPendingVerification ? (
                               <Chip
                                 icon={<PendingActionsIcon sx={{ fontSize: 16, color: '#0369A1 !important' }} />}
-                                label={`Verification in Progress (UTR: ${utr || 'சரிபார்க்கப்படுகிறது'})`}
+                                label={utr ? `Verification Pending (UTR: ${utr})` : 'Payment Verification Pending'}
                                 sx={{
                                   backgroundColor: '#E0F2FE',
                                   color: '#0369A1',
@@ -755,7 +755,7 @@ export default function PersonOrdersPage({
                             ) : (
                               <Chip
                                 icon={<PendingActionsIcon sx={{ fontSize: 16, color: '#B45309 !important' }} />}
-                                label="Payment Status: PENDING / PAY LATER"
+                                label="Payment Pending"
                                 sx={{
                                   backgroundColor: '#FEF3C7',
                                   color: '#B45309',

@@ -94,9 +94,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const [orders, setOrders] = useState([])
   const [products, setProducts] = useState(CRACKERS_DATA)
   const [loading, setLoading] = useState(false)
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [paymentFilter, setPaymentFilter] = useState('all')
-  const [couponOnlyFilter, setCouponOnlyFilter] = useState(false)
+  const [orderFilterTab, setOrderFilterTab] = useState('all') // 'all' | 'confirmed' | 'pending' | 'coupon'
   const [searchQuery, setSearchQuery] = useState('')
   const [catalogSearch, setCatalogSearch] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
@@ -137,7 +135,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     const timer = setTimeout(async () => {
       setLoading(true)
       try {
-        const ordersData = await getOrdersListApi({ status: statusFilter, search: searchQuery }).catch(() => [])
+        const ordersData = await getOrdersListApi({ status: 'all', search: searchQuery }).catch(() => [])
         if (isMounted) {
           const cleanOrders = (Array.isArray(ordersData) ? ordersData : [])
             .map(normalizeOrder)
@@ -155,14 +153,14 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       isMounted = false
       clearTimeout(timer)
     }
-  }, [token, statusFilter, searchQuery])
+  }, [token, searchQuery])
 
   const loadData = async (query = searchQuery) => {
     setLoading(true)
     try {
       const [dashData, ordersData] = await Promise.all([
         getAdminDashboardApi(token).catch(() => null),
-        getOrdersListApi({ status: statusFilter, search: query }).catch(() => []),
+        getOrdersListApi({ status: 'all', search: query }).catch(() => []),
       ])
       if (dashData) setDashboard(dashData)
       const cleanOrders = (Array.isArray(ordersData) ? ordersData : [])
@@ -340,31 +338,44 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     window.print()
   }
 
-  const couponOrdersCount = useMemo(() => {
-    return orders.filter((ord) =>
-      Boolean(
+  const filterCounts = useMemo(() => {
+    let confirmed = 0
+    let pending = 0
+    let coupon = 0
+    orders.forEach((ord) => {
+      const p = (ord.paymentStatus || '').toLowerCase()
+      const isPaid = p === 'completed' || p === 'paid' || p === 'received' || p === 'verified' || p === 'success'
+      if (isPaid) confirmed++
+      else pending++
+
+      const hasCoupon = Boolean(
         (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
         (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
       )
-    ).length
+      if (hasCoupon) coupon++
+    })
+    return {
+      all: orders.length,
+      confirmed,
+      pending,
+      coupon,
+    }
   }, [orders])
 
   const displayedOrders = useMemo(() => {
     return orders
       .filter((ord) => {
-        if (couponOnlyFilter) {
-          const hasCoupon = Boolean(
+        const p = (ord.paymentStatus || '').toLowerCase()
+        const isPaid = p === 'completed' || p === 'paid' || p === 'received' || p === 'verified' || p === 'success'
+
+        if (orderFilterTab === 'confirmed') return isPaid
+        if (orderFilterTab === 'pending') return !isPaid
+        if (orderFilterTab === 'coupon') {
+          return Boolean(
             (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
             (ord.notes && (ord.notes.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.notes.toUpperCase().includes('TRUSTSKYCRACKERS')))
           )
-          if (!hasCoupon) return false
         }
-        if (paymentFilter === 'all') return true
-        const pStatus = (ord.paymentStatus || '').toLowerCase()
-        if (paymentFilter === 'Completed') return pStatus === 'completed' || pStatus === 'paid' || pStatus === 'success' || pStatus === 'received' || pStatus === 'verified'
-        if (paymentFilter === 'Pending') return pStatus === 'pending' || pStatus === 'pending verification' || pStatus === 'verification in progress' || !pStatus
-        if (paymentFilter === 'Failed') return pStatus === 'failed' || pStatus === 'fail'
-        if (paymentFilter === 'Cancelled') return pStatus === 'cancelled' || pStatus === 'canceled'
         return true
       })
       .sort((a, b) => {
@@ -373,7 +384,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
         if (timeB !== timeA) return timeB - timeA
         return Number(b.orderId || 0) - Number(a.orderId || 0)
       })
-  }, [orders, paymentFilter, couponOnlyFilter])
+  }, [orders, orderFilterTab])
 
   const renderPaymentChip = (paymentStatus, utrNumber) => {
     const p = (paymentStatus || '').toLowerCase()
@@ -382,7 +393,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
         <Chip
           size="small"
           icon={<CheckCircleIcon sx={{ fontSize: '13px !important' }} />}
-          label="Payment Received (Paid)"
+          label="Paid ✓"
           sx={{
             backgroundColor: '#ECFDF5',
             color: '#065F46',
@@ -398,7 +409,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
         <Chip
           size="small"
           icon={<HourglassBottomIcon sx={{ fontSize: '13px !important', color: '#0369A1 !important' }} />}
-          label="Verify UTR (சரிபார்க்கவும்)"
+          label="Verify UTR"
           sx={{
             backgroundColor: '#E0F2FE',
             color: '#0369A1',
@@ -834,75 +845,49 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                 </Button>
               </Stack>
 
-              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                {['all', 'Confirmed', 'Packing', 'Shipped', 'Delivered', 'Cancelled'].map((st) => (
-                  <Chip
-                    key={st}
-                    label={st === 'all' ? 'All Bookings' : st}
-                    onClick={() => setStatusFilter(st)}
-                    variant={statusFilter === st ? 'filled' : 'outlined'}
-                    sx={{
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      backgroundColor: statusFilter === st ? '#0B132B' : 'transparent',
-                      color: statusFilter === st ? '#FFA000' : '#475569',
-                    }}
-                  />
-                ))}
-              </Stack>
-
-              {/* Payment Status & Coupon Filter Chips */}
-              <Box sx={{ mt: 1.5, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="caption" sx={{ fontWeight: 800, color: '#64748B', mr: 0.5 }}>
-                  Payment Filter:
-                </Typography>
+              {/* Clean Responsive Filter Bar */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  overflowX: 'auto',
+                  width: '100%',
+                  py: 0.6,
+                  whiteSpace: 'nowrap',
+                  '&::-webkit-scrollbar': { display: 'none' },
+                  msOverflowStyle: 'none',
+                  scrollbarWidth: 'none',
+                }}
+              >
                 {[
-                  { id: 'all', label: 'All Payments' },
-                  { id: 'Completed', label: 'Completed (Paid)', color: '#16A34A' },
-                  { id: 'Pending', label: 'Payment Pending', color: '#D97706' },
-                  { id: 'Failed', label: 'Payment Failed', color: '#DC2626' },
-                  { id: 'Cancelled', label: 'Cancelled', color: '#475569' },
-                ].map((pf) => (
-                  <Chip
-                    key={pf.id}
-                    label={pf.label}
-                    size="small"
-                    onClick={() => setPaymentFilter(pf.id)}
-                    variant={paymentFilter === pf.id ? 'filled' : 'outlined'}
-                    sx={{
-                      cursor: 'pointer',
-                      fontWeight: 700,
-                      fontSize: '0.74rem',
-                      backgroundColor: paymentFilter === pf.id ? (pf.color || '#0B132B') : 'transparent',
-                      color: paymentFilter === pf.id ? '#FFFFFF' : (pf.color || '#475569'),
-                      borderColor: pf.color || '#CBD5E1',
-                    }}
-                  />
-                ))}
-
-                <Divider orientation="vertical" flexItem sx={{ mx: 0.5, height: 20, alignSelf: 'center', display: { xs: 'none', sm: 'block' } }} />
-
-                {/* TRUSTSKYFIRECRACKERS Cashback Orders Toggle Filter */}
-                <Chip
-                  icon={<LocalOfferIcon sx={{ fontSize: '13px !important', color: couponOnlyFilter ? '#FFFFFF !important' : '#B45309 !important' }} />}
-                  label={`🎟️ TRUSTSKYFIRECRACKERS (${couponOrdersCount})`}
-                  size="small"
-                  onClick={() => setCouponOnlyFilter((prev) => !prev)}
-                  variant={couponOnlyFilter ? 'filled' : 'outlined'}
-                  sx={{
-                    cursor: 'pointer',
-                    fontWeight: 800,
-                    fontSize: '0.75rem',
-                    backgroundColor: couponOnlyFilter ? '#D97706' : '#FEF3C7',
-                    color: couponOnlyFilter ? '#FFFFFF' : '#92400E',
-                    borderColor: '#F59E0B',
-                    boxShadow: couponOnlyFilter ? '0 2px 6px rgba(217,119,6,0.3)' : 'none',
-                    '&:hover': {
-                      backgroundColor: couponOnlyFilter ? '#B45309' : '#FDE68A',
-                    },
-                  }}
-                  title="Filter orders with TRUSTSKYFIRECRACKERS coupon (Cashback eligible)"
-                />
+                  { id: 'all', label: 'All Orders', count: filterCounts.all, color: '#0B132B' },
+                  { id: 'confirmed', label: 'Payment Confirmed', count: filterCounts.confirmed, color: '#16A34A' },
+                  { id: 'pending', label: 'Payment Pending', count: filterCounts.pending, color: '#D97706' },
+                  { id: 'coupon', label: 'Coupon Orders', count: filterCounts.coupon, color: '#7C3AED' },
+                ].map((tab) => {
+                  const isSelected = orderFilterTab === tab.id
+                  return (
+                    <Chip
+                      key={tab.id}
+                      label={`${tab.label} (${tab.count})`}
+                      onClick={() => setOrderFilterTab(tab.id)}
+                      sx={{
+                        fontWeight: 800,
+                        fontSize: { xs: '0.78rem', sm: '0.85rem' },
+                        height: 36,
+                        px: 1,
+                        borderRadius: '50px',
+                        cursor: 'pointer',
+                        backgroundColor: isSelected ? tab.color : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#334155',
+                        border: isSelected ? `2px solid ${tab.color}` : '1.5px solid #CBD5E1',
+                        boxShadow: isSelected ? `0 3px 10px ${tab.color}33` : 'none',
+                        transition: 'all 0.2s ease',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )
+                })}
               </Box>
             </Box>
 
@@ -940,54 +925,31 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         position: 'relative',
                       }}
                     >
-                      {/* Coupon Banner if TRUSTSKYFIRECRACKERS was applied */}
-                      {hasCoupon && (
-                        <Box
-                          sx={{
-                            mb: 1.5,
-                            p: 1,
-                            borderRadius: 1.5,
-                            backgroundColor: '#FEF3C7',
-                            border: '1px solid #F59E0B',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: 1,
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                            <LocalOfferIcon sx={{ fontSize: 16, color: '#B45309' }} />
-                            <Box>
-                              <Typography variant="caption" sx={{ fontWeight: 800, color: '#92400E', display: 'block', lineHeight: 1.2 }}>
-                                PROMO: {ord.couponCode || 'TRUSTSKYFIRECRACKERS'}
-                              </Typography>
-                              <Typography variant="caption" sx={{ fontSize: '0.68rem', color: '#B45309', fontWeight: 600 }}>
-                                Cashback Eligible • Call to disburse
-                              </Typography>
-                            </Box>
-                          </Box>
-                          <Chip
-                            size="small"
-                            label="CASHBACK"
-                            sx={{
-                              backgroundColor: '#D97706',
-                              color: '#FFFFFF',
-                              fontWeight: 900,
-                              fontSize: '0.62rem',
-                              height: 20,
-                            }}
-                          />
+                      {/* Card Top: Order Number & Status & Coupon Tag */}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2, flexWrap: 'wrap', gap: 0.8 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0B132B', fontFamily: 'monospace', fontSize: '0.88rem' }}>
+                            #{ord.orderNumber}
+                          </Typography>
+                          {hasCoupon && (
+                            <Chip
+                              size="small"
+                              icon={<LocalOfferIcon sx={{ fontSize: '11px !important', color: '#92400E !important' }} />}
+                              label="Coupon"
+                              sx={{
+                                backgroundColor: '#FEF3C7',
+                                color: '#92400E',
+                                fontWeight: 800,
+                                fontSize: '0.65rem',
+                                height: 20,
+                                border: '1px solid #F59E0B',
+                              }}
+                            />
+                          )}
                         </Box>
-                      )}
-
-                      {/* Card Top: Order Number & Status */}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.2 }}>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#0B132B', fontFamily: 'monospace' }}>
-                          #{ord.orderNumber}
-                        </Typography>
                         <Chip
                           size="small"
-                          label={ord.orderStatus}
+                          label={ord.orderStatus || 'Confirmed'}
                           sx={{
                             fontWeight: 800,
                             fontSize: '0.72rem',
@@ -1173,74 +1135,87 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         </Box>
                       </Collapse>
 
-                      {/* Action Buttons Row */}
-                      <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          startIcon={<PersonIcon sx={{ fontSize: '14px !important' }} />}
-                          onClick={() => {
-                            if (onOpenPersonPage) {
-                              onOpenPersonPage({
-                                customerName: ord.customerName,
-                                mobileNumber: ord.customerPhone,
-                                address: ord.deliveryAddress,
-                              })
-                            }
-                          }}
-                          sx={{
-                            fontSize: '0.75rem',
-                            py: 0.6,
-                            textTransform: 'none',
-                            borderColor: '#0284C7',
-                            color: '#0284C7',
-                            fontWeight: 800,
-                          }}
-                        >
-                          Person Page
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          startIcon={<LocalShippingIcon sx={{ fontSize: '14px !important' }} />}
-                          onClick={() => {
-                            setSelectedOrderDetails(ord)
-                            setPackedChecklist({})
-                          }}
-                          sx={{
-                            flex: 1,
-                            fontSize: '0.75rem',
-                            py: 0.6,
-                            textTransform: 'none',
-                            backgroundColor: '#FFA000',
-                            color: '#0B132B',
-                            fontWeight: 800,
-                            '&:hover': { backgroundColor: '#FF8F00' },
-                          }}
-                        >
-                          Packing Sheet
-                        </Button>
-                        {ord.orderStatus !== 'Shipped' && ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
+                      {/* Action Buttons: Clean 2-column Grid without overflow */}
+                      <Grid container spacing={1} sx={{ mt: 0.5 }}>
+                        <Grid item xs={6}>
                           <Button
+                            fullWidth
                             size="small"
                             variant="outlined"
-                            onClick={() => handleStatusChange(ord.orderId, 'Shipped')}
-                            sx={{ fontSize: '0.75rem', py: 0.6, textTransform: 'none', borderColor: '#3B82F6', color: '#1D4ED8', fontWeight: 700 }}
+                            startIcon={<PersonIcon sx={{ fontSize: 15 }} />}
+                            onClick={() => {
+                              if (onOpenPersonPage) {
+                                onOpenPersonPage({
+                                  customerName: ord.customerName,
+                                  mobileNumber: ord.customerPhone,
+                                  address: ord.deliveryAddress,
+                                })
+                              }
+                            }}
+                            sx={{
+                              fontSize: '0.75rem',
+                              py: 0.6,
+                              textTransform: 'none',
+                              borderColor: '#0284C7',
+                              color: '#0284C7',
+                              fontWeight: 800,
+                              borderRadius: 2,
+                            }}
                           >
-                            Dispatched
+                            Customer Hub
                           </Button>
-                        )}
-                        {ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
+                        </Grid>
+                        <Grid item xs={6}>
                           <Button
+                            fullWidth
                             size="small"
                             variant="contained"
-                            onClick={() => handleStatusChange(ord.orderId, 'Delivered')}
-                            sx={{ fontSize: '0.75rem', py: 0.6, textTransform: 'none', backgroundColor: '#16A34A', color: '#FFFFFF', fontWeight: 800 }}
+                            startIcon={<LocalShippingIcon sx={{ fontSize: 15 }} />}
+                            onClick={() => {
+                              setSelectedOrderDetails(ord)
+                              setPackedChecklist({})
+                            }}
+                            sx={{
+                              fontSize: '0.75rem',
+                              py: 0.6,
+                              textTransform: 'none',
+                              backgroundColor: '#FFA000',
+                              color: '#0B132B',
+                              fontWeight: 800,
+                              borderRadius: 2,
+                              '&:hover': { backgroundColor: '#FF8F00' },
+                            }}
                           >
-                            Delivered
+                            Packing Sheet
                           </Button>
+                        </Grid>
+                        {ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
+                          <Grid item xs={12}>
+                            <Button
+                              fullWidth
+                              size="small"
+                              variant="outlined"
+                              onClick={() =>
+                                handleStatusChange(
+                                  ord.orderId,
+                                  ord.orderStatus === 'Shipped' ? 'Delivered' : 'Shipped'
+                                )
+                              }
+                              sx={{
+                                fontSize: '0.75rem',
+                                py: 0.5,
+                                textTransform: 'none',
+                                borderColor: ord.orderStatus === 'Shipped' ? '#16A34A' : '#3B82F6',
+                                color: ord.orderStatus === 'Shipped' ? '#16A34A' : '#1D4ED8',
+                                fontWeight: 700,
+                                borderRadius: 2,
+                              }}
+                            >
+                              {ord.orderStatus === 'Shipped' ? 'Mark as Delivered ✓' : 'Mark as Dispatched 🚚'}
+                            </Button>
+                          </Grid>
                         )}
-                      </Stack>
+                      </Grid>
                     </Paper>
                   )
                 })
