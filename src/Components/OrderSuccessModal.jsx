@@ -108,44 +108,40 @@ export default function OrderSuccessModal({
         </Box>
 
         <Chip
-          icon={<AutoAwesomeIcon sx={{ color: isPaid ? '#15803D !important' : isPendingVerification ? '#0369A1 !important' : '#B45309 !important', fontSize: 16 }} />}
-          label={
-            isPaid
-              ? 'PAYMENT CONFIRMED (PAID)'
-              : isPendingVerification
-              ? 'PAYMENT VERIFICATION IN PROGRESS'
-              : isWhatsApp
-              ? 'WHATSAPP BOOKING CONFIRMED'
-              : 'BOOKING SAVED IN DATABASE'
-          }
+          icon={<AutoAwesomeIcon sx={{ color: '#15803D !important', fontSize: 16 }} />}
+          label="ORDER ENQUIRY PLACED SUCCESSFULLY"
           sx={{
-            backgroundColor: isPaid ? '#DCFCE7' : isPendingVerification ? '#E0F2FE' : '#FEF3C7',
-            color: isPaid ? '#15803D' : isPendingVerification ? '#0369A1' : '#B45309',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            border: isPendingVerification ? '1px solid #BAE6FD' : 'none',
+            backgroundColor: '#DCFCE7',
+            color: '#15803D',
+            fontWeight: 900,
+            fontSize: '0.75rem',
+            border: '1px solid #86EFAC',
             mb: 1.2,
           }}
         />
 
-        <Typography variant="h5" sx={{ fontWeight: 900, color: '#0F172A', mb: 0.5, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
-          {isPaid
-            ? 'Payment Received & Order Placed! 🎉'
-            : isPendingVerification
-            ? 'Order Placed! Payment Verification in Progress ⏳'
-            : isWhatsApp
-            ? 'Booking Confirmed via WhatsApp! 💥'
-            : 'Booking Saved Successfully! 🎉'}
+        <Typography variant="h5" sx={{ fontWeight: 900, color: '#0F172A', mb: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
+          Your Order Enquiry Placed Successfully! 💥
         </Typography>
-        <Typography variant="body2" sx={{ color: '#64748B', mb: 2.5, fontSize: { xs: '0.8rem', sm: '0.875rem' } }}>
-          {isPaid
-            ? `Your payment of ₹${displayTotal.toLocaleString('en-IN')} has been confirmed. Your crackers package is being packed with certified Sivakasi safety standards and will be dispatched within 24 hours.`
-            : isPendingVerification
-            ? `உங்களின் 12-Digit UTR எண் (${orderDetails.utrNumber || 'பதிவு செய்யப்பட்டது'}) பெறப்பட்டது. நிர்வாகி உங்கள் கட்டணத்தை சரிபார்த்தவுடன் ரசீது 'PAID' என மாற்றப்பட்டு பேக்கிங் தொடங்கும்!`
-            : isWhatsApp
-            ? 'Your crackers booking has been sent directly to our Sivakasi WhatsApp team (+91 80567 04353). We will verify dispatch and transport collection with you!'
-            : 'Your crackers booking has been safely stored in our database. You can review items anytime in My Orders (என் ஆர்டர்கள்)!'}
-        </Typography>
+
+        {/* 24 Hours Team Contact Highlight Card */}
+        <Box
+          sx={{
+            p: 1.8,
+            mb: 2.2,
+            borderRadius: 2.5,
+            backgroundColor: '#FEF3C7',
+            border: '2px solid #F59E0B',
+            textAlign: 'center',
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ fontWeight: 900, color: '#92400E', fontSize: { xs: '0.88rem', sm: '0.96rem' }, mb: 0.4 }}>
+            📞 After 24 hours-குள்ள Sky Crackers Team will contact you!
+          </Typography>
+          <Typography variant="caption" sx={{ color: '#78350F', fontWeight: 700, display: 'block', fontSize: { xs: '0.76rem', sm: '0.82rem' }, lineHeight: 1.45 }}>
+            உங்கள் பட்டாசு பட்டியல் பெறப்பட்டது. அடுத்த 24 மணி நேரத்திற்குள் சிவகாசி அலுவலகத்திலிருந்து (+91 80567 04353) உங்களை அழைத்து பார்சல் பேக்கிங் & டெலிவரி விபரங்களை உறுதி செய்வோம்!
+          </Typography>
+        </Box>
 
         {/* Order Summary Paper */}
         <Paper

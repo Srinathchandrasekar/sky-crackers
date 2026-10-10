@@ -339,14 +339,15 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   }
 
   const filterCounts = useMemo(() => {
-    let confirmed = 0
-    let pending = 0
+    let pendingDispatch = 0
+    let dispatched = 0
+    let delivered = 0
     let coupon = 0
     orders.forEach((ord) => {
-      const p = (ord.paymentStatus || '').toLowerCase()
-      const isPaid = p === 'completed' || p === 'paid' || p === 'received' || p === 'verified' || p === 'success'
-      if (isPaid) confirmed++
-      else pending++
+      const status = (ord.orderStatus || '').toLowerCase()
+      if (status === 'shipped') dispatched++
+      else if (status === 'delivered') delivered++
+      else if (status !== 'cancelled') pendingDispatch++
 
       const hasCoupon = Boolean(
         (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
@@ -356,8 +357,9 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     })
     return {
       all: orders.length,
-      confirmed,
-      pending,
+      pendingDispatch,
+      dispatched,
+      delivered,
       coupon,
     }
   }, [orders])
@@ -365,11 +367,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
   const displayedOrders = useMemo(() => {
     return orders
       .filter((ord) => {
-        const p = (ord.paymentStatus || '').toLowerCase()
-        const isPaid = p === 'completed' || p === 'paid' || p === 'received' || p === 'verified' || p === 'success'
-
-        if (orderFilterTab === 'confirmed') return isPaid
-        if (orderFilterTab === 'pending') return !isPaid
+        const status = (ord.orderStatus || '').toLowerCase()
+        if (orderFilterTab === 'pending_dispatch') return status !== 'shipped' && status !== 'delivered' && status !== 'cancelled'
+        if (orderFilterTab === 'shipped') return status === 'shipped'
+        if (orderFilterTab === 'delivered') return status === 'delivered'
         if (orderFilterTab === 'coupon') {
           return Boolean(
             (ord.couponCode && (ord.couponCode.toUpperCase().includes('TRUSTSKYFIRECRACKERS') || ord.couponCode.toUpperCase().includes('TRUSTSKYCRACKERS'))) ||
@@ -404,27 +405,11 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
         />
       )
     }
-    if (p === 'pending verification' || p === 'verification in progress' || (utrNumber && p !== 'failed' && p !== 'cancelled')) {
-      return (
-        <Chip
-          size="small"
-          icon={<HourglassBottomIcon sx={{ fontSize: '13px !important', color: '#0369A1 !important' }} />}
-          label="Verify UTR"
-          sx={{
-            backgroundColor: '#E0F2FE',
-            color: '#0369A1',
-            fontWeight: 800,
-            fontSize: '0.72rem',
-            border: '1.5px solid #38BDF8',
-          }}
-        />
-      )
-    }
     if (p === 'failed' || p === 'fail') {
       return (
         <Chip
           size="small"
-          label="Payment Failed"
+          label="Failed"
           sx={{
             backgroundColor: '#FEF2F2',
             color: '#991B1B',
@@ -439,7 +424,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
       return (
         <Chip
           size="small"
-          label="Order Cancelled"
+          label="Cancelled"
           sx={{
             backgroundColor: '#F1F5F9',
             color: '#475569',
@@ -453,14 +438,14 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
     return (
       <Chip
         size="small"
-        icon={<HourglassBottomIcon sx={{ fontSize: '13px !important' }} />}
-        label="Payment Pending"
+        icon={<WhatsAppIcon sx={{ fontSize: '13px !important', color: '#16A34A !important' }} />}
+        label="WhatsApp Enquiry"
         sx={{
-          backgroundColor: '#FFF7ED',
-          color: '#C2410C',
+          backgroundColor: '#F0FDF4',
+          color: '#166534',
           fontWeight: 800,
           fontSize: '0.72rem',
-          border: '1px solid #FED7AA',
+          border: '1px solid #86EFAC',
         }}
       />
     )
@@ -860,9 +845,10 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                 }}
               >
                 {[
-                  { id: 'all', label: 'All Orders', count: filterCounts.all, color: '#0B132B' },
-                  { id: 'confirmed', label: 'Payment Confirmed', count: filterCounts.confirmed, color: '#16A34A' },
-                  { id: 'pending', label: 'Payment Pending', count: filterCounts.pending, color: '#D97706' },
+                  { id: 'all', label: 'All Enquiries', count: filterCounts.all, color: '#0B132B' },
+                  { id: 'pending_dispatch', label: 'To Pack & Dispatch', count: filterCounts.pendingDispatch, color: '#D97706' },
+                  { id: 'shipped', label: 'Dispatched', count: filterCounts.dispatched, color: '#2563EB' },
+                  { id: 'delivered', label: 'Delivered', count: filterCounts.delivered, color: '#16A34A' },
                   { id: 'coupon', label: 'Coupon Orders', count: filterCounts.coupon, color: '#7C3AED' },
                 ].map((tab) => {
                   const isSelected = orderFilterTab === tab.id
@@ -1036,77 +1022,6 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                         </Box>
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.6 }}>
                           {renderPaymentChip(ord.paymentStatus, ord.utrNumber)}
-                          {ord.utrNumber && (
-                            <Typography
-                              variant="caption"
-                              sx={{
-                                fontFamily: 'monospace',
-                                fontWeight: 800,
-                                color: '#0369A1',
-                                backgroundColor: '#E0F2FE',
-                                px: 0.8,
-                                py: 0.2,
-                                borderRadius: 1,
-                                border: '1px solid #BAE6FD',
-                                fontSize: '0.7rem',
-                              }}
-                            >
-                              UTR: {ord.utrNumber}
-                            </Typography>
-                          )}
-                          {!isPaid ? (
-                            <Button
-                              size="small"
-                              variant="contained"
-                              onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Completed')}
-                              sx={{
-                                mt: 0.5,
-                                backgroundColor: '#16A34A',
-                                color: '#FFFFFF',
-                                fontWeight: 900,
-                                fontSize: '0.75rem',
-                                py: 0.4,
-                                px: 1.5,
-                                textTransform: 'none',
-                                borderRadius: 1.5,
-                                boxShadow: '0 2px 6px rgba(22, 163, 74, 0.3)',
-                                '&:hover': { backgroundColor: '#15803D' },
-                              }}
-                            >
-                              ✓ Mark as Paid
-                            </Button>
-                          ) : (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mt: 0.5 }}>
-                              <Chip
-                                size="small"
-                                icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
-                                label="Paid ✓"
-                                sx={{
-                                  backgroundColor: '#DCFCE7',
-                                  color: '#15803D',
-                                  fontWeight: 900,
-                                  fontSize: '0.7rem',
-                                  height: 24,
-                                  border: '1px solid #86EFAC',
-                                }}
-                              />
-                              <Button
-                                size="small"
-                                variant="text"
-                                onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Pending Verification')}
-                                sx={{
-                                  color: '#94A3B8',
-                                  fontSize: '0.68rem',
-                                  py: 0,
-                                  px: 0.5,
-                                  textTransform: 'none',
-                                  '&:hover': { color: '#DC2626' },
-                                }}
-                              >
-                                Undo Paid
-                              </Button>
-                            </Box>
-                          )}
                         </Box>
                       </Box>
 
@@ -1142,6 +1057,30 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             fullWidth
                             size="small"
                             variant="outlined"
+                            href={`https://wa.me/91${ord.customerPhone}?text=${encodeURIComponent(`Vanakkam ${ord.customerName}! Sky Fire Crackers Sivakasi here regarding your booking #${ord.orderNumber}.`)}`}
+                            target="_blank"
+                            startIcon={<WhatsAppIcon sx={{ fontSize: 16, color: '#25D366' }} />}
+                            sx={{
+                              fontSize: '0.78rem',
+                              py: 0.8,
+                              minHeight: 40,
+                              textTransform: 'none',
+                              borderColor: '#86EFAC',
+                              color: '#166534',
+                              fontWeight: 800,
+                              borderRadius: 2,
+                              backgroundColor: '#F0FDF4',
+                              '&:hover': { backgroundColor: '#DCFCE7' },
+                            }}
+                          >
+                            WhatsApp
+                          </Button>
+                        </Grid>
+                        <Grid item xs={6}>
+                          <Button
+                            fullWidth
+                            size="small"
+                            variant="outlined"
                             startIcon={<PersonIcon sx={{ fontSize: 15 }} />}
                             onClick={() => {
                               if (onOpenPersonPage) {
@@ -1153,8 +1092,9 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               }
                             }}
                             sx={{
-                              fontSize: '0.75rem',
-                              py: 0.6,
+                              fontSize: '0.78rem',
+                              py: 0.8,
+                              minHeight: 40,
                               textTransform: 'none',
                               borderColor: '#0284C7',
                               color: '#0284C7',
@@ -1165,19 +1105,20 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             Customer Hub
                           </Button>
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid item xs={12}>
                           <Button
                             fullWidth
                             size="small"
                             variant="contained"
-                            startIcon={<LocalShippingIcon sx={{ fontSize: 15 }} />}
+                            startIcon={<LocalShippingIcon sx={{ fontSize: 16 }} />}
                             onClick={() => {
                               setSelectedOrderDetails(ord)
                               setPackedChecklist({})
                             }}
                             sx={{
-                              fontSize: '0.75rem',
-                              py: 0.6,
+                              fontSize: '0.8rem',
+                              py: 0.8,
+                              minHeight: 40,
                               textTransform: 'none',
                               backgroundColor: '#FFA000',
                               color: '#0B132B',
@@ -1186,7 +1127,7 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                               '&:hover': { backgroundColor: '#FF8F00' },
                             }}
                           >
-                            Packing Sheet
+                            Open Packing Sheet
                           </Button>
                         </Grid>
                         {ord.orderStatus !== 'Delivered' && ord.orderStatus !== 'Cancelled' && (
@@ -1202,12 +1143,13 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                 )
                               }
                               sx={{
-                                fontSize: '0.75rem',
-                                py: 0.5,
+                                fontSize: '0.78rem',
+                                py: 0.8,
+                                minHeight: 40,
                                 textTransform: 'none',
                                 borderColor: ord.orderStatus === 'Shipped' ? '#16A34A' : '#3B82F6',
                                 color: ord.orderStatus === 'Shipped' ? '#16A34A' : '#1D4ED8',
-                                fontWeight: 700,
+                                fontWeight: 800,
                                 borderRadius: 2,
                               }}
                             >
@@ -1365,62 +1307,9 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                                     title="UPI Ref / UTR Number"
                                   >
                                     UTR: {ord.utrNumber}
-                                  </Typography>
-                                )}
-                                 {!isPaid ? (
-                                   <Button
-                                     size="small"
-                                     variant="contained"
-                                     onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Completed')}
-                                     sx={{
-                                       mt: 0.4,
-                                       backgroundColor: '#16A34A',
-                                       color: '#FFFFFF',
-                                       fontWeight: 900,
-                                       fontSize: '0.74rem',
-                                       py: 0.3,
-                                       px: 1.2,
-                                       textTransform: 'none',
-                                       borderRadius: 1.5,
-                                       boxShadow: '0 2px 6px rgba(22, 163, 74, 0.25)',
-                                       '&:hover': { backgroundColor: '#15803D' },
-                                     }}
-                                   >
-                                     ✓ Mark as Paid
-                                   </Button>
-                                 ) : (
-                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mt: 0.4 }}>
-                                     <Chip
-                                       size="small"
-                                       icon={<CheckCircleIcon sx={{ fontSize: '12px !important' }} />}
-                                       label="Paid ✓"
-                                       sx={{
-                                         backgroundColor: '#DCFCE7',
-                                         color: '#15803D',
-                                         fontWeight: 900,
-                                         fontSize: '0.7rem',
-                                         height: 24,
-                                         border: '1px solid #86EFAC',
-                                       }}
-                                     />
-                                     <Button
-                                       size="small"
-                                       variant="text"
-                                       onClick={() => handlePaymentStatusChange(ord, ord.orderStatus, 'Pending Verification')}
-                                       sx={{
-                                         color: '#94A3B8',
-                                         fontSize: '0.68rem',
-                                         py: 0,
-                                         px: 0.5,
-                                         textTransform: 'none',
-                                         '&:hover': { color: '#DC2626' },
-                                       }}
-                                     >
-                                       Undo Paid
-                                     </Button>
-                                   </Box>
+                                   </Typography>
                                  )}
-                              </Box>
+                               </Box>
                             </TableCell>
                             <TableCell>
                               <Chip
@@ -1449,26 +1338,27 @@ export default function AdminPanelPage({ onExitAdmin, onOpenPersonPage }) {
                             </TableCell>
                             <TableCell sx={{ textAlign: 'center' }}>
                               <Stack direction="row" spacing={0.8} justifyContent="center" flexWrap="wrap" useFlexGap>
-                                {!isPaid && (
-                                  <Button
-                                    size="small"
-                                    variant="contained"
-                                    onClick={() => handlePaymentStatusChange(ord.orderId, ord.orderStatus, 'Completed')}
-                                    sx={{
-                                      fontSize: '0.72rem',
-                                      py: 0.3,
-                                      px: 1,
-                                      textTransform: 'none',
-                                      backgroundColor: '#16A34A',
-                                      color: '#FFFFFF',
-                                      fontWeight: 800,
-                                      '&:hover': { backgroundColor: '#15803D' },
-                                    }}
-                                    title="Verify UTR and mark payment as received"
-                                  >
-                                    ✓ Mark Paid
-                                  </Button>
-                                )}
+                                <Button
+                                  size="small"
+                                  variant="outlined"
+                                  href={`https://wa.me/91${ord.customerPhone}?text=${encodeURIComponent(`Vanakkam ${ord.customerName}! Sky Fire Crackers Sivakasi here regarding your booking #${ord.orderNumber}.`)}`}
+                                  target="_blank"
+                                  startIcon={<WhatsAppIcon sx={{ fontSize: "13px !important", color: "#25D366" }} />}
+                                  sx={{
+                                    fontSize: "0.72rem",
+                                    py: 0.3,
+                                    px: 1,
+                                    textTransform: "none",
+                                    borderColor: "#86EFAC",
+                                    color: "#166534",
+                                    fontWeight: 800,
+                                    backgroundColor: "#F0FDF4",
+                                    "&:hover": { backgroundColor: "#DCFCE7" },
+                                  }}
+                                  title="Chat with customer on WhatsApp"
+                                >
+                                  WhatsApp
+                                </Button>
                                 <Button
                                   size="small"
                                   variant="contained"

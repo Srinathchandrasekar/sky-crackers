@@ -10,8 +10,14 @@ export function generateStructuredInvoiceHtml(order) {
     pStatus === 'success'
 
   const utr = order.utrNumber || (typeof order.notes === 'string' ? order.notes.match(/UTR:\s*([0-9]{12})/i)?.[1] : null)
+  const isWhatsApp = Boolean(
+    order.paymentMethod?.toLowerCase().includes('whatsapp') ||
+    order.paymentMethod?.toUpperCase().includes('WHATSAPP') ||
+    !utr
+  )
   const isVerifying =
     !isPaid &&
+    !isWhatsApp &&
     (pStatus === 'pending verification' ||
       pStatus === 'verification in progress' ||
       pStatus === 'verifying' ||
@@ -172,16 +178,18 @@ export function generateStructuredInvoiceHtml(order) {
     </div>
 
     <!-- PAYMENT STATUS BANNER -->
-    <div class="status-banner ${isPaid ? 'status-completed' : (isVerifying ? 'status-verifying' : 'status-pending')}">
+    <div class="status-banner ${isPaid ? 'status-completed' : (isWhatsApp ? 'status-completed' : (isVerifying ? 'status-verifying' : 'status-pending'))}">
       <div>
         ${isPaid 
           ? '✔ PAYMENT STATUS: COMPLETED & VERIFIED (பணம் பெறப்பட்டது)' 
-          : (isVerifying
-              ? '⏳ PAYMENT STATUS: VERIFICATION IN PROGRESS (பரிசீலனையில் உள்ளது - UTR சரிபார்க்கப்படுகிறது)'
-              : '⚠️ PAYMENT STATUS: PENDING (ONLINE PAYMENT DUE / PAY LATER)')}
+          : (isWhatsApp
+              ? '💬 BOOKING STATUS: WHATSAPP ENQUIRY PLACED (விசாரணை பதிவு செய்யப்பட்டது)'
+              : (isVerifying
+                  ? '⏳ PAYMENT STATUS: VERIFICATION IN PROGRESS (பரிசீலனையில் உள்ளது - UTR சரிபார்க்கப்படுகிறது)'
+                  : '⚠️ PAYMENT STATUS: PENDING (ONLINE PAYMENT DUE / PAY LATER)'))}
       </div>
-      <div class="status-tag ${isPaid ? 'tag-completed' : (isVerifying ? 'tag-verifying' : 'tag-pending')}">
-        ${isPaid ? 'PAID' : (isVerifying ? 'VERIFICATION IN PROGRESS' : 'PAYMENT PENDING')}
+      <div class="status-tag ${isPaid ? 'tag-completed' : (isWhatsApp ? 'tag-completed' : (isVerifying ? 'tag-verifying' : 'tag-pending'))}">
+        ${isPaid ? 'PAID' : (isWhatsApp ? 'WHATSAPP ENQUIRY' : (isVerifying ? 'VERIFICATION IN PROGRESS' : 'PAYMENT PENDING'))}
       </div>
     </div>
 
@@ -199,8 +207,8 @@ export function generateStructuredInvoiceHtml(order) {
           <h4>Booking Information:</h4>
           <p><strong>Booking Ref:</strong> #${orderNumber}</p>
           ${utr ? `<p><strong>UPI Ref / UTR:</strong> <span style="background: ${isPaid ? '#dcfce7' : '#e0f2fe'}; color: ${isPaid ? '#15803d' : '#0369a1'}; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-weight: 800; font-size: 13px;">${utr}</span></p>` : ''}
-          <p><strong>Payment Option:</strong> ${order.paymentMethod || (isPaid ? 'Direct UPI (Verified)' : (isVerifying ? 'Direct UPI (Verification in Progress)' : 'WhatsApp Enquiry'))}</p>
-          <p><strong>Payment Verification:</strong> <span style="font-weight: 800; color: ${isPaid ? '#15803d' : (isVerifying ? '#0284c7' : '#b45309')};">${isPaid ? '✔ Payment Received & Verified' : (isVerifying ? '⏳ Verification in Progress (அட்மின் சரிபார்க்க வேண்டும்)' : '⚠️ Payment Due')}</span></p>
+          <p><strong>Payment Option:</strong> ${order.paymentMethod || (isPaid ? 'Direct UPI (Verified)' : (isWhatsApp ? 'Direct WhatsApp Booking Enquiry' : 'Pending'))}</p>
+          <p><strong>Enquiry Status:</strong> <span style="font-weight: 800; color: ${isPaid ? '#15803d' : '#15803d'};">${isPaid ? '✔ Payment Received & Verified' : (isWhatsApp ? '✔ Enquiry Placed (Team will contact in 24 hrs)' : '⏳ Verification Pending')}</span></p>
           <p><strong>Order Status:</strong> ${order.orderStatus || 'Confirmed & Packing'}</p>
         </div>
       </div>

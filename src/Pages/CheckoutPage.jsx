@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Box,
   Container,
@@ -133,7 +133,8 @@ export default function CheckoutPage({
     }
   }, [customerData])
 
-  const [paymentMethod, setPaymentMethod] = useState('upi') // 'upi' or 'whatsapp'
+  // Payment Mode: Default to 'whatsapp' booking enquiry (UPI payment commented out per user request)
+  const [paymentMethod, setPaymentMethod] = useState('whatsapp') // 'whatsapp' active
   const [utrNumber, setUtrNumber] = useState('')
   const [copiedUpi, setCopiedUpi] = useState(false)
   const [copiedPhone, setCopiedPhone] = useState(false)
@@ -247,10 +248,13 @@ export default function CheckoutPage({
   }
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const isSubmittingRef = useRef(false)
 
   const handleSubmitOrder = async (e) => {
     if (e && e.preventDefault) e.preventDefault()
-    if (isSubmitting) return
+    if (isSubmitting || isSubmittingRef.current) return
+    isSubmittingRef.current = true
+    setIsSubmitting(true)
 
     if (cart.length === 0) {
       setErrorMsg('Your cart is empty. Please add crackers before placing an order.')
@@ -439,6 +443,7 @@ export default function CheckoutPage({
       onPlaceOrder(orderSummary)
     } catch (err) {
       console.error('Order creation error:', err)
+      isSubmittingRef.current = false
       setIsSubmitting(false)
       setErrorMsg(err.message || 'Failed to place booking in database. Please check connection and try again.')
     }
@@ -987,10 +992,10 @@ export default function CheckoutPage({
                   sx={{
                     fontWeight: 900,
                     color: '#0F172A',
-                    fontSize: '1.1rem',
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
                   }}
                 >
-                  3. Select Payment Option
+                  3. Direct WhatsApp Booking Enquiry
                 </Typography>
                 <Chip
                   size="small"
@@ -1014,7 +1019,7 @@ export default function CheckoutPage({
               >
                 <Box>
                   <Typography variant="caption" sx={{ color: '#FFA000', fontWeight: 800, display: 'block' }}>
-                    AMOUNT TO PAY
+                    TOTAL ORDER VALUE
                   </Typography>
                   <Typography variant="h5" sx={{ fontWeight: 900, color: '#FFFFFF', lineHeight: 1.1 }}>
                     ₹{totalAmount.toLocaleString('en-IN')}
@@ -1022,774 +1027,90 @@ export default function CheckoutPage({
                 </Box>
               </Box>
 
-              {/* Payment Mode Selector Tabs */}
-              <Box sx={{ mb: 2 }}>
-                <Tabs
-                  value={paymentMethod === 'upi' ? 0 : 1}
-                  onChange={(e, val) => {
-                    setPaymentMethod(val === 0 ? 'upi' : 'whatsapp')
-                    setErrorMsg('')
-                  }}
-                  variant="fullWidth"
-                  sx={{
-                    backgroundColor: '#F1F5F9',
-                    borderRadius: 2,
-                    p: 0.5,
-                    minHeight: 44,
-                    '& .MuiTab-root': {
-                      minHeight: 40,
-                      borderRadius: 1.5,
-                      textTransform: 'none',
-                      fontWeight: 800,
-                      fontSize: { xs: '0.78rem', sm: '0.85rem' },
-                      transition: 'all 0.2s',
-                    },
-                    '& .Mui-selected': {
-                      backgroundColor: '#FFFFFF',
-                      color: paymentMethod === 'upi' ? '#15803D !important' : '#25D366 !important',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
-                    },
-                    '& .MuiTabs-indicator': { display: 'none' },
-                  }}
-                >
-                  <Tab
-                    icon={<QrCode2Icon sx={{ fontSize: 18 }} />}
-                    iconPosition="start"
-                    label="Pay via UPI / QR"
-                  />
-                  <Tab
-                    icon={<WhatsAppIcon sx={{ fontSize: 18 }} />}
-                    iconPosition="start"
-                    label="WhatsApp Booking"
-                  />
-                </Tabs>
+              {/* 
+                ========================================================================
+                NOTE: UPI / QR PAYMENT MODE TEMPORARILY DISABLED & COMMENTED OUT
+                (Can be uncommented and restored anytime as per user request)
+                ========================================================================
+                <Box sx={{ mb: 2 }}>
+                  <Tabs value={paymentMethod === 'upi' ? 0 : 1} onChange={(e, val) => setPaymentMethod(val === 0 ? 'upi' : 'whatsapp')}>
+                    <Tab label="Pay via UPI / QR" />
+                    <Tab label="WhatsApp Booking" />
+                  </Tabs>
+                </Box>
+                {paymentMethod === 'upi' && (
+                  <Box>...UPI QR Code & UTR verification inputs...</Box>
+                )}
+                ========================================================================
+              */}
+
+              {/* WhatsApp Direct Booking Enquiry Box */}
+              <Box
+                sx={{
+                  p: { xs: 2, sm: 2.5 },
+                  borderRadius: 2.5,
+                  border: '2px solid #86EFAC',
+                  backgroundColor: '#F0FDF4',
+                  mb: 2.5,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 1.2 }}>
+                  <WhatsAppIcon sx={{ color: '#25D366', fontSize: 32 }} />
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#166534', fontSize: '0.96rem' }}>
+                      Direct WhatsApp Booking Enquiry
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#15803D', fontWeight: 700, display: 'block' }}>
+                      Zero upfront payment required now
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Typography variant="body2" sx={{ color: '#1E293B', fontSize: '0.84rem', mb: 1.5, lineHeight: 1.6 }}>
+                  உடனடி ஆன்லைன் பேமென்ட் தேவையில்லை. கீழே உள்ள பட்டனை அழுத்தினால் உங்களின் பட்டாசு பட்டியல், முகவரி மற்றும் அதிகாரப்பூர்வ பில் எங்கள் சிவகாசி அலுவலகத்திற்கு (+91 80567 04353) WhatsApp-ல் நேரடியாக சென்றுவிடும்!
+                </Typography>
+
+                <Box sx={{ p: 1.5, backgroundColor: '#FFFFFF', borderRadius: 2, border: '1px solid #CBD5E1', mb: 1.5 }}>
+                  <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontWeight: 700, fontSize: '0.7rem' }}>
+                    SIVAKASI WHATSAPP HELPLINE
+                  </Typography>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0B132B' }}>
+                    {UPI_CONFIG.displayPhone}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ p: 1.2, backgroundColor: '#EFF6FF', borderRadius: 2, border: '1px solid #BFDBFE' }}>
+                  <Typography variant="caption" sx={{ color: '#1E40AF', fontWeight: 800, display: 'block', lineHeight: 1.45, fontSize: '0.78rem' }}>
+                    ⚡ <strong>உறுதிமொழி:</strong> உங்கள் enquiry பதிவு செய்தவுடன், 24 மணி நேரத்திற்குள் Sky Crackers குழுவினர் உங்களை தொடர்புகொண்டு பார்சல் பேக்கிங் மற்றும் டெலிவரி விவரங்களை உறுதி செய்வார்கள்!
+                  </Typography>
+                </Box>
               </Box>
 
-              {/* TAB 0: Direct UPI & QR Payment */}
-              {paymentMethod === 'upi' && (
-                <Box
-                  sx={{
-                    p: 2,
-                    borderRadius: 2.5,
-                    border: '1.5px solid #BBF7D0',
-                    backgroundColor: '#F0FDF4',
-                    mb: 2,
-                    textAlign: 'center',
-                  }}
-                >
-                  <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#166534', mb: 0.3 }}>
-                    Scan QR or Pay via Any UPI App
-                  </Typography>
-                  <Typography variant="caption" sx={{ color: '#15803D', display: 'block', mb: 1.5, fontWeight: 600 }}>
-                    Google Pay • PhonePe • Paytm • BHIM • CRED
-                  </Typography>
-
-                  {/* Clean Generated QR Code Box */}
-                  <Box
-                    sx={{
-                      display: 'inline-block',
-                      p: 1.5,
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: 3,
-                      border: '2px solid #22C55E',
-                      boxShadow: '0 4px 14px rgba(22, 163, 74, 0.15)',
-                      mb: 1.5,
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={dynamicQrCodeUrl}
-                      alt="UPI Payment QR Code"
-                      sx={{
-                        width: { xs: 200, sm: 220 },
-                        height: { xs: 200, sm: 220 },
-                        display: 'block',
-                        objectFit: 'contain',
-                        borderRadius: 1.5,
-                      }}
-                    />
-                    <Box
-                      sx={{
-                        mt: 1.2,
-                        py: 0.5,
-                        px: 1.2,
-                        backgroundColor: '#DCFCE7',
-                        borderRadius: 1.5,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: 0.6,
-                      }}
-                    >
-                      <CheckCircleIcon sx={{ fontSize: 16, color: '#15803D' }} />
-                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#166534', fontSize: '0.8rem' }}>
-                        Amount: ₹{totalAmount.toLocaleString('en-IN')} Pre-filled
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* Copy UPI ID Box */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      backgroundColor: '#FFFFFF',
-                      p: 1,
-                      px: 1.5,
-                      borderRadius: 2,
-                      border: '1px solid #CBD5E1',
-                      mb: 1.5,
-                    }}
-                  >
-                    <Box sx={{ textAlign: 'left' }}>
-                      <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.68rem', fontWeight: 700 }}>
-                        OFFICIAL UPI ID ({UPI_CONFIG.bankName})
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, color: '#0B132B', fontSize: '0.82rem' }}>
-                        {UPI_CONFIG.upiId}
-                      </Typography>
-                    </Box>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      onClick={handleCopyUpi}
-                      startIcon={<ContentCopyIcon sx={{ fontSize: 13 }} />}
-                      sx={{
-                        backgroundColor: copiedUpi ? '#15803D' : '#0B132B',
-                        color: '#FFFFFF',
-                        fontWeight: 800,
-                        fontSize: '0.72rem',
-                        textTransform: 'none',
-                        px: 1.2,
-                        py: 0.4,
-                        borderRadius: 1.5,
-                        '&:hover': { backgroundColor: copiedUpi ? '#166534' : '#1C2541' },
-                      }}
-                    >
-                      {copiedUpi ? 'Copied!' : 'Copy'}
-                    </Button>
-                  </Box>
-
-                  {/* Mobile 1-Tap Pay Buttons - Stacked Line-by-Line with High Visibility */}
-                  <Typography variant="subtitle2" sx={{ color: '#0F172A', fontWeight: 800, display: 'block', mb: 1.2, textAlign: 'left', fontSize: '0.88rem' }}>
-                    📲 Mobile-ல் செலுத்த ஆப்பைத் தேர்ந்தெடுக்கவும் (1-Tap Pay):
-                  </Typography>
-
-                  <Stack spacing={1.2} sx={{ mb: 2 }}>
-                    {/* Line 1: Google Pay */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      component="a"
-                      href={dynamicUpiUri}
-                      sx={{
-                        backgroundColor: '#FFFFFF',
-                        color: '#1E3A8A',
-                        border: '2px solid #3B82F6',
-                        py: 1.2,
-                        px: 2,
-                        borderRadius: 2.5,
-                        textTransform: 'none',
-                        boxShadow: '0 2px 8px rgba(59, 130, 246, 0.15)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        '&:hover': {
-                          backgroundColor: '#EFF6FF',
-                          borderColor: '#1D4ED8',
-                          boxShadow: '0 4px 14px rgba(59, 130, 246, 0.25)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
-                        <Box
-                          sx={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            backgroundColor: '#EFF6FF',
-                            border: '1.5px solid #3B82F6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.05rem',
-                            fontWeight: 900,
-                            color: '#2563EB',
-                          }}
-                        >
-                          G
-                        </Box>
-                        <Box sx={{ textAlign: 'left' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
-                            Google Pay (GPay)
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
-                            Tap to open & pay in Google Pay
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
-                        size="small"
-                        sx={{
-                          backgroundColor: '#DBEAFE',
-                          color: '#1E40AF',
-                          fontWeight: 900,
-                          fontSize: '0.8rem',
-                          height: 26,
-                        }}
-                      />
-                    </Button>
-
-                    {/* Line 2: PhonePe */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      component="a"
-                      href={dynamicUpiUri}
-                      sx={{
-                        backgroundColor: '#FFFFFF',
-                        color: '#581C87',
-                        border: '2px solid #7E22CE',
-                        py: 1.2,
-                        px: 2,
-                        borderRadius: 2.5,
-                        textTransform: 'none',
-                        boxShadow: '0 2px 8px rgba(126, 34, 206, 0.15)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        '&:hover': {
-                          backgroundColor: '#FAF5FF',
-                          borderColor: '#6B21A8',
-                          boxShadow: '0 4px 14px rgba(126, 34, 206, 0.25)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
-                        <Box
-                          sx={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            backgroundColor: '#FAF5FF',
-                            border: '1.5px solid #7E22CE',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '1.05rem',
-                            fontWeight: 900,
-                            color: '#7E22CE',
-                          }}
-                        >
-                          पे
-                        </Box>
-                        <Box sx={{ textAlign: 'left' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
-                            PhonePe
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
-                            Tap to open & pay in PhonePe
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
-                        size="small"
-                        sx={{
-                          backgroundColor: '#F3E8FF',
-                          color: '#6B21A8',
-                          fontWeight: 900,
-                          fontSize: '0.8rem',
-                          height: 26,
-                        }}
-                      />
-                    </Button>
-
-                    {/* Line 3: Paytm */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      component="a"
-                      href={dynamicUpiUri}
-                      sx={{
-                        backgroundColor: '#FFFFFF',
-                        color: '#0369A1',
-                        border: '2px solid #0284C7',
-                        py: 1.2,
-                        px: 2,
-                        borderRadius: 2.5,
-                        textTransform: 'none',
-                        boxShadow: '0 2px 8px rgba(2, 132, 199, 0.15)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        '&:hover': {
-                          backgroundColor: '#F0F9FF',
-                          borderColor: '#0369A1',
-                          boxShadow: '0 4px 14px rgba(2, 132, 199, 0.25)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
-                        <Box
-                          sx={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            backgroundColor: '#F0F9FF',
-                            border: '1.5px solid #0284C7',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.8rem',
-                            fontWeight: 900,
-                            color: '#0284C7',
-                          }}
-                        >
-                          pay
-                        </Box>
-                        <Box sx={{ textAlign: 'left' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
-                            Paytm UPI
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
-                            Tap to open & pay in Paytm
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
-                        size="small"
-                        sx={{
-                          backgroundColor: '#E0F2FE',
-                          color: '#0369A1',
-                          fontWeight: 900,
-                          fontSize: '0.8rem',
-                          height: 26,
-                        }}
-                      />
-                    </Button>
-
-                    {/* Line 4: Any Other UPI App */}
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      component="a"
-                      href={dynamicUpiUri}
-                      sx={{
-                        backgroundColor: '#FFFFFF',
-                        color: '#065F46',
-                        border: '2px solid #059669',
-                        py: 1.2,
-                        px: 2,
-                        borderRadius: 2.5,
-                        textTransform: 'none',
-                        boxShadow: '0 2px 8px rgba(5, 150, 105, 0.15)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        '&:hover': {
-                          backgroundColor: '#ECFDF5',
-                          borderColor: '#047857',
-                          boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
-                        <Box
-                          sx={{
-                            width: 34,
-                            height: 34,
-                            borderRadius: '50%',
-                            backgroundColor: '#ECFDF5',
-                            border: '1.5px solid #059669',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '0.85rem',
-                            fontWeight: 900,
-                            color: '#059669',
-                          }}
-                        >
-                          UPI
-                        </Box>
-                        <Box sx={{ textAlign: 'left' }}>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0F172A', fontSize: '0.94rem', lineHeight: 1.2 }}>
-                            BHIM / Any Other UPI App
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#64748B', fontSize: '0.72rem', display: 'block' }}>
-                            CRED • Amazon Pay • Navi • iMobile
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        label={`₹${totalAmount.toLocaleString('en-IN')}`}
-                        size="small"
-                        sx={{
-                          backgroundColor: '#D1FAE5',
-                          color: '#065F46',
-                          fontWeight: 900,
-                          fontSize: '0.8rem',
-                          height: 26,
-                        }}
-                      />
-                    </Button>
-                  </Stack>
-
-                  {/* Guaranteed 100% Success Direct Number & UPI Box */}
-                  <Box
-                    sx={{
-                      p: { xs: 2, sm: 2.5 },
-                      mb: 2,
-                      borderRadius: 3,
-                      backgroundColor: '#FEF2F2',
-                      border: '2px solid #EF4444',
-                      boxShadow: '0 4px 14px rgba(239, 68, 68, 0.12)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    {/* Big Eye-Catching "FAILED?" Banner */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1.5,
-                        pb: 1.2,
-                        borderBottom: '2px dashed #FCA5A5',
-                        flexWrap: 'wrap',
-                        gap: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box
-                          sx={{
-                            backgroundColor: '#DC2626',
-                            color: '#FFFFFF',
-                            px: 1.5,
-                            py: 0.4,
-                            borderRadius: 2,
-                            fontWeight: 900,
-                            fontSize: { xs: '1.25rem', sm: '1.45rem' },
-                            letterSpacing: '0.04em',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.6,
-                            boxShadow: '0 2px 6px rgba(220, 38, 38, 0.35)',
-                          }}
-                        >
-                          ⚠️ FAILED?
-                        </Box>
-                        <Box>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: 900,
-                              color: '#991B1B',
-                              fontSize: { xs: '1.05rem', sm: '1.2rem' },
-                              lineHeight: 1.15,
-                            }}
-                          >
-                            Payment Failed? (பணம் செலுத்த முடியவில்லையா?)
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: '#B91C1C', fontWeight: 700, fontSize: '0.74rem' }}>
-                            கவலை வேண்டாம்! நேரடி GPay / PhonePe மூலம் 100% செலுத்தலாம்:
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Chip
-                        label="100% SUCCESS"
-                        size="small"
-                        sx={{
-                          backgroundColor: '#16A34A',
-                          color: '#FFFFFF',
-                          fontWeight: 900,
-                          fontSize: '0.72rem',
-                          height: 24,
-                        }}
-                      />
-                    </Box>
-
-                    <Typography variant="body2" sx={{ color: '#450A0A', fontSize: '0.84rem', mb: 1.2, fontWeight: 600 }}>
-                      உங்கள் GPay அல்லது PhonePe ஆப்பைத் திறந்து, கீழே உள்ள <strong>மொபைல் எண்</strong> அல்லது <strong>UPI ID</strong>-க்கு நேரடியாக <strong>₹{totalAmount.toLocaleString('en-IN')}</strong> அனுப்பிவிடலாம்:
-                    </Typography>
-                    <Stack spacing={1.2}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: '#FFFFFF',
-                          p: 1.2,
-                          px: 1.5,
-                          borderRadius: 2,
-                          border: '1.5px solid #FECACA',
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.7rem', fontWeight: 800 }}>
-                            நேரடி GPAY / PHONEPE எண் (Sri Venkateshwaran)
-                          </Typography>
-                          <Typography variant="body1" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '1.1rem' }}>
-                            80567 04353
-                          </Typography>
-                        </Box>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={handleCopyPhone}
-                          startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
-                          sx={{
-                            backgroundColor: copiedPhone ? '#15803D' : '#DC2626',
-                            color: '#FFFFFF',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            textTransform: 'none',
-                            borderRadius: 1.5,
-                            py: 0.5,
-                            px: 1.5,
-                            '&:hover': {
-                              backgroundColor: copiedPhone ? '#166534' : '#B91C1C',
-                            },
-                          }}
-                        >
-                          {copiedPhone ? '✓ Copied!' : 'Copy Number'}
-                        </Button>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          backgroundColor: '#FFFFFF',
-                          p: 1.2,
-                          px: 1.5,
-                          borderRadius: 2,
-                          border: '1.5px solid #FECACA',
-                        }}
-                      >
-                        <Box sx={{ minWidth: 0, mr: 1 }}>
-                          <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontSize: '0.7rem', fontWeight: 800 }}>
-                            நேரடி UPI ID ({UPI_CONFIG.bankName})
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 900, color: '#0B132B', fontSize: '0.86rem', wordBreak: 'break-all' }}>
-                            {UPI_CONFIG.upiId}
-                          </Typography>
-                        </Box>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={handleCopyUpi}
-                          startIcon={<ContentCopyIcon sx={{ fontSize: 14 }} />}
-                          sx={{
-                            backgroundColor: copiedUpi ? '#15803D' : '#0B132B',
-                            color: '#FFA000',
-                            fontWeight: 800,
-                            fontSize: '0.75rem',
-                            textTransform: 'none',
-                            borderRadius: 1.5,
-                            py: 0.5,
-                            px: 1.5,
-                            flexShrink: 0,
-                            '&:hover': {
-                              backgroundColor: '#1E293B',
-                            },
-                          }}
-                        >
-                          {copiedUpi ? '✓ Copied!' : 'Copy UPI ID'}
-                        </Button>
-                      </Box>
-                    </Stack>
-                    <Box
-                      sx={{
-                        mt: 1.5,
-                        p: 1,
-                        borderRadius: 1.5,
-                        backgroundColor: '#FEF3C7',
-                        border: '1px solid #FCD34D',
-                      }}
-                    >
-                      <Typography variant="caption" sx={{ color: '#92400E', fontWeight: 800, display: 'block', fontSize: '0.74rem', lineHeight: 1.4 }}>
-                        👉 பணம் செலுத்தியவுடன் GPay / PhonePe-ல் கிடைக்கும் <strong>12-Digit UPI Ref / UTR</strong> எண்ணை கீழே பதிவிட்டு <strong>"Confirm Order"</strong> அழுத்தவும்!
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  {/* 12-Digit UTR Input Box */}
-                  <Box sx={{ mt: 1.5, textAlign: 'left' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 800, color: '#0B132B' }}>
-                        Enter 12-Digit UPI Ref / UTR No <span style={{ color: '#DC2626' }}>*</span>
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontWeight: 800,
-                          fontSize: '0.72rem',
-                          color: utrNumber.length === 12 ? '#15803D' : '#64748B',
-                        }}
-                      >
-                        {utrNumber.length}/12 Digits {utrNumber.length === 12 ? '✔ Valid' : ''}
-                      </Typography>
-                    </Box>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="e.g. 627875967624"
-                      value={utrNumber}
-                      onChange={(e) => {
-                        const numericOnly = e.target.value.replace(/\D/g, '').slice(0, 12)
-                        setUtrNumber(numericOnly)
-                        setErrorMsg('')
-                      }}
-                      helperText="Found in Google Pay / PhonePe transaction receipt (UPI Transaction ID)"
-                      inputProps={{
-                        maxLength: 12,
-                        inputMode: 'numeric',
-                        pattern: '[0-9]*',
-                      }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <CheckCircleIcon sx={{ color: utrNumber.length === 12 ? '#16A34A' : '#CBD5E1', fontSize: 18 }} />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{
-                        backgroundColor: '#FFFFFF',
-                        borderRadius: 2,
-                        '& .MuiOutlinedInput-root': {
-                          borderRadius: 2,
-                          '& fieldset': {
-                            borderColor: utrNumber.length === 12 ? '#16A34A' : undefined,
-                            borderWidth: utrNumber.length === 12 ? '2px' : undefined,
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
-              )}
-
-              {/* TAB 1: WhatsApp Direct Booking Enquiry */}
-              {paymentMethod === 'whatsapp' && (
-                <Box
-                  sx={{
-                    p: 2.2,
-                    borderRadius: 2.5,
-                    border: '1.5px solid #86EFAC',
-                    backgroundColor: '#F0FDF4',
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 1.2 }}>
-                    <WhatsAppIcon sx={{ color: '#25D366', fontSize: 28 }} />
-                    <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#166534', fontSize: '0.92rem' }}>
-                        Direct WhatsApp Booking Enquiry
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#15803D', fontWeight: 600 }}>
-                        Zero online payment needed now
-                      </Typography>
-                    </Box>
-                  </Box>
-
-                  <Typography variant="body2" sx={{ color: '#1E293B', fontSize: '0.82rem', mb: 1.5, lineHeight: 1.5 }}>
-                    உடனடி ஆன்லைன் பேமென்ட் தேவையில்லை. உங்கள் பட்டாசு பட்டியல் ஆர்டர் எங்கள் சிவகாசி அலுவலகத்திற்கு (+91 80567 04353) WhatsApp-ல் நேரடியாக சென்றுவிடும். நாங்கள் பேசிவிட்டு பார்சல் டெலிவரி உறுதி செய்வோம்.
-                  </Typography>
-
-                  <Box sx={{ p: 1.5, backgroundColor: '#FFFFFF', borderRadius: 2, border: '1px solid #CBD5E1', mb: 1 }}>
-                    <Typography variant="caption" sx={{ color: '#64748B', display: 'block', fontWeight: 700 }}>
-                      SIVAKASI WHATSAPP HELPLINE
-                    </Typography>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 900, color: '#0B132B' }}>
-                      {UPI_CONFIG.displayPhone}
-                    </Typography>
-                  </Box>
-                </Box>
-              )}
-
-              {/* Action Buttons */}
-              {paymentMethod === 'upi' ? (
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={isSubmitting || cart.length === 0}
-                  startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#FFFFFF' }} /> : <CheckCircleIcon sx={{ fontSize: 18 }} />}
-                  onClick={handleSubmitOrder}
-                  sx={{
-                    background: 'linear-gradient(135deg, #15803D 0%, #16A34A 100%)',
-                    color: '#FFFFFF',
-                    fontWeight: 900,
-                    fontSize: { xs: '0.86rem', sm: '0.94rem' },
-                    py: { xs: 1.1, sm: 1.25 },
-                    borderRadius: '24px',
-                    boxShadow: '0 4px 16px rgba(22, 163, 74, 0.45)',
-                    textTransform: 'none',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #166534 0%, #15803D 100%)',
-                      boxShadow: '0 6px 20px rgba(22, 163, 74, 0.6)',
-                    },
-                  }}
-                >
-                  {isSubmitting ? 'Confirming Payment...' : `Confirm UPI Payment & Download Bill (₹${totalAmount.toLocaleString('en-IN')}) →`}
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={isSubmitting || cart.length === 0}
-                  startIcon={isSubmitting ? <CircularProgress size={16} sx={{ color: '#FFFFFF' }} /> : <WhatsAppIcon sx={{ fontSize: 20 }} />}
-                  onClick={handleSubmitOrder}
-                  sx={{
-                    backgroundColor: '#25D366',
-                    color: '#FFFFFF',
-                    fontWeight: 900,
-                    fontSize: { xs: '0.86rem', sm: '0.94rem' },
-                    py: { xs: 1.1, sm: 1.25 },
-                    borderRadius: '24px',
-                    boxShadow: '0 4px 16px rgba(37, 211, 102, 0.45)',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: '#1EBE5D',
-                      boxShadow: '0 6px 20px rgba(37, 211, 102, 0.6)',
-                    },
-                  }}
-                >
-                  {isSubmitting ? 'Submitting Booking...' : `Confirm Booking & Open WhatsApp (${UPI_CONFIG.displayPhone}) →`}
-                </Button>
-              )}
-
-              {/* Save Order Details Button - Alternative fallback */}
-              {paymentMethod === 'upi' && (
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  disabled={isSubmitting || cart.length === 0}
-                  startIcon={<WhatsAppIcon sx={{ fontSize: 16, color: '#25D366' }} />}
-                  onClick={handleSaveBookingOnly}
-                  sx={{
-                    mt: 1.2,
-                    borderColor: '#CBD5E1',
-                    color: '#0B132B',
-                    fontWeight: 800,
-                    fontSize: { xs: '0.8rem', sm: '0.84rem' },
-                    py: { xs: 0.75, sm: 0.9 },
-                    borderRadius: 2,
-                    backgroundColor: '#F8FAFC',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: '#F0FDF4',
-                      borderColor: '#25D366',
-                      color: '#15803D',
-                    },
-                  }}
-                >
-                  💬 Pay Later & Send via WhatsApp Instead
-                </Button>
-              )}
+              {/* Action Submit Button - Mobile Optimized Touch Target */}
+              <Button
+                variant="contained"
+                fullWidth
+                disabled={isSubmitting || cart.length === 0}
+                startIcon={isSubmitting ? <CircularProgress size={18} sx={{ color: '#FFFFFF' }} /> : <WhatsAppIcon sx={{ fontSize: 24 }} />}
+                onClick={handleSubmitOrder}
+                sx={{
+                  backgroundColor: '#25D366',
+                  color: '#FFFFFF',
+                  fontWeight: 900,
+                  fontSize: { xs: '0.92rem', sm: '1.02rem' },
+                  py: { xs: 1.3, sm: 1.5 },
+                  minHeight: 50,
+                  borderRadius: '25px',
+                  boxShadow: '0 4px 16px rgba(37, 211, 102, 0.45)',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: '#1EBE5D',
+                    boxShadow: '0 6px 20px rgba(37, 211, 102, 0.6)',
+                  },
+                }}
+              >
+                {isSubmitting ? 'Submitting Enquiry...' : `Confirm Booking & Open WhatsApp (${UPI_CONFIG.displayPhone}) →`}
+              </Button>
 
               <Typography variant="caption" sx={{ color: '#64748B', display: 'block', textAlign: 'center', mt: 1.2, fontSize: '0.72rem' }}>
                 💡 All bookings receive an immediate official invoice bill with direct Sivakasi transport dispatch coordination.
